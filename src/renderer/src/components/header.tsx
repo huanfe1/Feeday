@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { cn } from '../lib/utils';
 
 export default function Header() {
     const [isMaximized, setIsMaximized] = useState(false);
-    const handleClose = () => {
-        window.electron.ipcRenderer.send('window-close');
-    };
-    const handleMaximize = () => {
-        window.electron.ipcRenderer.send('window-maximize');
-    };
-    const handleMinimize = () => {
-        window.electron.ipcRenderer.send('window-minimize');
-    };
+
+    const handleClose = () => window.electron.ipcRenderer.send('window-close');
+    const handleMaximize = () => window.electron.ipcRenderer.send('window-maximize');
+    const handleMinimize = () => window.electron.ipcRenderer.send('window-minimize');
 
     useEffect(() => {
         const handleResize = () => {
@@ -28,7 +24,9 @@ export default function Header() {
                 <Button onClick={handleMinimize}>
                     <i className="i-mingcute-minimize-line" />
                 </Button>
-                <Button onClick={handleMaximize}>{isMaximized ? <i className="i-mingcute-restore-line" /> : <i className="i-mingcute-square-line" />}</Button>
+                <Button onClick={handleMaximize}>
+                    <i className={cn(isMaximized ? 'i-mingcute-restore-line' : 'i-mingcute-square-line')}></i>
+                </Button>
                 <Button onClick={handleClose} className="hover:bg-red-500 hover:text-white">
                     <i className="i-mingcute-close-line" />
                 </Button>
@@ -37,9 +35,9 @@ export default function Header() {
     );
 }
 
-function Button({ children, onClick, className }: { children: React.ReactNode; onClick: () => void; className?: string }): React.JSX.Element {
+function Button({ children, onClick, className }: { children: ReactNode; onClick: () => void; className?: string }) {
     return (
-        <button type="button" className={cn('pointer-events-auto flex h-full w-[50px] items-center justify-center duration-200 hover:bg-gray-300/75', className)} onClick={onClick}>
+        <button type="button" className={cn('pointer-events-auto flex h-full w-[50px] items-center justify-center duration-200 hover:bg-gray-300/70', className)} onClick={onClick}>
             {children}
         </button>
     );
