@@ -18,8 +18,7 @@ export default function Header() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     return (
-        <div className="drag-region flex h-[35px] items-center justify-between bg-gray-100">
-            <div className="pl-5">Feeday</div>
+        <div className="drag-region flex h-[35px] items-center justify-end">
             <div className="no-drag-region flex h-full">
                 <Button onClick={handleMinimize}>
                     <i className="i-mingcute-minimize-line" />

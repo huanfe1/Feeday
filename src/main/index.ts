@@ -3,12 +3,13 @@ import { BrowserWindow, app, ipcMain, shell } from 'electron';
 import { join } from 'path';
 
 import icon from '../../resources/icon.png?asset';
+import db from './database';
 
-function createWindow(): void {
+function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
         width: 1280,
-        height: 1080,
+        height: 720,
         show: false,
         frame: false,
         autoHideMenuBar: true,
@@ -63,9 +64,9 @@ app.whenReady().then(() => {
     });
 
     // IPC test
-    ipcMain.on('ping', () => {
-        console.log('pong');
-    });
+    // ipcMain.on('ping', () => {
+    //     console.log('pong');
+    // });
 
     createWindow();
 
@@ -87,3 +88,4 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+db();
