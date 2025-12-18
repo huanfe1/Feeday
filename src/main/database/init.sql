@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS feeds (
     xmlUrl TEXT NOT NULL UNIQUE, -- 订阅源网址
     last_fetch_time DATETIME NULL, -- 最后抓取时间
     fetch_frequency INTEGER DEFAULT 60, -- 拉取频率（分钟，默认60）
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP -- 更新时间
+    create_time DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
+    updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
 );
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS posts (
     pub_date DATETIME NULL, -- 文章发布时间
     content TEXT NULL, -- 文章内容
     content_encoded TEXT NULL, -- 文章完整内容（HTML）
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, -- 更新时间
+    created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
+    updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间
     -- 外键关联订阅源，删除订阅源时自动删除文章
     FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
 );
@@ -34,7 +34,7 @@ AFTER UPDATE ON feeds
 FOR EACH ROW
 WHEN NEW.updated_at = OLD.updated_at
 BEGIN
-    UPDATE feeds SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+    UPDATE feeds SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
 END;
 
 CREATE TRIGGER update_posts_updated_at
@@ -42,5 +42,5 @@ AFTER UPDATE ON posts
 FOR EACH ROW
 WHEN NEW.updated_at = OLD.updated_at
 BEGIN
-    UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+    UPDATE posts SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
 END;
