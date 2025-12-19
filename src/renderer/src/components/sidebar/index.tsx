@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useResizable } from 'react-resizable-layout';
 
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 import AddFeed from './addFeed';
@@ -16,6 +17,9 @@ function Content() {
                 </div>
                 <div className="no-drag-region flex items-center">
                     <AddFeed />
+                    <Button variant="ghost" size="icon">
+                        <i className="i-mingcute-settings-3-fill text-lg opacity-75"></i>
+                    </Button>
                 </div>
             </div>
             <Separator />

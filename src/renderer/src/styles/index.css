@@ -39,7 +39,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    --font-custom: 'PingFang SC', 'HarmonyOS Sans SC', sans-serif;
+    --font-custom: 'HarmonyOS Sans SC', 'PingFang SC', sans-serif;
 }
 
 .dark {

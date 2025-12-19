@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Feed = {
     title: string;
@@ -83,12 +84,19 @@ export default function AddFeed() {
     };
     return (
         <Dialog open={modalVisible} onOpenChange={setModalVisible}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <i className="i-mingcute-add-fill text-base opacity-75"></i>
-                </Button>
-            </DialogTrigger>
-            <DialogContent onCloseAutoFocus={closeModal} onPointerDownOutside={e => e.preventDefault()}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <i className="i-mingcute-add-fill text-base opacity-75"></i>
+                        </Button>
+                    </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>添加订阅源</p>
+                </TooltipContent>
+            </Tooltip>
+            <DialogContent onCloseAutoFocus={closeModal} onPointerDownOutside={e => isLoading && e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>添加订阅源</DialogTitle>
                     <DialogDescription>输入订阅源地址以添加新的 RSS 订阅源</DialogDescription>

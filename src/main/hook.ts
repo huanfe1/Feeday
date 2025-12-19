@@ -37,7 +37,7 @@ ipcMain.handle('db-insert-post', async (_event, post: PostInfo) => {
 });
 
 ipcMain.handle('db-get-feeds', async _event => {
-    const select = db.prepare('SELECT id, note as title, htmlUrl as link  FROM feeds');
+    const select = db.prepare('SELECT id, note as title, htmlUrl as link  FROM feeds ORDER BY note ASC');
     return select.all();
 });
 
