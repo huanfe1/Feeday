@@ -40,3 +40,8 @@ ipcMain.handle('db-get-feeds', async _event => {
     const select = db.prepare('SELECT id, note as title, htmlUrl as link  FROM feeds');
     return select.all();
 });
+
+ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number) => {
+    const select = db.prepare('SELECT id, title, link, author, summary, pub_date as pubDate, content FROM posts WHERE feed_id = ? ORDER BY pub_date DESC LIMIT 20');
+    return select.all(feedId);
+});
