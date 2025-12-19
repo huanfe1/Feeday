@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { ipcMain } from 'electron';
+import { ipcMain, net } from 'electron';
 import Parser from 'rss-parser';
 
 import { db } from './database';
@@ -7,20 +7,22 @@ import type { FeedInfo, PostInfo } from './database';
 
 const parser = new Parser();
 ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
-    return parser.parseURL(feedUrl).then(data => {
-        data.items = data.items.map(item => {
+    const xmlContent = await net.fetch(feedUrl).then(response => response.text());
+    const data = await parser.parseString(xmlContent);
+    return {
+        ...data,
+        items: data.items.map(item => {
             const isRss2 = !!item['content:encoded'];
             return {
                 title: item.title,
                 link: item.link,
-                author: item.creator || item.author,
+                author: (item as any).creator || (item as any).author,
                 summary: isRss2 ? item.contentSnippet : item.summary,
                 content: isRss2 ? item['content:encoded'] : item.content,
                 pubDate: item.pubDate ? dayjs(item.pubDate).format('YYYY-MM-DD HH:mm') : '',
             };
-        });
-        return data;
-    });
+        }),
+    };
 });
 
 ipcMain.handle('db-insert-feed', async (_event, feed: FeedInfo) => {

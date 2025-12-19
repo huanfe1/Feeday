@@ -1,5 +1,5 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
-import { BrowserWindow, app, ipcMain, shell } from 'electron';
+import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
 import { join } from 'path';
 
 import icon from '../../resources/icon.png?asset';
@@ -62,10 +62,9 @@ app.whenReady().then(() => {
         optimizer.watchWindowShortcuts(window);
     });
 
-    // IPC test
-    // ipcMain.on('ping', () => {
-    //     console.log('pong');
-    // });
+    session.defaultSession.setProxy({
+        proxyRules: 'http://127.0.0.1:7890',
+    });
 
     import('./hook');
 
