@@ -85,14 +85,14 @@ export default function AddFeed() {
     return (
         <Dialog open={modalVisible} onOpenChange={setModalVisible}>
             <Tooltip>
-                <TooltipTrigger asChild>
-                    <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <TooltipTrigger asChild>
                             <i className="i-mingcute-add-fill text-base opacity-75"></i>
-                        </Button>
-                    </DialogTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
+                        </TooltipTrigger>
+                    </Button>
+                </DialogTrigger>
+                <TooltipContent sideOffset={10}>
                     <p>添加订阅源</p>
                 </TooltipContent>
             </Tooltip>
@@ -124,6 +124,7 @@ export default function AddFeed() {
                                     id="feedUrl"
                                     placeholder="请输入订阅源地址"
                                     value={feed.link}
+                                    autoFocus
                                     onChange={e => setFeed(value => ({ ...value, link: e.target.value }))}
                                 />
                             </InputGroup>
