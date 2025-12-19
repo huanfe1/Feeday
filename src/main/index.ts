@@ -4,8 +4,6 @@ import { join } from 'path';
 
 import icon from '../../resources/icon.png?asset';
 
-// import db from './database';
-
 function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
