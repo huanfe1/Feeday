@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ export default function AddFeed() {
         window.electron.ipcRenderer
             .invoke('get-feed-info', feed.link)
             .then(res => {
+                console.log(res);
                 feedRef.current = res;
                 if (res.title) {
                     setFeed(value => ({ ...value, title: res.title, note: res.title }));
@@ -67,12 +68,14 @@ export default function AddFeed() {
                         feedId: feedId,
                         title: post.title,
                         link: post.link,
-                        author: post.author,
-                        summary: post.summary,
-                        pubDate: post.pubDate,
-                        content: post.content,
+                        author: post.author || feedRef.current.title,
+                        summary: post.summary || '',
+                        pubDate: post.pubDate || '',
+                        content: post.content || '',
                     });
                 });
+                // 派发事件通知sidebar刷新feeds列表
+                window.dispatchEvent(new CustomEvent('refresh-feeds'));
             })
             .catch(error => {
                 toast.error('添加订阅源失败：' + error.message, { position: 'top-center', richColors: true });
@@ -88,8 +91,9 @@ export default function AddFeed() {
             <DialogContent onCloseAutoFocus={closeModal} onPointerDownOutside={e => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>添加订阅源</DialogTitle>
+                    <DialogDescription>输入订阅源地址以添加新的 RSS 订阅源</DialogDescription>
                 </DialogHeader>
-                <div className="my-5">
+                <div className="my-3">
                     <div>
                         <Label htmlFor="feedUrl" className="mb-2">
                             订阅源地址
