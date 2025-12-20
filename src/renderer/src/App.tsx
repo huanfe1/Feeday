@@ -5,6 +5,7 @@ import Header from '@/components/header';
 import Post from '@/components/post';
 import Posts from '@/components/posts';
 import Sidebar from '@/components/sidebar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { cn } from './lib/utils';
 
@@ -16,11 +17,11 @@ function App() {
             <div className={cn('flex h-screen w-screen', isDragging ? 'cursor-ew-resize' : 'cursor-auto')}>
                 <Sidebar setIsDragging={setIsDragging} />
                 <Posts setIsDragging={setIsDragging} />
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex h-full min-w-0 flex-1 flex-col">
                     <Header />
-                    <div className="flex-1 overflow-x-hidden overflow-y-scroll">
+                    <ScrollArea className="min-h-0 flex-1">
                         <Post />
-                    </div>
+                    </ScrollArea>
                 </div>
             </div>
             <Toaster toastOptions={{ style: { fontFamily: 'var(--font-custom)' } }} />

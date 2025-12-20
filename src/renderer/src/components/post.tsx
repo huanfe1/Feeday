@@ -26,7 +26,7 @@ export default function Post() {
                         )}
                     </div>
                 </div>
-                <div>{post.content && parse(post.content)}</div>
+                <div>{post.content && parse(sanitizeHtml(post.content))}</div>
             </div>
         </div>
     );

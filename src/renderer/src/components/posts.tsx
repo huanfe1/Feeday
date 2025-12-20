@@ -24,7 +24,7 @@ function PostsContent() {
                 <h3 className="text-lg font-bold">文章列表</h3>
             </div>
             <div className="w-full flex-1 overflow-y-auto">
-                <ScrollArea scrollKey={feed.id} className="flex h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
+                <ScrollArea scrollKey={feed.id} className="flex h-full">
                     {posts.map(post => (
                         <div
                             onClick={() => setPost(post)}
