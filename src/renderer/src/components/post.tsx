@@ -1,11 +1,19 @@
 import dayjs from 'dayjs';
 import parse from 'html-react-parser';
+import { useEffect, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { usePost } from '@/lib/store';
 
 export default function Post() {
+    const [content, setContent] = useState('');
     const { post } = usePost();
+    useEffect(() => {
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(post.id)).then(data => setContent(sanitizeHtml(data.content || data.summary)));
+    }, [post]);
+
+    if (!content) return;
+
     return (
         <div>
             <div className="prose max-w-none px-20 py-10">
@@ -26,7 +34,7 @@ export default function Post() {
                         )}
                     </div>
                 </div>
-                <div>{post.content && parse(sanitizeHtml(post.content))}</div>
+                <div>{content && parse(content)}</div>
             </div>
         </div>
     );

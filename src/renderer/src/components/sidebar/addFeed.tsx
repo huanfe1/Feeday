@@ -12,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 type Feed = {
     title: string;
     link: string;
-    note: string;
 };
 
 export default function AddFeed() {
@@ -20,7 +19,7 @@ export default function AddFeed() {
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<any>(null);
 
-    const [feed, setFeed] = useState<Feed>({ title: '', link: '', note: '' });
+    const [feed, setFeed] = useState<Feed>({ title: '', link: '' });
 
     const getFeedInfo = () => {
         if (!feed.link) return;
@@ -33,11 +32,9 @@ export default function AddFeed() {
         window.electron.ipcRenderer
             .invoke('get-feed-info', feed.link)
             .then(res => {
-                console.log(res);
                 feedRef.current = res;
-                if (res.title) {
-                    setFeed(value => ({ ...value, title: res.title, note: res.title }));
-                }
+                console.log(res);
+                setFeed(value => ({ ...value, title: res.rawTitle }));
             })
             .catch(error => {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -49,18 +46,19 @@ export default function AddFeed() {
     const closeModal = () => {
         setModalVisible(false);
         setLoading(false);
-        setFeed({ title: '', link: '', note: '' });
+        setFeed({ title: '', link: '' });
         feedRef.current = null;
     };
     const submit = () => {
         if (!feed.title) return;
         window.electron.ipcRenderer
             .invoke('db-insert-feed', {
-                title: feedRef.current.title,
-                note: feed.note,
+                title: feed.title,
+                rawTitle: feedRef.current.rawTitle,
                 description: feedRef.current.description,
-                htmlUrl: feedRef.current.link,
+                htmlUrl: feedRef.current.htmlUrl,
                 xmlUrl: feed.link,
+                icon: feedRef.current.icon,
             })
             .then(feedId => {
                 setModalVisible(false);
@@ -142,8 +140,8 @@ export default function AddFeed() {
                                         type="text"
                                         id="feedNote"
                                         placeholder="请输入订阅源备注"
-                                        value={feed.note}
-                                        onChange={e => setFeed(value => ({ ...value, note: e.target.value }))}
+                                        value={feed.title}
+                                        onChange={e => setFeed(value => ({ ...value, title: e.target.value }))}
                                     />
                                 </div>
                             </>

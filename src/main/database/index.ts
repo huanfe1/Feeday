@@ -16,10 +16,11 @@ app.on('before-quit', () => {
 export type FeedInfo = {
     id: number;
     title: string;
-    note: string;
+    rawTitle: string;
     description: string;
     htmlUrl: string;
     xmlUrl: string;
+    icon: string;
     lastFetchTime: string;
     fetchFrequency: number;
     createTime: string;
@@ -34,6 +35,12 @@ export type PostInfo = {
     author: string;
     summary: string;
     pubDate: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PostContentInfo = {
+    postId: number;
     content: string;
     createdAt: string;
     updatedAt: string;

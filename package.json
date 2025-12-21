@@ -34,6 +34,7 @@
         "@radix-ui/react-tooltip": "^1.2.8",
         "dayjs": "^1.11.19",
         "electron-updater": "^6.3.9",
+        "feedsmith": "^2.8.0",
         "html-react-parser": "^5.2.10",
         "react-resizable-layout": "^0.7.3",
         "rss-parser": "^3.13.0",

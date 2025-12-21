@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 
 @plugin '@egoist/tailwindcss-icons';
-@plugin "@tailwindcss/typography";
+@plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:is(.dark *));
 

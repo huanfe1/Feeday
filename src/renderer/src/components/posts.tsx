@@ -13,9 +13,7 @@ function PostsContent() {
     const { post: selectedPost, setPost } = usePost();
 
     useEffect(() => {
-        window.electron.ipcRenderer.invoke('db-get-posts-by-id', Number(feed.id)).then(data => {
-            setPosts(data);
-        });
+        window.electron.ipcRenderer.invoke('db-get-posts-by-id', Number(feed.id)).then(data => setPosts(data));
     }, [feed]);
 
     return (

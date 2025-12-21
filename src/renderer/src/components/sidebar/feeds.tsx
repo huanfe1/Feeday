@@ -39,6 +39,8 @@ export default function Feeds({ className }: { className?: string }) {
         return () => window.removeEventListener('refresh-feeds', loadFeeds);
     }, []);
 
+    useEffect(() => console.log(data), [data]);
+
     return (
         <ScrollArea className={cn('min-h-0 flex-1 px-3', className)}>
             {data.length === 0 ? (
@@ -56,7 +58,7 @@ export default function Feeds({ className }: { className?: string }) {
                                 <div
                                     onClick={() => setFeed(item)}
                                     key={item.id}
-                                    onDoubleClick={() => window.open(item.link, '_blank')}
+                                    onDoubleClick={() => window.open(item.htmlUrl, '_blank')}
                                     className={cn(
                                         'flex cursor-default items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none',
                                         feed.id === item.id && 'bg-gray-300/70',
@@ -64,7 +66,10 @@ export default function Feeds({ className }: { className?: string }) {
                                 >
                                     <Avatar className="size-4">
                                         <AvatarImage
-                                            src={`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(item.link).origin}&size=64`}
+                                            src={
+                                                item.icon ||
+                                                `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(item.htmlUrl).origin}&size=64`
+                                            }
                                         />
                                         <AvatarFallback>{item.title.slice(0, 1)}</AvatarFallback>
                                     </Avatar>
@@ -75,7 +80,7 @@ export default function Feeds({ className }: { className?: string }) {
                                 <ContextMenuItem>编辑</ContextMenuItem>
                                 <ContextMenuItem onSelect={() => setActions('delete')}>删除</ContextMenuItem>
                                 <ContextMenuSeparator />
-                                <ContextMenuItem onSelect={() => window.open(selectedFeed.current.link, '_blank')}>在浏览器中打开网站</ContextMenuItem>
+                                <ContextMenuItem onSelect={() => window.open(selectedFeed.current.htmlUrl, '_blank')}>在浏览器中打开网站</ContextMenuItem>
                                 <ContextMenuItem onSelect={() => window.open(selectedFeed.current.xmlUrl, '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
                             </ContextMenuContent>
                         </ContextMenu>
