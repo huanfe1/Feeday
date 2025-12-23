@@ -1,14 +1,12 @@
 import dayjs from 'dayjs';
 import { ipcMain, net } from 'electron';
 import { parseFeed } from 'feedsmith';
-import Parser from 'rss-parser';
 
 import { db } from './database';
 import type { FeedInfo, PostContentInfo, PostInfo } from './database';
 import { truncate } from './lib/utils';
 
-const parser = new Parser();
-ipcMain.handle('get-feed-info', async (_event, feedUrl: string): Promise<Partial<FeedInfo & { items: Partial<PostInfo>[] }>> => {
+ipcMain.handle('get-feed-info', async (_event, feedUrl: string): Promise<Partial<FeedInfo & { items: Partial<PostInfo>[] }> | null> => {
     const xmlContent = await net.fetch(feedUrl).then(response => response.text());
     const { format, feed } = parseFeed(xmlContent);
 
@@ -26,7 +24,7 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string): Promise<Partial
                 content: item.content,
                 pubDate: item.updated ?? item.published ?? '',
             })),
-            data: { feed, format },
+            // data: { feed, format },
         };
     } else if (format === 'rss') {
         return {
@@ -43,7 +41,7 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string): Promise<Partial
                 pubDate: item.pubDate,
                 author: item.authors?.join(','),
             })),
-            data: { feed, format },
+            // data: { feed, format },
         };
     }
     return null;
@@ -98,8 +96,36 @@ ipcMain.handle('db-insert-post', async (_event, post: PostInfo & PostContentInfo
     return insertContent.run(lastInsertRowid, post.summary || '', post.content ?? '');
 });
 
+ipcMain.handle('db-get-posts', async _event => {
+    const select = db.prepare(
+        `SELECT p.id,
+                p.title,
+                p.link,
+                f.title AS author,
+                p.summary,
+                p.pub_date as pubDate
+         FROM posts p
+         LEFT JOIN feeds f ON f.id = p.feed_id
+         ORDER BY p.pub_date DESC
+         LIMIT 30`,
+    );
+    return select.all();
+});
+
 ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number) => {
-    const select = db.prepare('SELECT id, title, link, author, summary, pub_date as pubDate FROM posts WHERE feed_id = ? ORDER BY pub_date DESC LIMIT 20');
+    const select = db.prepare(
+        `SELECT p.id,
+                p.title,
+                p.link,
+                f.title AS author,
+                p.summary,
+                p.pub_date as pubDate
+         FROM posts p
+         LEFT JOIN feeds f ON f.id = p.feed_id
+         WHERE p.feed_id = ?
+         ORDER BY p.pub_date DESC
+         LIMIT 20`,
+    );
     return select.all(feedId);
 });
 

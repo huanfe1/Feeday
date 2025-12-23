@@ -67,7 +67,7 @@ export default function AddFeed() {
                         feedId: feedId,
                         title: post.title,
                         link: post.link,
-                        author: post.author || feedRef.current.title,
+                        author: post.author || feed.title,
                         summary: post.summary || '',
                         pubDate: post.pubDate || '',
                         content: post.content || '',

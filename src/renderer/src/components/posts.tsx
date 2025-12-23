@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useResizable } from 'react-resizable-layout';
 
@@ -10,36 +11,51 @@ function PostsContent() {
     const [posts, setPosts] = useState<any[]>([]);
 
     const { feed } = useFeed();
-    const { post: selectedPost, setPost } = usePost();
+    const { post: selectedPost, setPost, cancelPost } = usePost();
 
     useEffect(() => {
-        window.electron.ipcRenderer.invoke('db-get-posts-by-id', Number(feed.id)).then(data => setPosts(data));
+        if (feed.id) {
+            window.electron.ipcRenderer.invoke('db-get-posts-by-id', Number(feed.id)).then(data => setPosts(data));
+        } else {
+            window.electron.ipcRenderer.invoke('db-get-posts').then(data => setPosts(data));
+            cancelPost();
+        }
     }, [feed]);
 
     return (
-        <div className="flex h-full w-full flex-col">
+        <div className="flex h-full w-full flex-col overflow-y-hidden">
             <div className="drag-region flex h-[60px] flex-col items-center justify-center gap-4">
-                <h3 className="text-lg font-bold">文章列表</h3>
+                <h3 className="text-lg font-bold">{feed.title || '文章列表'}</h3>
             </div>
-            <div className="w-full flex-1 overflow-y-auto">
-                <ScrollArea scrollKey={feed.id} className="flex h-full">
-                    {posts.map(post => (
-                        <div
-                            onClick={() => setPost(post)}
-                            onDoubleClick={() => window.open(post.link, '_blank')}
-                            key={post.id}
-                            className={cn('cursor-default bg-white p-4 duration-200 select-none', selectedPost.id === post.id ? 'bg-gray-200' : '')}
-                        >
-                            <h3 className="mb-2 truncate font-bold text-gray-800">{post.title}</h3>
-                            <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
-                            <div className="mt-1 space-x-2 text-xs text-gray-500">
-                                <span>{feed.title}</span>
-                                <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={feed.id || 'all'}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.1, ease: 'easeIn' }}
+                    className="w-full flex-1 overflow-y-hidden"
+                >
+                    <ScrollArea scrollKey={feed.id} className="flex h-full">
+                        {posts.map(post => (
+                            <div
+                                onClick={() => setPost(post)}
+                                onDoubleClick={() => window.open(post.link, '_blank')}
+                                key={post.id}
+                                className={cn('cursor-default bg-white p-4 duration-200 select-none', selectedPost.id === post.id ? 'bg-gray-200' : '')}
+                            >
+                                <h3 className="mb-2 truncate font-bold text-gray-800">{post.title}</h3>
+                                <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
+                                <div className="mt-1 space-x-2 text-xs text-gray-500">
+                                    <span>{post.author || feed.title}</span>
+                                    <span>·</span>
+                                    <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </ScrollArea>
-            </div>
+                        ))}
+                    </ScrollArea>
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 }

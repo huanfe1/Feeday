@@ -19,8 +19,13 @@ export default function Feeds({ className }: { className?: string }) {
         return () => window.removeEventListener('refresh-feeds', loadFeeds);
     }, []);
 
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>, item: any) => {
+        e.stopPropagation();
+        setFeed(item);
+    };
+
     return (
-        <ScrollArea className={cn('min-h-0 flex-1 px-3', className)}>
+        <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={() => setFeed({} as any)}>
             {data.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
@@ -33,7 +38,7 @@ export default function Feeds({ className }: { className?: string }) {
                     {data.map(item => (
                         <ContextMenu key={item.id} feed={item}>
                             <div
-                                onClick={() => setFeed(item)}
+                                onClick={e => handleClick(e, item)}
                                 key={item.id}
                                 onDoubleClick={() => window.open(item.htmlUrl, '_blank')}
                                 className={cn('flex cursor-default items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', feed.id === item.id && 'bg-gray-300/70')}

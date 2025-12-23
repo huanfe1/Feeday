@@ -19,9 +19,7 @@ function App() {
                 <Posts setIsDragging={setIsDragging} />
                 <div className="flex h-full min-w-0 flex-1 flex-col">
                     <Header />
-                    <ScrollArea className="min-h-0 flex-1">
-                        <Post />
-                    </ScrollArea>
+                    <Post />
                 </div>
             </div>
             <Toaster toastOptions={{ style: { fontFamily: 'var(--font-custom)' } }} />
