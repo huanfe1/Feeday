@@ -1,0 +1,175 @@
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useFeed, usePost } from '@/lib/store';
+
+export default function ContextMenuFeed({ children, feed }: { children: React.ReactNode; feed: any }) {
+    const [actions, setActions] = useState<string | null>(null);
+    const [editOpen, setEditOpen] = useState(false);
+    const { cancelFeed } = useFeed();
+    const { cancelPost } = usePost();
+
+    const deleteFeed = () => {
+        window.electron.ipcRenderer.invoke('db-delete-feed', feed.id).then(() => {
+            toast.success(`${feed.title} 删除成功`);
+            window.dispatchEvent(new CustomEvent('refresh-feeds'));
+            cancelFeed();
+            cancelPost();
+        });
+    };
+    return (
+        <>
+            <ContextMenu>
+                <ContextMenuTrigger>{children}</ContextMenuTrigger>
+                <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => setEditOpen(true)}>编辑</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => setActions('delete')}>删除</ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => window.open(feed.htmlUrl, '_blank')}>在浏览器中打开网站</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open(feed.xmlUrl, '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
+                </ContextMenuContent>
+            </ContextMenu>
+            <AlertDialog open={actions === 'delete'} onOpenChange={() => setActions(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>确定删除吗？</AlertDialogTitle>
+                        <AlertDialogDescription>删除后，「{feed.title}」订阅源及其所有文章将永久删除，无法恢复。</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteFeed}>确定</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <EditFeed feed={feed} open={editOpen} onOpenChange={setEditOpen} />
+        </>
+    );
+}
+
+function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOpenChange: (open: boolean) => void }) {
+    const [formData, setFormData] = useState({
+        title: feed.title || '',
+        htmlUrl: feed.htmlUrl || '',
+        fetchFrequency: feed.fetchFrequency || 60,
+    });
+
+    // 当对话框打开时，重置表单为原始值
+    useEffect(() => {
+        if (open) {
+            setFormData({
+                title: feed.title || '',
+                htmlUrl: feed.htmlUrl || '',
+                fetchFrequency: feed.fetchFrequency || 60,
+            });
+        }
+    }, [open, feed]);
+
+    const handleSubmit = () => {
+        if (!formData.title.trim()) {
+            toast.error('请输入订阅源标题', { position: 'top-center', richColors: true });
+            return;
+        }
+        if (!formData.htmlUrl.trim()) {
+            toast.error('请输入网站地址', { position: 'top-center', richColors: true });
+            return;
+        }
+        const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
+        if (!urlPattern.test(formData.htmlUrl)) {
+            toast.error('请输入正确的网址', { position: 'top-center', richColors: true });
+            return;
+        }
+        if (formData.fetchFrequency < 1) {
+            toast.error('更新频率必须大于0', { position: 'top-center', richColors: true });
+            return;
+        }
+
+        window.electron.ipcRenderer
+            .invoke('db-update-feed', {
+                id: feed.id,
+                title: formData.title,
+                htmlUrl: formData.htmlUrl,
+                fetchFrequency: formData.fetchFrequency,
+            })
+            .then(() => {
+                toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
+                window.dispatchEvent(new CustomEvent('refresh-feeds'));
+                onOpenChange(false);
+            })
+            .catch(error => {
+                toast.error('更新订阅源失败：' + error.message, { position: 'top-center', richColors: true });
+            });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>编辑订阅源</DialogTitle>
+                    <DialogDescription>修改订阅源的基本信息</DialogDescription>
+                </DialogHeader>
+                <div className="my-3 space-y-4">
+                    <div>
+                        <Label htmlFor="edit-title" className="mb-2">
+                            订阅源标题
+                        </Label>
+                        <Input
+                            type="text"
+                            id="edit-title"
+                            placeholder="请输入订阅源标题"
+                            value={formData.title}
+                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="edit-htmlUrl" className="mb-2">
+                            网站地址
+                        </Label>
+                        <Input
+                            type="text"
+                            id="edit-htmlUrl"
+                            placeholder="请输入网站地址"
+                            value={formData.htmlUrl}
+                            onChange={e => setFormData({ ...formData, htmlUrl: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="edit-fetchFrequency" className="mb-2">
+                            更新频率（分钟）
+                        </Label>
+                        <Input
+                            type="number"
+                            id="edit-fetchFrequency"
+                            placeholder="请输入更新频率"
+                            min="1"
+                            value={formData.fetchFrequency}
+                            onChange={e => setFormData({ ...formData, fetchFrequency: parseInt(e.target.value) || 60 })}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">取消</Button>
+                    </DialogClose>
+                    <Button onClick={handleSubmit} type="submit">
+                        确定
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

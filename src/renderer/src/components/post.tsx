@@ -9,7 +9,7 @@ export default function Post() {
     const [content, setContent] = useState('');
     const { post } = usePost();
     useEffect(() => {
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(post.id)).then(data => setContent(sanitizeHtml(data.content || data.summary)));
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(post.id)).then(data => setContent(sanitizeHtml(data?.content || data?.summary || '')));
     }, [post]);
 
     if (!content) return;
