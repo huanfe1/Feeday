@@ -40,8 +40,8 @@ export default function ContextMenuFeed({ children, feed }: { children: React.Re
                     <ContextMenuItem onSelect={() => setEditOpen(true)}>编辑</ContextMenuItem>
                     <ContextMenuItem onSelect={() => setActions('delete')}>删除</ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onSelect={() => window.open(feed.htmlUrl, '_blank')}>在浏览器中打开网站</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => window.open(feed.xmlUrl, '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open(feed.link, '_blank')}>在浏览器中打开网站</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open(feed.url, '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
             <AlertDialog open={actions === 'delete'} onOpenChange={() => setActions(null)}>
@@ -64,7 +64,7 @@ export default function ContextMenuFeed({ children, feed }: { children: React.Re
 function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOpenChange: (open: boolean) => void }) {
     const [formData, setFormData] = useState({
         title: feed.title || '',
-        htmlUrl: feed.htmlUrl || '',
+        link: feed.link || '',
         fetchFrequency: feed.fetchFrequency || 60,
     });
 
@@ -73,7 +73,7 @@ function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOp
         if (open) {
             setFormData({
                 title: feed.title || '',
-                htmlUrl: feed.htmlUrl || '',
+                link: feed.link || '',
                 fetchFrequency: feed.fetchFrequency || 60,
             });
         }
@@ -84,12 +84,12 @@ function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOp
             toast.error('请输入订阅源标题', { position: 'top-center', richColors: true });
             return;
         }
-        if (!formData.htmlUrl.trim()) {
+        if (!formData.link.trim()) {
             toast.error('请输入网站地址', { position: 'top-center', richColors: true });
             return;
         }
         const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
-        if (!urlPattern.test(formData.htmlUrl)) {
+        if (!urlPattern.test(formData.link)) {
             toast.error('请输入正确的网址', { position: 'top-center', richColors: true });
             return;
         }
@@ -102,7 +102,7 @@ function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOp
             .invoke('db-update-feed', {
                 id: feed.id,
                 title: formData.title,
-                htmlUrl: formData.htmlUrl,
+                link: formData.link,
                 fetchFrequency: formData.fetchFrequency,
             })
             .then(() => {
@@ -136,16 +136,10 @@ function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOp
                         />
                     </div>
                     <div>
-                        <Label htmlFor="edit-htmlUrl" className="mb-2">
+                        <Label htmlFor="edit-link" className="mb-2">
                             网站地址
                         </Label>
-                        <Input
-                            type="text"
-                            id="edit-htmlUrl"
-                            placeholder="请输入网站地址"
-                            value={formData.htmlUrl}
-                            onChange={e => setFormData({ ...formData, htmlUrl: e.target.value })}
-                        />
+                        <Input type="text" id="edit-link" placeholder="请输入网站地址" value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })} />
                     </div>
                     <div>
                         <Label htmlFor="edit-fetchFrequency" className="mb-2">

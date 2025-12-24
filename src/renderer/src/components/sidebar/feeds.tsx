@@ -40,14 +40,14 @@ export default function Feeds({ className }: { className?: string }) {
                             <div
                                 onClick={e => handleClick(e, item)}
                                 key={item.id}
-                                onDoubleClick={() => window.open(item.htmlUrl, '_blank')}
+                                onDoubleClick={() => window.open(item.link, '_blank')}
                                 className={cn('flex cursor-default items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', feed.id === item.id && 'bg-gray-300/70')}
                             >
                                 <Avatar className="size-4">
                                     <AvatarImage
                                         src={
                                             item.icon ||
-                                            `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(item.htmlUrl).origin}&size=64`
+                                            `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(item.link).origin}&size=64`
                                         }
                                     />
                                     <AvatarFallback>{item.title.slice(0, 1)}</AvatarFallback>

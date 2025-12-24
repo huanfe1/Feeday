@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 type Feed = {
     title: string;
-    link: string;
+    url: string;
 };
 
 export default function AddFeed() {
@@ -19,22 +19,21 @@ export default function AddFeed() {
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<any>(null);
 
-    const [feed, setFeed] = useState<Feed>({ title: '', link: '' });
+    const [feed, setFeed] = useState<Feed>({ title: '', url: '' });
 
     const getFeedInfo = () => {
-        if (!feed.link) return;
+        if (!feed.url) return;
         const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
-        if (!urlPattern.test(feed.link)) {
+        if (!urlPattern.test(feed.url)) {
             toast.error('请输入正确的网址', { position: 'top-center', richColors: true });
             return;
         }
         setLoading(true);
         window.electron.ipcRenderer
-            .invoke('get-feed-info', feed.link)
+            .invoke('get-feed-info', feed.url)
             .then(res => {
                 feedRef.current = res;
-                console.log(res);
-                setFeed(value => ({ ...value, title: res.rawTitle }));
+                setFeed({ title: res.title, url: res.url });
             })
             .catch(error => {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -46,7 +45,7 @@ export default function AddFeed() {
     const closeModal = () => {
         setModalVisible(false);
         setLoading(false);
-        setFeed({ title: '', link: '' });
+        setFeed({ title: '', url: '' });
         feedRef.current = null;
     };
     const submit = () => {
@@ -54,10 +53,10 @@ export default function AddFeed() {
         window.electron.ipcRenderer
             .invoke('db-insert-feed', {
                 title: feed.title,
-                rawTitle: feedRef.current.rawTitle,
                 description: feedRef.current.description,
-                htmlUrl: feedRef.current.htmlUrl,
-                xmlUrl: feed.link,
+                link: feedRef.current.link,
+                url: feedRef.current.url || feed.url,
+                last_updated: feedRef.current.last_updated,
                 icon: feedRef.current.icon,
             })
             .then(feedId => {
@@ -67,10 +66,11 @@ export default function AddFeed() {
                         feedId: feedId,
                         title: post.title,
                         link: post.link,
-                        author: post.author || feed.title,
-                        summary: post.summary || '',
-                        pubDate: post.pubDate || '',
-                        content: post.content || '',
+                        author: post.author,
+                        image_url: post.image_url,
+                        summary: post.summary,
+                        pubDate: post.pubDate,
+                        content: post.content,
                     });
                 });
                 // 派发事件通知sidebar刷新feeds列表
@@ -109,7 +109,7 @@ export default function AddFeed() {
                                 <InputGroupAddon align="inline-end">
                                     <InputGroupButton
                                         onClick={() => {
-                                            setFeed(value => ({ ...value, link: '' }));
+                                            setFeed(value => ({ ...value, url: '' }));
                                         }}
                                         className="rounded-full"
                                         size="icon-xs"
@@ -121,9 +121,9 @@ export default function AddFeed() {
                                     type="text"
                                     id="feedUrl"
                                     placeholder="请输入订阅源地址"
-                                    value={feed.link}
+                                    value={feed.url}
                                     autoFocus
-                                    onChange={e => setFeed(value => ({ ...value, link: e.target.value }))}
+                                    onChange={e => setFeed(value => ({ ...value, url: e.target.value }))}
                                 />
                             </InputGroup>
                             <Button className="flex w-20 items-center" disabled={isLoading} onClick={getFeedInfo} type="submit" variant="outline">
