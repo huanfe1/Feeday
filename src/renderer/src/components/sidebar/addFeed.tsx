@@ -33,7 +33,7 @@ export default function AddFeed() {
             .invoke('get-feed-info', feed.url)
             .then(res => {
                 feedRef.current = res;
-                setFeed({ title: res.title, url: res.url });
+                setFeed(value => ({ ...value, title: res.title }));
             })
             .catch(error => {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -53,29 +53,24 @@ export default function AddFeed() {
         window.electron.ipcRenderer
             .invoke('db-insert-feed', {
                 title: feed.title,
-                description: feedRef.current.description,
+                description: feedRef.current.description || null,
                 link: feedRef.current.link,
-                url: feedRef.current.url || feed.url,
+                url: feedRef.current.url ?? feed.url,
                 last_updated: feedRef.current.last_updated,
-                icon: feedRef.current.icon,
+                icon: feedRef.current.icon || null,
             })
             .then(feedId => {
                 setModalVisible(false);
                 feedRef.current.items.forEach(post => {
                     window.electron.ipcRenderer.invoke('db-insert-post', {
-                        feedId: feedId,
-                        title: post.title,
-                        link: post.link,
-                        author: post.author,
-                        image_url: post.image_url,
-                        summary: post.summary,
-                        pubDate: post.pubDate,
-                        content: post.content,
+                        feed_id: feedId,
+                        ...post,
                     });
                 });
                 // 派发事件通知sidebar刷新feeds列表
                 window.dispatchEvent(new CustomEvent('refresh-feeds'));
             })
+            .then(() => toast.success(`「${feed.title}」添加订阅源成功`))
             .catch(error => {
                 toast.error('添加订阅源失败：' + error.message, { position: 'top-center', richColors: true });
             });

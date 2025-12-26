@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS posts (
     image_url TEXT NULL, -- 文章图片URL
     summary TEXT NULL, -- 文章简略描述
     pub_date DATETIME NULL, -- 文章发布时间
+    is_read BOOLEAN DEFAULT 0, -- 是否已读
     created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
     updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间
     -- 外键关联订阅源，删除订阅源时自动删除文章

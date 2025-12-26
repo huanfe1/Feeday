@@ -1,7 +1,50 @@
 import dayjs from 'dayjs';
+import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
 
-export default function rssParser(data: string) {
+async function validateIcon(iconUrl: string): Promise<string | undefined> {
+    try {
+        // 使用 Promise.race 实现超时
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout')), 5000);
+        });
+
+        const fetchPromise = net.fetch(iconUrl, {
+            method: 'HEAD',
+        });
+
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+        // 如果状态码是 2xx 或 3xx，认为可以访问
+        if (response.ok || (response.status >= 300 && response.status < 400)) {
+            return iconUrl;
+        }
+        return undefined;
+    } catch {
+        // 如果请求失败或超时，返回 undefined
+        return undefined;
+    }
+}
+
+export async function fetchFeed(url: string) {
+    try {
+        const data = await fetch(url).then(res => res.text());
+        const result = rssParser(data);
+
+        // 验证 icon 是否可以访问
+        if (result?.icon) {
+            result.icon = await validateIcon(result.icon);
+        }
+
+        if (result) return result;
+        const { format, feed } = parseFeed(data);
+        return { format, feed };
+    } catch (error) {
+        throw error;
+    }
+}
+
+export function rssParser(data: string) {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
         return {
@@ -16,7 +59,7 @@ export default function rssParser(data: string) {
                 link: item.link,
                 image_url: item.enclosures?.[0]?.url,
                 author: item.dc?.creators?.join('、') || item.authors?.join(''),
-                pubDate: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
+                pub_date: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.description,
                 content: item.content?.encoded,
             })),
@@ -34,7 +77,7 @@ export default function rssParser(data: string) {
                 link: item.id,
                 image_url: item.links?.find(_ => _.rel === 'enclosure')?.href,
                 author: item.authors?.map(_ => _.name).join('、'),
-                pubDate: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
+                pub_date: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.summary,
                 content: item.content,
             })),

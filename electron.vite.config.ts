@@ -4,7 +4,13 @@ import { defineConfig } from 'electron-vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-    main: {},
+    main: {
+        resolve: {
+            alias: {
+                '@main': resolve(__dirname, './src/main'),
+            },
+        },
+    },
     preload: {},
     renderer: {
         resolve: {

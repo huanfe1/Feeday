@@ -17,7 +17,7 @@ type Post = {
     link: string;
     author: string;
     content: string;
-    pubDate: string;
+    pub_date: string;
     summary: string;
 };
 export const usePost = create<{ post: Post; setPost: (post: Post) => void; cancelPost: () => void }>(set => ({

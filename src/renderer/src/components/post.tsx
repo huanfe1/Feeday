@@ -37,10 +37,10 @@ export default function Post() {
                                                 <span>{post.author}</span>
                                             </div>
                                         )}
-                                        {post.pubDate && (
+                                        {post.pub_date && (
                                             <div className="flex items-center gap-1.5">
                                                 <i className="i-mingcute-calendar-time-add-line h-4 w-4" />
-                                                <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
+                                                <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
                                             </div>
                                         )}
                                     </div>

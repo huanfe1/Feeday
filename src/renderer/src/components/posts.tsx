@@ -2,10 +2,11 @@ import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useResizable } from 'react-resizable-layout';
+import sanitizeHtml from 'sanitize-html';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFeed, usePost } from '@/lib/store';
-import { cn } from '@/lib/utils';
+import { cn, truncate } from '@/lib/utils';
 
 function PostsContent() {
     const [posts, setPosts] = useState<any[]>([]);
@@ -45,11 +46,11 @@ function PostsContent() {
                                 className={cn('cursor-default bg-white p-4 duration-200 select-none', selectedPost.id === post.id ? 'bg-gray-200' : '')}
                             >
                                 <h3 className="mb-2 truncate font-bold text-gray-800">{post.title}</h3>
-                                <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
+                                <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
                                 <div className="mt-1 space-x-2 text-xs text-gray-500">
-                                    <span>{post.author || feed.title}</span>
+                                    <span>{post.author}</span>
                                     <span>·</span>
-                                    <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
+                                    <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
                                 </div>
                             </div>
                         ))}
