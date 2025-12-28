@@ -36,8 +36,8 @@ export function insertPost(post) {
     return lastInsertRowid;
 }
 
-async function refreshFeed() {
-    const sql = "SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > fetch_frequency OR last_fetch = null;";
+async function refreshFeed(timeLimit: boolean = true) {
+    const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch = null;`;
     const needFetchFeeds = db.prepare(sql).all();
     if (needFetchFeeds.length === 0) return;
 
@@ -81,7 +81,7 @@ app.whenReady().then(() => {
         console.log('every 10 minutes task start', new Date().toLocaleString());
         refreshFeed();
     });
-    refreshFeed();
+    refreshFeed(false);
 
     app.on('before-quit', () => {
         db.close();
