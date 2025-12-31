@@ -11,43 +11,26 @@ import { useFeed, usePost } from '@/lib/store';
 import { cn, truncate } from '@/lib/utils';
 
 function PostsContent() {
-    const [posts, setPosts] = useState<any[]>([]);
     const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
 
-    const { feed } = useFeed();
-    const { post: selectedPost, setPost, cancelPost } = usePost();
+    const { currentFeed } = useFeed();
+    const { posts, currentPost, setCurrentPost, refreshPosts } = usePost();
 
-    const clickPost = (post: any) => {
-        setPost(post);
-        window.electron.ipcRenderer.invoke('db-update-read-post-by-id', Number(post.id), true);
-        post.is_read = true;
-    };
+    const clickPost = (post: any) => setCurrentPost(post);
 
-    const loadPosts = () => {
-        if (feed.id) {
-            window.electron.ipcRenderer.invoke('db-get-posts-by-id', Number(feed.id), onlyUnread).then(data => setPosts(data));
-        } else {
-            window.electron.ipcRenderer.invoke('db-get-posts', onlyUnread).then(data => setPosts(data));
-        }
-    };
+    const loadPosts = () => refreshPosts(currentFeed?.id, onlyUnread);
+    useEffect(() => loadPosts(), [currentFeed, onlyUnread]);
 
     const readAllPosts = () => {
-        console.log(feed.id && Number(feed.id));
-        window.electron.ipcRenderer.invoke('db-read-all-posts', feed.id && Number(feed.id));
+        window.electron.ipcRenderer.invoke('db-read-all-posts', currentFeed?.id && Number(currentFeed.id));
         loadPosts();
     };
-
-    useEffect(() => {
-        loadPosts();
-        window.addEventListener('refresh-posts', loadPosts);
-        return () => window.removeEventListener('refresh-posts', loadPosts);
-    }, [feed, onlyUnread]);
 
     return (
         <div className="flex h-full w-full flex-col overflow-y-hidden">
             <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
-                <h3 className="text-lg font-bold">{feed.title || '文章列表'}</h3>
-                <span className="space-x-1 text-xl text-gray-500">
+                <h3 className="truncate text-lg font-bold">{currentFeed?.title || '文章列表'}</h3>
+                <span className="flex-none space-x-1 text-xl text-gray-500">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" className="" size="icon" onClick={loadPosts}>
@@ -70,7 +53,7 @@ function PostsContent() {
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>{onlyUnread ? '全部' : '已读'}</p>
+                            <p>{onlyUnread ? '显示全部' : '只显示已读'}</p>
                         </TooltipContent>
                     </Tooltip>
                     <Tooltip>
@@ -87,7 +70,7 @@ function PostsContent() {
             </div>
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={`${feed.id || 'all'}-${onlyUnread ? 'unread' : 'all'}`}
+                    key={`${currentFeed?.id || 'all'}-${onlyUnread ? 'unread' : 'all'}`}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
@@ -102,16 +85,18 @@ function PostsContent() {
                             </div>
                         </div>
                     ) : (
-                        <ScrollArea scrollKey={feed.id} className="flex h-full">
+                        <ScrollArea scrollKey={currentFeed?.id} className="flex h-full">
                             {posts.map(post => (
                                 <div
                                     onClick={() => clickPost(post)}
                                     onDoubleClick={() => window.open(post.link, '_blank')}
                                     key={post.id}
-                                    className={cn('cursor-default bg-white p-4 duration-200 select-none', selectedPost.id === post.id ? 'bg-gray-200' : '')}
+                                    className={cn('cursor-default bg-white p-4 duration-200 select-none', currentPost?.id === post.id ? 'bg-gray-200' : '')}
                                 >
                                     <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
-                                        <span className="truncate">{post.title}</span>
+                                        <span className="truncate" title={post.title}>
+                                            {post.title}
+                                        </span>
                                         <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
                                     </h3>
                                     <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>

@@ -30,6 +30,7 @@ export function insertPost(post) {
 
     // 只有当成功插入新行时才插入内容
     if (lastInsertRowid > 0) {
+        console.log(`insert new post ${post.title} ${post.link}`);
         insertContent.run({ post_id: lastInsertRowid, content: post.content });
     }
 
@@ -44,7 +45,7 @@ async function refreshFeed(timeLimit: boolean = true) {
     for (const feed of needFetchFeeds) {
         try {
             const feedInfo: any = await fetchFeed(feed.url as string);
-            console.log(feed.id, feed.title, feedInfo?.items?.length);
+            // console.log(feed.id, feed.title, feedInfo?.items?.length);
 
             // 使用事务批量插入文章
             db.exec('BEGIN TRANSACTION');

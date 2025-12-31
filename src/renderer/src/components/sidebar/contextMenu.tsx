@@ -21,15 +21,16 @@ import { useFeed, usePost } from '@/lib/store';
 export default function ContextMenuFeed({ children, feed }: { children: React.ReactNode; feed: any }) {
     const [actions, setActions] = useState<string | null>(null);
     const [editOpen, setEditOpen] = useState(false);
-    const { cancelFeed } = useFeed();
-    const { cancelPost } = usePost();
+
+    const { refreshFeeds, setCurrentFeed } = useFeed();
+    const { setCurrentPost } = usePost();
 
     const deleteFeed = () => {
         window.electron.ipcRenderer.invoke('db-delete-feed', feed.id).then(() => {
             toast.success(`${feed.title} 删除成功`);
-            window.dispatchEvent(new CustomEvent('refresh-feeds'));
-            cancelFeed();
-            cancelPost();
+            refreshFeeds();
+            setCurrentFeed(null);
+            setCurrentPost(null);
         });
     };
     return (
@@ -62,6 +63,8 @@ export default function ContextMenuFeed({ children, feed }: { children: React.Re
 }
 
 function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOpenChange: (open: boolean) => void }) {
+    const { refreshFeeds } = useFeed();
+
     const [formData, setFormData] = useState({
         title: feed.title || '',
         link: feed.link || '',
@@ -107,7 +110,7 @@ function EditFeed({ feed, open, onOpenChange }: { feed: any; open: boolean; onOp
             })
             .then(() => {
                 toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
-                window.dispatchEvent(new CustomEvent('refresh-feeds'));
+                refreshFeeds();
                 onOpenChange(false);
             })
             .catch(error => {

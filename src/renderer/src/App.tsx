@@ -5,7 +5,6 @@ import Header from '@/components/header';
 import Post from '@/components/post';
 import Posts from '@/components/posts';
 import Sidebar from '@/components/sidebar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { cn } from './lib/utils';
 

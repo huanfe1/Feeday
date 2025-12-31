@@ -8,6 +8,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useFeed } from '@/lib/store';
 
 type Feed = {
     title: string;
@@ -18,7 +19,7 @@ export default function AddFeed() {
     const [modalVisible, setModalVisible] = useState(false);
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<any>(null);
-
+    const { refreshFeeds } = useFeed();
     const [feed, setFeed] = useState<Feed>({ title: '', url: '' });
 
     const getFeedInfo = () => {
@@ -67,8 +68,7 @@ export default function AddFeed() {
                         ...post,
                     });
                 });
-                // 派发事件通知sidebar刷新feeds列表
-                window.dispatchEvent(new CustomEvent('refresh-feeds'));
+                refreshFeeds();
             })
             .then(() => toast.success(`「${feed.title}」添加订阅源成功`))
             .catch(error => {

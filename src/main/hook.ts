@@ -11,7 +11,9 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
 });
 
 ipcMain.handle('db-get-feeds', async _event => {
-    const select = db.prepare('SELECT id, title, link, url, icon FROM feeds ORDER BY title ASC');
+    const select = db.prepare(
+        'SELECT f.id, f.title, f.link, f.url, f.icon, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f ORDER BY f.title ASC',
+    );
     return select.all();
 });
 
@@ -37,14 +39,14 @@ ipcMain.handle('db-insert-post', async (_event, post) => {
 
 ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.pub_date DESC LIMIT 30`,
+        `SELECT p.id, p.title, p.link, p.summary, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
     );
     return select.all();
 });
 
 ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary,  f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.pub_date DESC LIMIT 30`,
+        `SELECT p.id, p.title, p.link, p.summary,  f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
     );
     return select.all(feedId);
 });
