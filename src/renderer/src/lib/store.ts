@@ -38,6 +38,7 @@ type Post = {
     summary: string;
     is_read: boolean;
     pub_date: string;
+    feed_id: number;
 };
 
 interface UsePost {
@@ -47,9 +48,13 @@ interface UsePost {
     refreshPosts: (feed_id?: number, onlyUnread?: boolean) => void;
 }
 
-export const usePost = create<UsePost>(set => {
+export const usePost = create<UsePost>((set, get) => {
     const updateReadPostById = (post_id: number, is_read: boolean) => {
         window.electron.ipcRenderer.invoke('db-update-read-post-by-id', Number(post_id), is_read);
+    };
+
+    const readAllPosts = (feed_id?: number) => {
+        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id);
     };
 
     return {
@@ -58,12 +63,14 @@ export const usePost = create<UsePost>(set => {
         setCurrentPost: post => {
             if (post?.id) {
                 post.is_read = true;
-                // updateReadPostById(Number(post.id), true);
+                updateReadPostById(Number(post.id), true);
+                if (!get().posts.some(p => p.feed_id === post.feed_id && !p.is_read)) {
+                    useFeed.getState().refreshFeeds();
+                }
             }
             return set({ currentPost: post });
         },
         refreshPosts: (feed_id?: number, onlyUnread?: boolean) => {
-            console.log('refreshPosts', feed_id, onlyUnread);
             if (feed_id) {
                 window.electron.ipcRenderer.invoke('db-get-posts-by-id', feed_id, onlyUnread).then(posts => {
                     set({ posts: posts || [] });
@@ -72,5 +79,6 @@ export const usePost = create<UsePost>(set => {
                 window.electron.ipcRenderer.invoke('db-get-posts', onlyUnread).then(posts => set({ posts: posts || [] }));
             }
         },
+        readAllPosts,
     };
 });

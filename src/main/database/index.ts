@@ -28,11 +28,7 @@ export function insertPost(post) {
         pub_date: post.pub_date,
     });
 
-    // 只有当成功插入新行时才插入内容
-    if (lastInsertRowid > 0) {
-        console.log(`insert new post ${post.title} ${post.link}`);
-        insertContent.run({ post_id: lastInsertRowid, content: post.content });
-    }
+    insertContent.run({ post_id: lastInsertRowid, content: post.content });
 
     return lastInsertRowid;
 }
@@ -60,6 +56,7 @@ async function refreshFeed(timeLimit: boolean = true) {
 
                 feedInfo?.items?.forEach(item => {
                     insertPost({ feed_id: feed.id, ...item });
+                    console.log(feed.title, item.title);
                 });
 
                 db.exec('COMMIT');
@@ -68,6 +65,7 @@ async function refreshFeed(timeLimit: boolean = true) {
                 throw error;
             }
         } catch (error: any) {
+            if (error.errstr === 'constraint failed') return;
             console.error(`Failed to refresh feed ${feed.id}, ${feed.title} (${feed.url}):`, error.message);
         }
     }

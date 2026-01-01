@@ -39,14 +39,14 @@ ipcMain.handle('db-insert-post', async (_event, post) => {
 
 ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
+        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
     );
     return select.all();
 });
 
 ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary,  f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
+        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
     );
     return select.all(feedId);
 });
@@ -61,7 +61,7 @@ ipcMain.handle('db-update-read-post-by-id', async (_event, post_id: number, is_r
     return update.run({ post_id: post_id, is_read: is_read ? 1 : 0 });
 });
 
-ipcMain.handle('db-read-all-posts', async (_event, feed_id: number) => {
+ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number) => {
     const update = db.prepare(`UPDATE posts SET is_read = 1 WHERE ${feed_id ? 'feed_id = ' + feed_id : 'is_read = 0'}`);
     return update.run();
 });
