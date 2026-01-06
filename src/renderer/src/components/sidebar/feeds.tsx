@@ -1,20 +1,26 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFeed } from '@/lib/store';
+import { useFeed, usePost } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 import ContextMenu from './contextMenu';
 
 export default function Feeds({ className }: { className?: string }) {
     const { feeds, currentFeed, setCurrentFeed } = useFeed();
+    const { setCurrentPost } = usePost();
 
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>, item: any) => {
+    const selectFeed = (e: React.MouseEvent<HTMLDivElement>, item: any) => {
         e.stopPropagation();
         setCurrentFeed(item);
     };
 
+    const cancelSelectFeed = () => {
+        setCurrentFeed(null);
+        setCurrentPost(null);
+    };
+
     return (
-        <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={() => setCurrentFeed(null)}>
+        <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={cancelSelectFeed}>
             {feeds.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
@@ -27,13 +33,10 @@ export default function Feeds({ className }: { className?: string }) {
                     {feeds.map(item => (
                         <ContextMenu key={item.id} feed={item}>
                             <div
-                                onClick={e => handleClick(e, item)}
+                                onClick={e => selectFeed(e, item)}
                                 key={item.id}
                                 onDoubleClick={() => window.open(item.link, '_blank')}
-                                className={cn(
-                                    'flex cursor-default items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none',
-                                    currentFeed?.id === item.id && 'bg-gray-300/70',
-                                )}
+                                className={cn('flex items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', currentFeed?.id === item.id && 'bg-gray-300/70')}
                             >
                                 <Avatar className="size-4">
                                     <AvatarImage

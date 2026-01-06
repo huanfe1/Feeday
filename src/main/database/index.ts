@@ -28,6 +28,8 @@ export function insertPost(post) {
         pub_date: post.pub_date,
     });
 
+    if (lastInsertRowid === 0) return;
+    console.log(`insert new post: ${post.title}`);
     insertContent.run({ post_id: lastInsertRowid, content: post.content });
 
     return lastInsertRowid;
@@ -41,9 +43,7 @@ async function refreshFeed(timeLimit: boolean = true) {
     for (const feed of needFetchFeeds) {
         try {
             const feedInfo: any = await fetchFeed(feed.url as string);
-            // console.log(feed.id, feed.title, feedInfo?.items?.length);
 
-            // 使用事务批量插入文章
             db.exec('BEGIN TRANSACTION');
             try {
                 db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon WHERE id = $id').run({
@@ -56,7 +56,6 @@ async function refreshFeed(timeLimit: boolean = true) {
 
                 feedInfo?.items?.forEach(item => {
                     insertPost({ feed_id: feed.id, ...item });
-                    console.log(feed.title, item.title);
                 });
 
                 db.exec('COMMIT');
@@ -65,7 +64,6 @@ async function refreshFeed(timeLimit: boolean = true) {
                 throw error;
             }
         } catch (error: any) {
-            if (error.errstr === 'constraint failed') return;
             console.error(`Failed to refresh feed ${feed.id}, ${feed.title} (${feed.url}):`, error.message);
         }
     }

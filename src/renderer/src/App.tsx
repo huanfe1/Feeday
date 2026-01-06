@@ -1,25 +1,19 @@
-import { useState } from 'react';
 import { Toaster } from 'sonner';
 
-import Header from '@/components/header';
-import Post from '@/components/post';
-import Posts from '@/components/posts';
 import Sidebar from '@/components/sidebar';
+import { cn } from '@/lib/utils';
+import { useDragging } from '@/store/common';
 
-import { cn } from './lib/utils';
+import View from './view';
 
 function App() {
-    const [isDragging, setIsDragging] = useState(false);
+    const { isDragging } = useDragging();
 
     return (
         <>
             <div className={cn('flex h-screen w-screen', isDragging ? 'cursor-ew-resize' : 'cursor-auto')}>
-                <Sidebar setIsDragging={setIsDragging} />
-                <Posts setIsDragging={setIsDragging} />
-                <div className="flex h-full min-w-0 flex-1 flex-col">
-                    <Header />
-                    <Post />
-                </div>
+                <Sidebar />
+                <View />
             </div>
             <Toaster toastOptions={{ style: { fontFamily: 'var(--font-custom)' } }} />
         </>

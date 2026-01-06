@@ -7,7 +7,7 @@ import sanitizeHtml from 'sanitize-html';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePost } from '@/lib/store';
 
-export default function Post() {
+export default function Main() {
     const [content, setContent] = useState('');
     const { currentPost } = usePost();
     useEffect(() => {
@@ -55,8 +55,7 @@ export default function Post() {
                         ) : (
                             <div className="flex h-full items-center justify-center text-gray-400 select-none">
                                 <div className="flex flex-col items-center gap-y-3">
-                                    <i className="i-mingcute-celebrate-line text-3xl"></i>
-                                    <span>全部已读</span>
+                                    <i className="i-mingcute-follow-fill text-[60px] opacity-50"></i>
                                 </div>
                             </div>
                         )}
