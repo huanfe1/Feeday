@@ -14,25 +14,27 @@ export const db = new DatabaseSync(dbPath);
 export function insertPost(post) {
     post = undefined2null(post);
     const insert = db.prepare(
-        'INSERT OR IGNORE INTO posts (feed_id, title, link, author, image_url, summary, pub_date) VALUES ($feed_id, $title, $link, $author, $image_url, $summary, $pub_date)',
+        'INSERT INTO posts (feed_id, title, link, author, image_url, summary, pub_date) VALUES ($feed_id, $title, $link, $author, $image_url, $summary, $pub_date)',
     );
-    const insertContent = db.prepare('INSERT OR IGNORE INTO post_contents (post_id, content) VALUES ($post_id, $content)');
+    const insertContent = db.prepare('INSERT INTO post_contents (post_id, content) VALUES ($post_id, $content)');
 
-    const { lastInsertRowid } = insert.run({
-        feed_id: post.feed_id,
-        title: post.title,
-        link: post.link,
-        author: post.author,
-        image_url: post.image_url,
-        summary: post.summary,
-        pub_date: post.pub_date,
-    });
+    try {
+        const { lastInsertRowid } = insert.run({
+            feed_id: post.feed_id,
+            title: post.title,
+            link: post.link,
+            author: post.author,
+            image_url: post.image_url,
+            summary: post.summary,
+            pub_date: post.pub_date,
+        });
 
-    if (lastInsertRowid === 0) return;
-    console.log(`insert new post: ${post.title}`);
-    insertContent.run({ post_id: lastInsertRowid, content: post.content });
-
-    return lastInsertRowid;
+        insertContent.run({ post_id: lastInsertRowid, content: post.content });
+        console.log(`Insert new post ${post.title}, ${post.link}`);
+    } catch (error: any) {
+        if (error.message === 'UNIQUE constraint failed: posts.link') return;
+        throw error;
+    }
 }
 
 async function refreshFeed(timeLimit: boolean = true) {
