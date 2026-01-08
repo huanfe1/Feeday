@@ -7,7 +7,7 @@ interface ScrollAreaProps extends React.ComponentProps<typeof ScrollAreaPrimitiv
     scrollKey?: string | number;
 }
 
-const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(({ className, children, scrollKey, onScroll, ...props }) => {
+const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(({ className, children, scrollKey, onScroll, ...props }, ref) => {
     const viewportRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -17,7 +17,13 @@ const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(({ classNam
     }, [scrollKey]);
 
     return (
-        <ScrollAreaPrimitive.Root scrollHideDelay={0} data-slot="scroll-area" className={cn('relative [&_[data-slot=scroll-area-viewport]>div]:block!', className)} {...props}>
+        <ScrollAreaPrimitive.Root
+            ref={ref}
+            scrollHideDelay={0}
+            data-slot="scroll-area"
+            className={cn('relative [&_[data-slot=scroll-area-viewport]>div]:block!', className)}
+            {...props}
+        >
             <ScrollAreaPrimitive.Viewport
                 data-slot="scroll-area-viewport"
                 className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"

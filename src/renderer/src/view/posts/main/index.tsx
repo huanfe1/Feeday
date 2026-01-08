@@ -37,8 +37,8 @@ export default function Main() {
     return (
         <div className="min-h-0 flex-1 overflow-y-hidden">
             <div className={cn('flex items-center justify-between px-5 pt-1 pb-2 text-lg font-bold', { 'border-b': isScrolled })}>
-                <span className={cn('opacity-0 transition-opacity', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
-                <div className="space-x-1">
+                <span className={cn('truncate opacity-0 transition-opacity', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
+                <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" onClick={() => updatePostReadById(currentPost.id, !currentPost.is_read)}>
