@@ -19,7 +19,7 @@ export default function AddFeed() {
     const [modalVisible, setModalVisible] = useState(false);
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<any>(null);
-    const { refreshFeeds } = useFeedStore();
+    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
     const [feed, setFeed] = useState<Feed>({ title: '', url: '' });
 
     const getFeedInfo = () => {

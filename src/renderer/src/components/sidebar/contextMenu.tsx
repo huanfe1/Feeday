@@ -23,8 +23,9 @@ const ContextMenuFeed = memo(
         const [actions, setActions] = useState<string | null>(null);
         const [editOpen, setEditOpen] = useState(false);
 
-        const { refreshFeeds, setCurrentFeed } = useFeedStore();
-        // Use selector to only subscribe to setCurrentPost (stable function), not the entire store
+        // 使用选择器只订阅需要的函数，避免订阅整个 store
+        const refreshFeeds = useFeedStore(state => state.refreshFeeds);
+        const setCurrentFeed = useFeedStore(state => state.setCurrentFeed);
         const setCurrentPost = usePostStore(state => state.setCurrentPost);
 
         const deleteFeed = useCallback(() => {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type Feed = {
+export type FeedType = {
     id: number;
     title: string;
     link: string;
@@ -10,15 +10,15 @@ type Feed = {
 };
 
 interface UseFeedStore {
-    feeds: Feed[];
-    currentFeed: Feed | null;
+    feeds: FeedType[];
+    currentFeed: FeedType | null;
     setCurrentFeed: (feed_id: number | null) => void;
     refreshFeeds: () => void;
+    updateFeedHasUnread: (feed_id: number, has_unread: boolean) => void;
 }
 
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
-        console.log('refreshFeeds');
         window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => set({ feeds: feeds || [] }));
     };
     refreshFeeds();
@@ -30,5 +30,12 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
             return set({ currentFeed: get().feeds.find(feed => feed.id === feed_id) || null });
         },
         refreshFeeds,
+        updateFeedHasUnread: (feed_id, has_unread) => {
+            set(state => ({
+                ...state,
+                feeds: state.feeds.map(feed => (feed.id === feed_id ? { ...feed, has_unread } : feed)),
+                currentFeed: state.currentFeed && state.currentFeed.id === feed_id ? { ...state.currentFeed, has_unread } : state.currentFeed,
+            }));
+        },
     };
 });

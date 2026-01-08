@@ -13,17 +13,19 @@ import Render from './render';
 export default function Main() {
     const [content, setContent] = useState('');
     const { currentPost, updatePostReadById } = usePostStore();
-    useEffect(() => {
-        if (!currentPost) return;
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost.id)).then(data => {
-            setContent(data?.content || data?.summary || '');
-        });
-    }, [currentPost]);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         setIsScrolled(e.currentTarget.scrollTop > 50);
     };
+
+    useEffect(() => {
+        if (!currentPost?.id) return;
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost.id)).then(data => {
+            setContent(data?.content || data?.summary || '');
+        });
+        return () => setIsScrolled(false);
+    }, [currentPost?.id]);
 
     if (!currentPost)
         return (
@@ -37,7 +39,7 @@ export default function Main() {
     return (
         <div className="min-h-0 flex-1 overflow-y-hidden">
             <div className={cn('flex items-center justify-between px-5 pt-1 pb-2 text-lg font-bold', { 'border-b': isScrolled })}>
-                <span className={cn('truncate opacity-0 transition-opacity', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
+                <span className={cn('truncate opacity-0', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
                 <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -71,7 +73,7 @@ export default function Main() {
                     className="h-full"
                 >
                     <ScrollArea onScroll={handleScroll} className="h-full" scrollKey={currentPost.id}>
-                        <div className="mx-auto max-w-4xl px-8 py-8 lg:px-16 lg:py-12">
+                        <div className="mx-auto max-w-2xl px-8 pt-4 pb-12 2xl:max-w-4xl">
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
                                     <h1>
