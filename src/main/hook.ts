@@ -56,7 +56,7 @@ ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {
     return select.get(postId);
 });
 
-ipcMain.handle('db-update-read-post-by-id', async (_event, post_id: number, is_read: boolean) => {
+ipcMain.handle('db-update-post-read-by-id', async (_event, post_id: number, is_read: boolean) => {
     const update = db.prepare('UPDATE posts SET is_read = $is_read WHERE id = $post_id');
     return update.run({ post_id: post_id, is_read: is_read ? 1 : 0 });
 });

@@ -1,3 +1,4 @@
+import { useFeedStore } from '@/store';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -8,7 +9,6 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFeed } from '@/lib/store';
 
 type Feed = {
     title: string;
@@ -19,7 +19,7 @@ export default function AddFeed() {
     const [modalVisible, setModalVisible] = useState(false);
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<any>(null);
-    const { refreshFeeds } = useFeed();
+    const { refreshFeeds } = useFeedStore();
     const [feed, setFeed] = useState<Feed>({ title: '', url: '' });
 
     const getFeedInfo = () => {

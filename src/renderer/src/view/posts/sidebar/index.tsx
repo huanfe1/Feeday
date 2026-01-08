@@ -1,30 +1,55 @@
+import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFeed, usePost } from '@/lib/store';
 import { cn, truncate } from '@/lib/utils';
+
+// Memoized post item component to prevent unnecessary re-renders
+const PostItem = memo(function PostItem({
+    post,
+    isSelected,
+    onClick,
+    onDoubleClick,
+}: {
+    post: { id: number; title: string; summary: string; author: string; pub_date: string; is_read: boolean };
+    isSelected: boolean;
+    onClick: () => void;
+    onDoubleClick: () => void;
+}) {
+    return (
+        <div onClick={onClick} onDoubleClick={onDoubleClick} className={cn('cursor-default bg-white p-4 duration-200 select-none', isSelected ? 'bg-gray-200' : '')}>
+            <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
+                <span className="truncate" title={post.title}>
+                    {post.title}
+                </span>
+                <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
+            </h3>
+            <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
+            <div className="mt-1 space-x-2 text-xs text-gray-500">
+                <span>{post.author}</span>
+                <span>·</span>
+                <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
+            </div>
+        </div>
+    );
+});
 
 export default function Sidebar() {
     const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
 
-    const { currentFeed } = useFeed();
-    const { posts, currentPost, setCurrentPost, refreshPosts } = usePost();
+    const { currentFeed } = useFeedStore();
+    const { posts, currentPost, setCurrentPost, refreshPosts, readAllPosts } = usePostStore();
 
-    const clickPost = (post: any) => setCurrentPost(post);
+    const clickPost = useCallback((post_id: number) => setCurrentPost(post_id), [setCurrentPost]);
 
-    const loadPosts = () => refreshPosts(currentFeed?.id, onlyUnread);
-    useEffect(() => loadPosts(), [currentFeed, onlyUnread]);
-
-    const readAllPosts = () => {
-        window.electron.ipcRenderer.invoke('db-read-all-posts', currentFeed?.id && Number(currentFeed.id));
-        loadPosts();
-    };
+    const loadPosts = useCallback(() => refreshPosts(currentFeed?.id, onlyUnread), [currentFeed?.id, onlyUnread, refreshPosts]);
+    useEffect(() => loadPosts(), [loadPosts]);
 
     return (
         <Resizable options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
@@ -59,7 +84,7 @@ export default function Sidebar() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={readAllPosts}>
+                                <Button variant="ghost" size="icon" onClick={() => readAllPosts(currentFeed?.id)}>
                                     <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
                                 </Button>
                             </TooltipTrigger>
@@ -88,25 +113,13 @@ export default function Sidebar() {
                         ) : (
                             <ScrollArea scrollKey={currentFeed?.id} className="flex h-full">
                                 {posts.map(post => (
-                                    <div
-                                        onClick={() => clickPost(post)}
-                                        onDoubleClick={() => window.open(post.link, '_blank')}
+                                    <PostItem
                                         key={post.id}
-                                        className={cn('cursor-default bg-white p-4 duration-200 select-none', currentPost?.id === post.id ? 'bg-gray-200' : '')}
-                                    >
-                                        <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
-                                            <span className="truncate" title={post.title}>
-                                                {post.title}
-                                            </span>
-                                            <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
-                                        </h3>
-                                        <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
-                                        <div className="mt-1 space-x-2 text-xs text-gray-500">
-                                            <span>{post.author}</span>
-                                            <span>·</span>
-                                            <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
-                                        </div>
-                                    </div>
+                                        post={post}
+                                        isSelected={currentPost?.id === post.id}
+                                        onClick={() => clickPost(post.id)}
+                                        onDoubleClick={() => window.open(post.link, '_blank')}
+                                    />
                                 ))}
                             </ScrollArea>
                         )}
