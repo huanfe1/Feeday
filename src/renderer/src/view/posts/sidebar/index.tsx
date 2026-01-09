@@ -1,44 +1,14 @@
 import { useFeedStore, usePostStore } from '@/store';
-import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useCallback, useEffect, useState } from 'react';
-import sanitizeHtml from 'sanitize-html';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn, truncate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-// Memoized post item component to prevent unnecessary re-renders
-const PostItem = memo(function PostItem({
-    post,
-    isSelected,
-    onClick,
-    onDoubleClick,
-}: {
-    post: { id: number; title: string; summary: string; author: string; pub_date: string; is_read: boolean };
-    isSelected: boolean;
-    onClick: () => void;
-    onDoubleClick: () => void;
-}) {
-    return (
-        <div onClick={onClick} onDoubleClick={onDoubleClick} className={cn('bg-white p-4 duration-200 select-none', isSelected ? 'bg-gray-200' : '')}>
-            <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
-                <span className="truncate" title={post.title}>
-                    {post.title}
-                </span>
-                <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
-            </h3>
-            <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
-            <div className="mt-1 space-x-2 text-xs text-gray-500">
-                <span>{post.author}</span>
-                <span>·</span>
-                <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
-            </div>
-        </div>
-    );
-});
+import Post from './post';
 
 export default function Sidebar() {
     const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
@@ -113,7 +83,7 @@ export default function Sidebar() {
                         ) : (
                             <ScrollArea scrollKey={selectFeed?.id} className="flex h-full">
                                 {posts.map(post => (
-                                    <PostItem
+                                    <Post
                                         key={post.id}
                                         post={post}
                                         isSelected={currentPost?.id === post.id}

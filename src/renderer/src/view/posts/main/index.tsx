@@ -1,4 +1,4 @@
-import { usePostStore } from '@/store';
+import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import Render from './render';
 export default function Main() {
     const [content, setContent] = useState('');
     const { currentPost, updatePostReadById } = usePostStore();
+    const setSelectFeed = useFeedStore(state => state.setSelectFeed);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -88,7 +89,7 @@ export default function Main() {
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
                                         {currentPost.author && (
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex cursor-pointer items-center gap-2" onClick={() => setSelectFeed(currentPost.feed_id)}>
                                                 <i className="i-mingcute-user-3-line h-4 w-4" />
                                                 <span className="font-medium">{currentPost.author}</span>
                                             </div>
