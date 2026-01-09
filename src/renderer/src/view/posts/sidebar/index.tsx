@@ -23,7 +23,7 @@ const PostItem = memo(function PostItem({
     onDoubleClick: () => void;
 }) {
     return (
-        <div onClick={onClick} onDoubleClick={onDoubleClick} className={cn('cursor-default bg-white p-4 duration-200 select-none', isSelected ? 'bg-gray-200' : '')}>
+        <div onClick={onClick} onDoubleClick={onDoubleClick} className={cn('bg-white p-4 duration-200 select-none', isSelected ? 'bg-gray-200' : '')}>
             <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
                 <span className="truncate" title={post.title}>
                     {post.title}
@@ -43,19 +43,19 @@ const PostItem = memo(function PostItem({
 export default function Sidebar() {
     const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
 
-    const { currentFeed } = useFeedStore();
+    const selectFeed = useFeedStore(state => state.getSelectFeed());
     const { posts, currentPost, setCurrentPost, refreshPosts, readAllPosts } = usePostStore();
 
     const clickPost = useCallback((post_id: number) => setCurrentPost(post_id), [setCurrentPost]);
 
-    const loadPosts = useCallback(() => refreshPosts(currentFeed?.id, onlyUnread), [currentFeed?.id, onlyUnread, refreshPosts]);
+    const loadPosts = useCallback(() => refreshPosts(selectFeed?.id, onlyUnread), [selectFeed?.id, onlyUnread, refreshPosts]);
     useEffect(() => loadPosts(), [loadPosts]);
 
     return (
         <Resizable options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
             <div className="flex h-full w-full flex-col overflow-y-hidden">
                 <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
-                    <h3 className="truncate text-lg font-bold">{currentFeed?.title || '文章列表'}</h3>
+                    <h3 className="truncate text-lg font-bold">{selectFeed?.title || '文章列表'}</h3>
                     <span className="flex-none space-x-1 text-xl text-gray-500">
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -84,7 +84,7 @@ export default function Sidebar() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => readAllPosts(currentFeed?.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => readAllPosts(selectFeed?.id)}>
                                     <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
                                 </Button>
                             </TooltipTrigger>
@@ -96,7 +96,7 @@ export default function Sidebar() {
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={`${currentFeed?.id || 'all'}-${onlyUnread ? 'unread' : 'all'}`}
+                        key={`${selectFeed?.id || 'all'}-${onlyUnread ? 'unread' : 'all'}`}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
@@ -111,7 +111,7 @@ export default function Sidebar() {
                                 </div>
                             </div>
                         ) : (
-                            <ScrollArea scrollKey={currentFeed?.id} className="flex h-full">
+                            <ScrollArea scrollKey={selectFeed?.id} className="flex h-full">
                                 {posts.map(post => (
                                     <PostItem
                                         key={post.id}

@@ -12,7 +12,7 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
 
 ipcMain.handle('db-get-feeds', async _event => {
     const select = db.prepare(
-        'SELECT f.id, f.title, f.link, f.url, f.icon, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f ORDER BY f.title ASC',
+        'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f ORDER BY f.title ASC',
     );
     return select.all();
 });
