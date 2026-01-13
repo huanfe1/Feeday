@@ -1,40 +1,68 @@
 import { useFeedStore } from '@/store';
-import { useRef, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-type Feed = {
+const addFeedSchema = z.object({
+    url: z.url('请输入正确的订阅源地址'),
+    title: z.string().min(1, '请输入订阅源标题'),
+});
+
+type AddFeedFormValues = z.infer<typeof addFeedSchema>;
+
+type FeedInfo = {
     title: string;
-    url: string;
+    description?: string;
+    link: string;
+    url?: string;
+    last_updated?: string;
+    icon?: string;
+    items: unknown[];
 };
 
 export default function AddFeed() {
     const [modalVisible, setModalVisible] = useState(false);
     const [isLoading, setLoading] = useState(false);
-    const feedRef = useRef<any>(null);
+    const feedRef = useRef<FeedInfo | null>(null);
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
-    const [feed, setFeed] = useState<Feed>({ title: '', url: '' });
+    const [hasTitle, setHasTitle] = useState(false);
 
-    const getFeedInfo = () => {
-        if (!feed.url) return;
-        const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
-        if (!urlPattern.test(feed.url)) {
-            toast.error('请输入正确的网址', { position: 'top-center', richColors: true });
+    const form = useForm<AddFeedFormValues>({
+        resolver: zodResolver(addFeedSchema),
+        defaultValues: {
+            url: '',
+            title: '',
+        },
+    });
+
+    const getFeedInfo = async () => {
+        const url = form.getValues('url');
+        if (!url) {
+            form.setError('url', { message: '请输入订阅源地址' });
             return;
         }
+
+        // 验证 URL 格式
+        const isValid = await form.trigger('url');
+        if (!isValid) return;
+
         setLoading(true);
         window.electron.ipcRenderer
-            .invoke('get-feed-info', feed.url)
-            .then(res => {
+            .invoke('get-feed-info', url)
+            .then((res: FeedInfo) => {
                 feedRef.current = res;
-                setFeed(value => ({ ...value, title: res.title }));
+                form.setValue('title', res.title);
+                setHasTitle(true);
             })
             .catch(error => {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -43,38 +71,64 @@ export default function AddFeed() {
                 setLoading(false);
             });
     };
+
     const closeModal = () => {
         setModalVisible(false);
         setLoading(false);
-        setFeed({ title: '', url: '' });
+        form.reset();
         feedRef.current = null;
+        setHasTitle(false);
     };
-    const submit = () => {
-        if (!feed.title) return;
-        window.electron.ipcRenderer
-            .invoke('db-insert-feed', {
-                title: feed.title,
-                description: feedRef.current.description || null,
-                link: feedRef.current.link,
-                url: feedRef.current.url ?? feed.url,
-                last_updated: feedRef.current.last_updated,
-                icon: feedRef.current.icon || null,
-            })
-            .then(feedId => {
-                setModalVisible(false);
-                feedRef.current.items.forEach(post => {
-                    window.electron.ipcRenderer.invoke('db-insert-post', {
-                        feed_id: feedId,
-                        ...post,
-                    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        form.handleSubmit((data: AddFeedFormValues) => {
+            const feedInfo = feedRef.current;
+            if (!feedInfo) {
+                toast.error('请先获取订阅源信息', { position: 'top-center', richColors: true });
+                return;
+            }
+
+            window.electron.ipcRenderer
+                .invoke('db-insert-feed', {
+                    title: data.title,
+                    description: feedInfo.description || null,
+                    link: feedInfo.link,
+                    url: feedInfo.url ?? data.url,
+                    last_updated: feedInfo.last_updated,
+                    icon: feedInfo.icon || null,
+                })
+                .then(feedId => {
+                    if (feedInfo) {
+                        feedInfo.items.forEach((post: unknown) => {
+                            window.electron.ipcRenderer.invoke('db-insert-post', {
+                                feed_id: feedId,
+                                ...(post as Record<string, unknown>),
+                            });
+                        });
+                    }
+                    refreshFeeds();
+                    closeModal();
+                })
+                .then(() => toast.success(`「${data.title}」添加订阅源成功`))
+                .catch(error => {
+                    console.log(error.message);
+                    if (error.message.endsWith('Error: UNIQUE constraint failed: feeds.url')) {
+                        toast.error('该订阅源地址已存在', { position: 'top-center', richColors: true });
+                        return;
+                    }
+                    toast.error('添加订阅源失败：' + error.message, { position: 'top-center', richColors: true });
                 });
-                refreshFeeds();
-            })
-            .then(() => toast.success(`「${feed.title}」添加订阅源成功`))
-            .catch(error => {
-                toast.error('添加订阅源失败：' + error.message, { position: 'top-center', richColors: true });
-            });
+        })();
     };
+
+    // 当对话框关闭时重置表单
+    useEffect(() => {
+        if (!modalVisible) {
+            form.reset();
+            feedRef.current = null;
+        }
+    }, [modalVisible, form]);
     return (
         <Dialog open={modalVisible} onOpenChange={setModalVisible}>
             <Tooltip>
@@ -94,63 +148,69 @@ export default function AddFeed() {
                     <DialogTitle>添加订阅源</DialogTitle>
                     <DialogDescription>输入订阅源地址以添加新的 RSS 订阅源</DialogDescription>
                 </DialogHeader>
-                <div className="my-3">
-                    <div>
-                        <Label htmlFor="feedUrl" className="mb-2">
-                            订阅源地址
-                        </Label>
-                        <div className="flex w-full items-center gap-3">
-                            <InputGroup>
-                                <InputGroupAddon align="inline-end">
-                                    <InputGroupButton
-                                        onClick={() => {
-                                            setFeed(value => ({ ...value, url: '' }));
-                                        }}
-                                        className="rounded-full"
-                                        size="icon-xs"
-                                    >
-                                        <i className="i-mingcute-close-line"></i>
-                                    </InputGroupButton>
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    type="text"
-                                    id="feedUrl"
-                                    placeholder="请输入订阅源地址"
-                                    value={feed.url}
-                                    autoFocus
-                                    onChange={e => setFeed(value => ({ ...value, url: e.target.value }))}
-                                />
-                            </InputGroup>
-                            <Button className="flex w-20 items-center" disabled={isLoading} onClick={getFeedInfo} type="submit" variant="outline">
-                                {isLoading ? <Spinner /> : '获取'}
-                            </Button>
-                        </div>
-                        {feed.title && (
-                            <>
-                                <div className="mt-5">
-                                    <Label htmlFor="feedNote" className="mb-2">
-                                        订阅源标题
-                                    </Label>
-                                    <Input
-                                        type="text"
-                                        id="feedNote"
-                                        placeholder="请输入订阅源备注"
-                                        value={feed.title}
-                                        onChange={e => setFeed(value => ({ ...value, title: e.target.value }))}
-                                    />
-                                </div>
-                            </>
+                <Form {...form}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="url"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>订阅源地址</FormLabel>
+                                    <FormControl>
+                                        <div className="flex w-full items-center gap-3">
+                                            <InputGroup className="flex-1">
+                                                <InputGroupAddon align="inline-end">
+                                                    <InputGroupButton
+                                                        onClick={() => {
+                                                            form.setValue('url', '');
+                                                            form.setValue('title', '');
+                                                            feedRef.current = null;
+                                                        }}
+                                                        className="rounded-full"
+                                                        size="icon-xs"
+                                                        type="button"
+                                                    >
+                                                        <i className="i-mingcute-close-line"></i>
+                                                    </InputGroupButton>
+                                                </InputGroupAddon>
+                                                <InputGroupInput type="text" placeholder="请输入订阅源地址" autoFocus {...field} />
+                                            </InputGroup>
+                                            <Button className="flex w-20 items-center" disabled={isLoading} onClick={getFeedInfo} type="button" variant="outline">
+                                                {isLoading ? <Spinner /> : '获取'}
+                                            </Button>
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {hasTitle && (
+                            <FormField
+                                control={form.control}
+                                name="title"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>订阅源标题</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="请输入订阅源备注" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         )}
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">取消</Button>
-                    </DialogClose>
-                    <Button onClick={submit} type="submit" disabled={!feed.title}>
-                        确定
-                    </Button>
-                </DialogFooter>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">
+                                    取消
+                                </Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={!hasTitle}>
+                                确定
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     );

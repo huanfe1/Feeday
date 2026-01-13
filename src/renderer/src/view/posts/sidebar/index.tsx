@@ -1,6 +1,8 @@
 import { useFeedStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useAnimate } from 'motion/react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -27,21 +29,7 @@ export default function Sidebar() {
                 <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
                     <h3 className="truncate text-lg font-bold">{selectFeed?.title || '文章列表'}</h3>
                     <span className="flex-none space-x-1 text-xl text-gray-500">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" className="" size="icon" onClick={loadPosts}>
-                                    <motion.i
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 0.5, ease: 'easeInOut' }}
-                                        whileHover={{ rotate: 0 }}
-                                        className="i-mingcute-refresh-2-line text-xl opacity-75"
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>刷新</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <RefreshButton onClick={loadPosts} />
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={() => setOnlyUnread(!onlyUnread)}>
@@ -99,3 +87,38 @@ export default function Sidebar() {
         </Resizable>
     );
 }
+
+const RefreshButton = memo(function RefreshButton() {
+    const [scope, animate] = useAnimate();
+
+    useEffect(() => {
+        // animate(scope.current, { rotate: 360 }, { duration: 0.5, ease: 'linear', repeat: Infinity });
+        // window.electron.ipcRenderer.on('refresh-feed-end', (_, data) => {
+        //     animate(scope.current, { rotate: 0 }, { duration: 0 });
+        //     if (!data.success) {
+        //         toast.error(data.error);
+        //     }
+        // });
+    }, [animate, scope]);
+
+    const testClick = () => {
+        animate(scope.current, { rotate: 360 }, { duration: 0.5, ease: 'linear', repeat: Infinity });
+        setTimeout(() => {
+            animate(scope.current, { rotate: -180 }, { duration: 0.2, ease: 'easeInOut' }).then(() => {
+                animate(scope.current, { rotate: 0 }, { duration: 0 });
+            });
+        }, 500);
+    };
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="ghost" className="" size="icon" onClick={testClick}>
+                    <i ref={scope} className="i-mingcute-refresh-2-line text-xl opacity-75" />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>刷新</p>
+            </TooltipContent>
+        </Tooltip>
+    );
+});

@@ -1,3 +1,4 @@
+import type { FeedType, PostType } from '@main/database/types';
 import dayjs from 'dayjs';
 import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
@@ -27,24 +28,18 @@ async function validateIcon(iconUrl: string): Promise<string | undefined> {
 }
 
 export async function fetchFeed(url: string) {
-    try {
-        const data = await fetch(url).then(res => res.text());
-        const result = rssParser(data);
+    const data = await fetch(url).then(res => res.text());
+    const result = rssParser(data);
 
-        // 验证 icon 是否可以访问
-        if (result?.icon) {
-            result.icon = await validateIcon(result.icon);
-        }
-
-        if (result) return result;
-        const { format, feed } = parseFeed(data);
-        return { format, feed };
-    } catch (error) {
-        throw error;
+    // 验证 icon 是否可以访问
+    if (result?.icon) {
+        result.icon = await validateIcon(result.icon);
     }
+
+    return result;
 }
 
-export function rssParser(data: string) {
+export function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType>[] } {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
         return {
@@ -83,5 +78,6 @@ export function rssParser(data: string) {
             })),
         };
     }
-    return null;
+    console.error(`Invalid feed format: ${format}`);
+    throw new Error('Invalid feed format');
 }

@@ -1,8 +1,10 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
+import schedule from 'node-schedule';
 import { join } from 'path';
 
 import icon from '../../resources/icon.png?asset';
+import { refreshFeed } from './database';
 
 function createWindow() {
     // Create the browser window.
@@ -49,6 +51,23 @@ function createWindow() {
         mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
     }
 
+    const refreshFeedHandle = () => {
+        mainWindow.webContents.send('refresh-feed', { loading: true });
+        refreshFeed(false)
+            .then(() => {
+                mainWindow.webContents.send('refresh-feed', { loading: false, success: true });
+            })
+            .catch(error => {
+                mainWindow.webContents.send('refresh-feed', { loading: false, success: false, message: error.message });
+            });
+    };
+    schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
+    mainWindow.webContents.on('did-finish-load', () => refreshFeedHandle());
+
+    app.commandLine.appendSwitch('disable-autofill-keyboard-accessory-view');
+    // 或者尝试禁用自动填充相关功能
+    app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication');
+
     const { platform } = process;
     if (platform === 'win32') {
         // Change the default font-family and font-size of the devtools.
@@ -78,7 +97,7 @@ app.whenReady().then(() => {
         proxyRules: 'http://127.0.0.1:7890',
     });
 
-    import('./hook');
+    import('./database/hook');
 
     createWindow();
 

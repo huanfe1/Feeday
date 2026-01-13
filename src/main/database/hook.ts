@@ -5,12 +5,12 @@ import { ipcMain } from 'electron';
 ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
     try {
         return await fetchFeed(feedUrl);
-    } catch (error: any) {
-        throw new Error(`获取订阅源信息失败: ${error.message}`);
+    } catch (error) {
+        throw new Error(`获取订阅源信息失败: ${(error as Error).message}`);
     }
 });
 
-ipcMain.handle('db-get-feeds', async _event => {
+ipcMain.handle('db-get-feeds', async () => {
     const select = db.prepare(
         'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f ORDER BY f.title ASC',
     );
@@ -65,3 +65,7 @@ ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number) => {
     const update = db.prepare(`UPDATE posts SET is_read = 1 WHERE ${feed_id ? 'feed_id = ' + feed_id : 'is_read = 0'}`);
     return update.run();
 });
+
+// ipcMain.handle('refresh-feed', async () => {
+//     return refreshFeed(false);
+// });
