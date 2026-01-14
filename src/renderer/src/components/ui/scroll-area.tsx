@@ -7,7 +7,7 @@ interface ScrollAreaProps extends React.ComponentProps<typeof ScrollAreaPrimitiv
     scrollKey?: string | number;
 }
 
-const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(({ className, children, scrollKey, onScroll, onClick, ...props }) => {
+const ScrollArea = ({ className, children, scrollKey, onScroll, onClick, ...props }: ScrollAreaProps) => {
     const rootRef = React.useRef<HTMLDivElement>(null);
     const viewportRef = React.useRef<HTMLDivElement>(null);
 
@@ -45,8 +45,7 @@ const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(({ classNam
             <ScrollAreaPrimitive.Corner />
         </ScrollAreaPrimitive.Root>
     );
-});
-ScrollArea.displayName = 'ScrollArea';
+};
 
 function ScrollBar({ className, orientation = 'vertical', ...props }: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
     return (

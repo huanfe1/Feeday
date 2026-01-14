@@ -66,6 +66,24 @@ ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number) => {
     return update.run();
 });
 
-// ipcMain.handle('refresh-feed', async () => {
-//     return refreshFeed(false);
-// });
+// folders
+
+ipcMain.handle('db-get-folders', async () => {
+    const select = db.prepare('SELECT id, name FROM folders ORDER BY name ASC');
+    return select.all();
+});
+
+ipcMain.handle('db-insert-folder', async (_event, folder_name) => {
+    const insert = db.prepare('INSERT INTO folders (name) VALUES (?)');
+    return insert.run(folder_name);
+});
+
+ipcMain.handle('db-update-folder', async (_event, folder_id: number, folder_name: string) => {
+    const update = db.prepare('UPDATE folders SET name = ? WHERE id = ?');
+    return update.run(folder_name, folder_id);
+});
+
+ipcMain.handle('db-delete-folder', async (_event, folderId: number) => {
+    const del = db.prepare('DELETE FROM folders WHERE id = ?');
+    return del.run(folderId);
+});

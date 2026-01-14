@@ -35,13 +35,27 @@ export const usePostStore = create<UsePostStore>((set, get) => {
             const posts = get().posts.map(p => (p.id === post_id ? { ...p, is_read } : p));
             set({ posts });
 
-            // 更新对应 feed 的 has_unread 状态
             const updatedPost = posts.find(p => p.id === post_id);
-            if (updatedPost) {
-                const feedId = updatedPost.feed_id;
-                // 检查该 feed 是否还有其他未读文章
-                const hasUnreadPosts = posts.some(p => p.feed_id === feedId && !p.is_read);
-                useFeedStore.getState().updateFeedHasUnread(feedId, hasUnreadPosts);
+            if (!updatedPost) return;
+
+            const feedId = updatedPost.feed_id;
+            const feedStore = useFeedStore.getState();
+            const feed = feedStore.feeds.find(f => f.id === feedId);
+            if (!feed) return;
+
+            const currentHasUnread = feed.has_unread;
+
+            if (is_read) {
+                if (currentHasUnread) {
+                    const hasUnreadPosts = posts.some(p => p.feed_id === feedId && !p.is_read);
+                    if (!hasUnreadPosts) {
+                        feedStore.updateFeedHasUnread(feedId, false);
+                    }
+                }
+            } else {
+                if (!currentHasUnread) {
+                    feedStore.updateFeedHasUnread(feedId, true);
+                }
             }
         });
     };
@@ -51,12 +65,9 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         const posts = get().posts.map(p => ({ ...p, is_read: true }));
         set({ posts });
 
-        // 更新 feed 的 has_unread 状态
         if (feed_id) {
-            // 如果指定了 feed_id，只更新该 feed
             useFeedStore.getState().updateFeedHasUnread(feed_id, false);
         } else {
-            // 如果没有指定 feed_id，更新所有相关的 feed
             const affectedFeedIds = new Set(posts.map(p => p.feed_id));
             affectedFeedIds.forEach(id => {
                 useFeedStore.getState().updateFeedHasUnread(id, false);

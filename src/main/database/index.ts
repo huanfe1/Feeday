@@ -21,9 +21,12 @@ const initSql = `
         icon TEXT, -- 订阅源图标
         last_fetch DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 最后抓取时间
         last_fetch_error TEXT, -- 最后抓取错误信息
+        folder_id INTEGER NULL, -- 文件夹ID
         fetch_frequency INTEGER DEFAULT 60, -- 拉取频率（分钟，默认60）
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
-        updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
+        updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间
+
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL -- 外键关联文件夹，删除文件夹时自动将包含订阅源设置为空
     );
 
     CREATE TABLE IF NOT EXISTS posts (
@@ -38,8 +41,8 @@ const initSql = `
         is_read BOOLEAN DEFAULT 0 CHECK (is_read IN (0, 1)), -- 是否已读
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间
-        -- 外键关联订阅源，删除订阅源时自动删除文章
-        FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+        
+        FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE -- 外键关联订阅源，删除订阅源时自动删除文章
     );
 
     CREATE TABLE IF NOT EXISTS post_contents (
@@ -47,8 +50,15 @@ const initSql = `
         content TEXT NULL, -- 文章内容
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')),
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')),
-        -- 外键关联文章，删除文章时自动删除内容
-        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE -- 外键关联文章，删除文章时自动删除内容
+    );
+
+    CREATE TABLE IF NOT EXISTS folders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, -- 文件夹ID
+        name TEXT NOT NULL UNIQUE, -- 文件夹名称
+        created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
+        updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
     );
 
     CREATE TRIGGER IF NOT EXISTS update_feeds_updated_at
@@ -74,11 +84,23 @@ const initSql = `
     BEGIN
         UPDATE post_contents SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
     END;
+
+    CREATE TRIGGER IF NOT EXISTS update_folders_updated_at
+    AFTER UPDATE ON folders
+    FOR EACH ROW
+    WHEN NEW.updated_at = OLD.updated_at
+    BEGIN
+        UPDATE folders SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
+    END;
 `;
 
 app.whenReady().then(() => {
-    db.exec(initSql);
-    db.exec('PRAGMA foreign_keys = ON;');
+    try {
+        db.exec(initSql);
+        db.exec('PRAGMA foreign_keys = ON;');
+    } catch (error: unknown) {
+        console.error(error);
+    }
     app.on('before-quit', () => db.close());
 });
 

@@ -40,10 +40,18 @@ export default function Main() {
 
     if (!currentPost)
         return (
-            <div className="flex h-full items-center justify-center text-gray-400 select-none">
-                <div className="flex flex-col items-center gap-y-3">
-                    <i className="i-mingcute-follow-fill text-[60px] opacity-50"></i>
-                </div>
+            <div className="h-full overflow-hidden">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="flex h-full items-center justify-center text-gray-400 select-none"
+                >
+                    <div className="flex flex-col items-center gap-y-3">
+                        <i className="i-mingcute-follow-fill text-[60px] opacity-50"></i>
+                    </div>
+                </motion.div>
             </div>
         );
 
