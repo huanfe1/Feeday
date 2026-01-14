@@ -1,8 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { useAnimate } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -16,9 +14,10 @@ export default function Sidebar() {
     const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
 
     const selectFeed = useFeedStore(state => state.getSelectFeed());
-    const { posts, currentPost, setCurrentPost, refreshPosts, readAllPosts } = usePostStore();
 
-    const clickPost = useCallback((post_id: number) => setCurrentPost(post_id), [setCurrentPost]);
+    const posts = usePostStore(state => state.posts);
+    const refreshPosts = usePostStore(state => state.refreshPosts);
+    const readAllPosts = usePostStore(state => state.readAllPosts);
 
     const loadPosts = useCallback(() => refreshPosts(selectFeed?.id, onlyUnread), [selectFeed?.id, onlyUnread, refreshPosts]);
     useEffect(() => loadPosts(), [loadPosts]);
@@ -29,7 +28,7 @@ export default function Sidebar() {
                 <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
                     <h3 className="truncate text-lg font-bold">{selectFeed?.title || '文章列表'}</h3>
                     <span className="flex-none space-x-1 text-xl text-gray-500">
-                        <RefreshButton onClick={loadPosts} />
+                        <RefreshButton />
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={() => setOnlyUnread(!onlyUnread)}>
@@ -71,13 +70,7 @@ export default function Sidebar() {
                         ) : (
                             <ScrollArea scrollKey={selectFeed?.id} className="flex h-full">
                                 {posts.map(post => (
-                                    <Post
-                                        key={post.id}
-                                        post={post}
-                                        isSelected={currentPost?.id === post.id}
-                                        onClick={() => clickPost(post.id)}
-                                        onDoubleClick={() => window.open(post.link, '_blank')}
-                                    />
+                                    <Post key={post.id} post={post} />
                                 ))}
                             </ScrollArea>
                         )}
@@ -89,31 +82,19 @@ export default function Sidebar() {
 }
 
 const RefreshButton = memo(function RefreshButton() {
-    const [scope, animate] = useAnimate();
+    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
+    const refreshPosts = usePostStore(state => state.refreshPosts);
 
-    useEffect(() => {
-        // animate(scope.current, { rotate: 360 }, { duration: 0.5, ease: 'linear', repeat: Infinity });
-        // window.electron.ipcRenderer.on('refresh-feed-end', (_, data) => {
-        //     animate(scope.current, { rotate: 0 }, { duration: 0 });
-        //     if (!data.success) {
-        //         toast.error(data.error);
-        //     }
-        // });
-    }, [animate, scope]);
-
-    const testClick = () => {
-        animate(scope.current, { rotate: 360 }, { duration: 0.5, ease: 'linear', repeat: Infinity });
-        setTimeout(() => {
-            animate(scope.current, { rotate: -180 }, { duration: 0.2, ease: 'easeInOut' }).then(() => {
-                animate(scope.current, { rotate: 0 }, { duration: 0 });
-            });
-        }, 500);
+    const onClick = () => {
+        refreshFeeds();
+        refreshPosts();
     };
+
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <Button variant="ghost" className="" size="icon" onClick={testClick}>
-                    <i ref={scope} className="i-mingcute-refresh-2-line text-xl opacity-75" />
+                <Button variant="ghost" className="" size="icon" onClick={onClick}>
+                    <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent>

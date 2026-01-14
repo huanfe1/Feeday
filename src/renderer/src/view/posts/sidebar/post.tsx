@@ -1,15 +1,20 @@
 import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
+import { memo } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn, truncate } from '@/lib/utils';
 
-export default function Post({ post, isSelected, onClick, onDoubleClick }: { post: PostType; isSelected: boolean; onClick: () => void; onDoubleClick: () => void }) {
+function Post({ post }: { post: PostType }) {
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
-
+    const setCurrentPost = usePostStore(state => state.setCurrentPost);
+    const isSelected = usePostStore(state => state.currentPostId === post.id);
     const setSelectFeed = useFeedStore(state => state.setSelectFeed);
+
+    const onClick = () => setCurrentPost(post.id);
+    const onDoubleClick = () => window.open(post.link, '_blank');
 
     const toggleReadStatus = () => {
         updatePostReadById(post.id, !post.is_read);
@@ -43,3 +48,5 @@ export default function Post({ post, isSelected, onClick, onDoubleClick }: { pos
         </ContextMenu>
     );
 }
+
+export default memo(Post);

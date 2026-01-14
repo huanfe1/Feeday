@@ -16,23 +16,24 @@ export type PostType = {
 
 interface UsePostStore {
     posts: PostType[];
-    currentPost: PostType | null;
+    currentPostId: number | null;
     setCurrentPost: (post_id: number | null) => void;
+    getCurrentPost: () => PostType | null;
     refreshPosts: (feed_id?: number, onlyUnread?: boolean) => void;
     readAllPosts: (feed_id?: number) => void;
     updatePostReadById: (post_id: number, is_read: boolean) => void;
 }
 
 export const usePostStore = create<UsePostStore>((set, get) => {
+    const getCurrentPost = () => {
+        if (!get().currentPostId) return null;
+        return get().posts.find(post => post.id === get().currentPostId) || null;
+    };
+
     const updatePostReadById = (post_id: number, is_read: boolean = true) => {
         window.electron.ipcRenderer.invoke('db-update-post-read-by-id', Number(post_id), is_read).then(() => {
             const posts = get().posts.map(p => (p.id === post_id ? { ...p, is_read } : p));
-            const currentPost = get().currentPost;
-            set(state => ({
-                ...state,
-                posts,
-                currentPost: currentPost && currentPost.id === post_id ? { ...currentPost, is_read } : currentPost,
-            }));
+            set({ posts });
 
             // 更新对应 feed 的 has_unread 状态
             const updatedPost = posts.find(p => p.id === post_id);
@@ -48,11 +49,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
     const readAllPosts = (feed_id?: number) => {
         window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id);
         const posts = get().posts.map(p => ({ ...p, is_read: true }));
-        const currentPost = get().currentPost;
-        set({
-            posts,
-            currentPost: currentPost ? { ...currentPost, is_read: true } : currentPost,
-        });
+        set({ posts });
 
         // 更新 feed 的 has_unread 状态
         if (feed_id) {
@@ -69,19 +66,20 @@ export const usePostStore = create<UsePostStore>((set, get) => {
 
     return {
         posts: [],
-        currentPost: null,
+        currentPostId: null,
         setCurrentPost: post_id => {
-            if (!post_id) return set({ currentPost: null });
+            if (!post_id) return set({ currentPostId: null });
 
             const post = get().posts.find(p => p.id === post_id);
             if (!post) return;
 
-            set({ currentPost: { ...post } });
+            set({ currentPostId: post_id });
 
             if (!post.is_read) {
                 updatePostReadById(Number(post_id), true);
             }
         },
+        getCurrentPost,
         refreshPosts: (feed_id?: number, onlyUnread?: boolean) => {
             if (feed_id) {
                 window.electron.ipcRenderer.invoke('db-get-posts-by-id', feed_id, onlyUnread).then(posts => {

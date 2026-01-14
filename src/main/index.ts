@@ -43,14 +43,6 @@ function createWindow() {
         return { action: 'deny' };
     });
 
-    // HMR for renderer base on electron-vite cli.
-    // Load the remote URL for development or the local html file for production.
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-        mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
-    } else {
-        mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
-    }
-
     const refreshFeedHandle = () => {
         mainWindow.webContents.send('refresh-feed', { loading: true });
         refreshFeed(false)
@@ -61,8 +53,19 @@ function createWindow() {
                 mainWindow.webContents.send('refresh-feed', { loading: false, success: false, message: error.message });
             });
     };
-    schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
-    mainWindow.webContents.on('did-finish-load', () => refreshFeedHandle());
+    ipcMain.handle('refresh-feed-start', async () => {
+        const every10minTask = schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
+        app.on('before-quit', () => every10minTask.cancel());
+        return refreshFeed(false);
+    });
+
+    // HMR for renderer base on electron-vite cli.
+    // Load the remote URL for development or the local html file for production.
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+        mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    } else {
+        mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    }
 
     app.commandLine.appendSwitch('disable-autofill-keyboard-accessory-view');
     // 或者尝试禁用自动填充相关功能

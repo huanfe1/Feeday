@@ -1,7 +1,7 @@
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,8 +12,18 @@ import Render from './render';
 
 export default function Main() {
     const [content, setContent] = useState('');
-    const { currentPost, updatePostReadById } = usePostStore();
+
     const setSelectFeed = useFeedStore(state => state.setSelectFeed);
+
+    const currentPostId = usePostStore(state => state.currentPostId);
+    const posts = usePostStore(state => state.posts);
+    const updatePostReadById = usePostStore(state => state.updatePostReadById);
+
+    // 使用 useMemo 基于 currentPostId 和 posts 计算 currentPost
+    const currentPost = useMemo(() => {
+        if (!currentPostId) return null;
+        return posts.find(post => post.id === currentPostId) || null;
+    }, [currentPostId, posts]);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -21,12 +31,12 @@ export default function Main() {
     };
 
     useEffect(() => {
-        if (!currentPost?.id) return;
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost.id)).then(data => {
+        if (!currentPostId) return;
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPostId)).then(data => {
             setContent(data?.content || data?.summary || '');
         });
         return () => setIsScrolled(false);
-    }, [currentPost?.id]);
+    }, [currentPostId]);
 
     if (!currentPost)
         return (

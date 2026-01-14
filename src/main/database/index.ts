@@ -2,7 +2,6 @@ import { fetchFeed } from '@main/lib/rss';
 import { undefined2null } from '@main/lib/utils';
 import dayjs from 'dayjs';
 import { app } from 'electron';
-import schedule from 'node-schedule';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
 
@@ -80,16 +79,7 @@ const initSql = `
 app.whenReady().then(() => {
     db.exec(initSql);
     db.exec('PRAGMA foreign_keys = ON;');
-
-    const every10minTask = schedule.scheduleJob('*/10 * * * *', () => {
-        console.log('every 10 minutes task start', new Date().toLocaleString());
-        refreshFeed();
-    });
-
-    app.on('before-quit', () => {
-        db.close();
-        every10minTask.cancel();
-    });
+    app.on('before-quit', () => db.close());
 });
 
 export function insertPost(post: PostType) {
@@ -124,7 +114,10 @@ export function insertPost(post: PostType) {
     }
 }
 
+let isRefreshing = false;
 export async function refreshFeed(timeLimit: boolean = true) {
+    if (isRefreshing) return;
+    isRefreshing = true;
     const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch = null;`;
     const needFetchFeeds = db.prepare(sql).all();
     if (needFetchFeeds.length === 0) return;
@@ -168,4 +161,5 @@ export async function refreshFeed(timeLimit: boolean = true) {
             }
         });
     }
+    isRefreshing = false;
 }

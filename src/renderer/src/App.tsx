@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import { useEffect, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
 
@@ -16,6 +15,12 @@ function App() {
     useEffect(() => {
         if (isDone.current) return;
         isDone.current = true;
+
+        toast.promise(window.electron.ipcRenderer.invoke('refresh-feed-start'), {
+            loading: '重新拉取订阅源信息中...',
+            success: '拉取成功',
+            error: (error: Error) => `拉取失败：${error.message}`,
+        });
 
         window.electron.ipcRenderer.on('refresh-feed', (_, data) => {
             if (data.loading) {
