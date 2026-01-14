@@ -1,5 +1,5 @@
 import type { FeedType } from '@/store';
-import { useFeedStore } from '@/store';
+import { useFeedStore, useFolderStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -22,9 +22,10 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-export default function Feed({ feed }: { feed: FeedType }) {
+export default function Feed({ feed, className }: { feed: FeedType; className?: string }) {
     const setSelectFeed = useFeedStore(state => state.setSelectFeed);
     const isSelected = useFeedStore(state => state.selectFeed === feed.id);
 
@@ -42,7 +43,7 @@ export default function Feed({ feed }: { feed: FeedType }) {
                     <div
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
-                        className={cn('flex items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70')}
+                        className={cn('flex items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
                     >
                         <Avatar className="size-4">
                             <AvatarImage
@@ -94,17 +95,20 @@ const editFeedSchema = z.object({
     title: z.string().min(1, '请输入订阅源标题'),
     link: z.url('请输入正确的网站地址'),
     fetch_frequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
+    folder_id: z.number().nullable().optional(),
 });
 
 type EditFeedFormValues = z.infer<typeof editFeedSchema>;
 
 function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: (open: boolean) => void; feed: FeedType }) {
+    const folders = useFolderStore(state => state.folders);
     const form = useForm<EditFeedFormValues>({
         resolver: zodResolver(editFeedSchema),
         defaultValues: {
             title: feed.title,
             link: feed.link,
             fetch_frequency: feed.fetch_frequency,
+            folder_id: feed.folder_id ?? null,
         },
     });
 
@@ -114,10 +118,12 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             title: feed.title,
             link: feed.link,
             fetch_frequency: feed.fetch_frequency,
+            folder_id: feed.folder_id ?? null,
         });
     }, [open, form, feed]);
 
     const updateFeed = useFeedStore(state => state.updateFeed);
+    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
 
     const onSubmit = (data: EditFeedFormValues) => {
         updateFeed({
@@ -125,8 +131,10 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             title: data.title,
             link: data.link,
             fetch_frequency: data.fetch_frequency,
+            folder_id: data.folder_id ?? null,
         })
             .then(() => {
+                refreshFeeds();
                 toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
                 onOpenChange(false);
             })
@@ -186,6 +194,31 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                             value={field.value}
                                         />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="folder_id"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>文件夹</FormLabel>
+                                    <Select value={field.value?.toString() ?? 'none'} onValueChange={value => field.onChange(value === 'none' ? null : parseInt(value))}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="未分类" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="none">未分类</SelectItem>
+                                            {folders.map(folder => (
+                                                <SelectItem key={folder.id} value={folder.id.toString()}>
+                                                    {folder.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

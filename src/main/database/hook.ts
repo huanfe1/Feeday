@@ -12,19 +12,21 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
 
 ipcMain.handle('db-get-feeds', async () => {
     const select = db.prepare(
-        'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f ORDER BY f.title ASC',
+        'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, f.folder_id, fo.name AS folder_name, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f LEFT JOIN folders fo ON f.folder_id = fo.id ORDER BY (fo.name IS NULL), fo.name ASC, f.title ASC',
     );
     return select.all();
 });
 
 ipcMain.handle('db-insert-feed', async (_event, feed) => {
-    const insert = db.prepare('INSERT INTO feeds (title, description, link, url, last_updated, icon) VALUES ($title, $description, $link, $url, $last_updated, $icon)');
+    const insert = db.prepare(
+        'INSERT INTO feeds (title, description, link, url, last_updated, icon, folder_id) VALUES ($title, $description, $link, $url, $last_updated, $icon, $folder_id)',
+    );
     const { lastInsertRowid } = insert.run(feed);
     return lastInsertRowid;
 });
 
 ipcMain.handle('db-update-feed', async (_event, feed) => {
-    const update = db.prepare('UPDATE feeds SET title = $title, link = $link, fetch_frequency = $fetch_frequency WHERE id = $id');
+    const update = db.prepare('UPDATE feeds SET title = $title, link = $link, fetch_frequency = $fetch_frequency, folder_id = $folder_id WHERE id = $id');
     return update.run(feed);
 });
 

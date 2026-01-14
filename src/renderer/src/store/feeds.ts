@@ -8,6 +8,8 @@ export type FeedType = {
     icon: string;
     has_unread: boolean;
     fetch_frequency: number;
+    folder_id: number | null;
+    folder_name: string | null;
 };
 
 interface UseFeedStore {

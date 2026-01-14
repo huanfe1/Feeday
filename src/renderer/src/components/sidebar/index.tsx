@@ -1,7 +1,7 @@
 import { Resizable } from '@/components/resizable';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
+import Settings from '../settings';
 import AddFeed from './addFeed';
 import Feeds from './feeds';
 
@@ -16,9 +16,7 @@ export default function Sidebar() {
                     </div>
                     <div className="no-drag-region flex items-center">
                         <AddFeed />
-                        <Button variant="ghost" size="icon">
-                            <i className="i-mingcute-settings-3-fill text-lg opacity-75"></i>
-                        </Button>
+                        <Settings />
                     </div>
                 </div>
                 <Separator />

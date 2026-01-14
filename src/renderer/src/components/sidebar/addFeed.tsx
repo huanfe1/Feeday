@@ -1,4 +1,4 @@
-import { useFeedStore } from '@/store';
+import { useFeedStore, useFolderStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,12 +10,14 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const addFeedSchema = z.object({
     url: z.url('请输入正确的订阅源地址'),
     title: z.string().min(1, '请输入订阅源标题'),
+    folder_id: z.number().nullable().optional(),
 });
 
 type AddFeedFormValues = z.infer<typeof addFeedSchema>;
@@ -35,6 +37,7 @@ export default function AddFeed() {
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<FeedInfo | null>(null);
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
+    const folders = useFolderStore(state => state.folders);
     const [hasTitle, setHasTitle] = useState(false);
 
     const form = useForm<AddFeedFormValues>({
@@ -42,6 +45,7 @@ export default function AddFeed() {
         defaultValues: {
             url: '',
             title: '',
+            folder_id: null,
         },
     });
 
@@ -97,6 +101,7 @@ export default function AddFeed() {
                     url: feedInfo.url ?? data.url,
                     last_updated: feedInfo.last_updated,
                     icon: feedInfo.icon || null,
+                    folder_id: data.folder_id ?? null,
                 })
                 .then(feedId => {
                     if (feedInfo) {
@@ -185,19 +190,46 @@ export default function AddFeed() {
                             )}
                         />
                         {hasTitle && (
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>订阅源标题</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="请输入订阅源备注" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>订阅源标题</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="请输入订阅源备注" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="folder_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>文件夹</FormLabel>
+                                            <Select value={field.value?.toString() ?? 'none'} onValueChange={value => field.onChange(value === 'none' ? null : parseInt(value))}>
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="未分类" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="none">未分类</SelectItem>
+                                                    {folders.map(folder => (
+                                                        <SelectItem key={folder.id} value={folder.id.toString()}>
+                                                            {folder.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
                         )}
                         <DialogFooter>
                             <DialogClose asChild>
