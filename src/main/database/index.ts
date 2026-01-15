@@ -162,7 +162,7 @@ export async function refreshFeed(timeLimit: boolean = true) {
             if (result.success) {
                 const { data, feedInfo } = result;
                 try {
-                    db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon WHERE id = $id').run({
+                    db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon, last_fetch_error = null WHERE id = $id').run({
                         id: feedInfo.id,
                         description: data?.description || null,
                         link: data?.link || null,
@@ -171,7 +171,7 @@ export async function refreshFeed(timeLimit: boolean = true) {
                     });
                     data?.items?.forEach(item => insertPost({ feed_id: feedInfo.id, ...item } as PostType));
                 } catch (error: unknown) {
-                    console.log(error);
+                    console.error(error);
                 }
             } else {
                 const { message, id } = result as { message: string; id: number };

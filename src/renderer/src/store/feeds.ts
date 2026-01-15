@@ -10,6 +10,7 @@ export type FeedType = {
     fetch_frequency: number;
     folder_id: number | null;
     folder_name: string | null;
+    last_fetch_error: string | null;
 };
 
 interface UseFeedStore {

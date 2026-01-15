@@ -1,44 +1,162 @@
-import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from 'lucide-react';
+import { motion } from 'motion/react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Accordion({ ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
-    return <AccordionPrimitive.Root data-slot="accordion" {...props} />;
-}
+type AccordionContextType = {
+    value: string[];
+    toggleValue: (itemValue: string) => void;
+    type: 'single' | 'multiple';
+};
 
-function AccordionItem({ className, ...props }: React.ComponentProps<typeof AccordionPrimitive.Item>) {
-    return <AccordionPrimitive.Item data-slot="accordion-item" className={cn('border-b last:border-b-0', className)} {...props} />;
-}
+const AccordionContext = React.createContext<AccordionContextType | null>(null);
 
-function AccordionTrigger({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+type AccordionProps = {
+    type?: 'single' | 'multiple';
+    value?: string[];
+    defaultValue?: string[];
+    onValueChange?: (value: string[]) => void;
+    className?: string;
+    children: React.ReactNode;
+};
+
+function Accordion({ type = 'single', value, defaultValue = [], onValueChange, className, children }: AccordionProps) {
+    const [internalValue, setInternalValue] = React.useState<string[]>(defaultValue);
+    const controlled = value !== undefined;
+    const currentValue = controlled ? value : internalValue;
+
+    const handleValueChange = React.useCallback(
+        (newValue: string[]) => {
+            if (!controlled) {
+                setInternalValue(newValue);
+            }
+            onValueChange?.(newValue);
+        },
+        [controlled, onValueChange],
+    );
+
+    const toggleValue = React.useCallback(
+        (itemValue: string) => {
+            if (type === 'single') {
+                handleValueChange(currentValue.includes(itemValue) ? [] : [itemValue]);
+            } else {
+                handleValueChange(currentValue.includes(itemValue) ? currentValue.filter(v => v !== itemValue) : [...currentValue, itemValue]);
+            }
+        },
+        [type, currentValue, handleValueChange],
+    );
+
     return (
-        <AccordionPrimitive.Header className="flex">
-            <AccordionPrimitive.Trigger
-                data-slot="accordion-trigger"
-                className={cn(
-                    'focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
-                    className,
-                )}
-                {...props}
-            >
+        <AccordionContext.Provider value={{ value: currentValue, toggleValue, type }}>
+            <div data-slot="accordion" className={className}>
                 {children}
-                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
-            </AccordionPrimitive.Trigger>
-        </AccordionPrimitive.Header>
+            </div>
+        </AccordionContext.Provider>
     );
 }
 
-function AccordionContent({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+type AccordionItemProps = {
+    value: string;
+    className?: string;
+    children: React.ReactNode;
+};
+
+function AccordionItem({ value, className, children }: AccordionItemProps) {
     return (
-        <AccordionPrimitive.Content
-            data-slot="accordion-content"
-            className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm"
-            {...props}
+        <div data-slot="accordion-item" className={cn('border-b last:border-b-0', className)}>
+            {React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                    return React.cloneElement(child, { value } as { value: string });
+                }
+                return child;
+            })}
+        </div>
+    );
+}
+
+type AccordionTriggerProps = {
+    value?: string;
+    className?: string;
+    children: React.ReactNode;
+};
+
+function AccordionTrigger({ value, className, children }: AccordionTriggerProps) {
+    const context = React.useContext(AccordionContext);
+    if (!context) throw new Error('AccordionTrigger must be used within Accordion');
+
+    const isOpen = context.value.includes(value || '');
+
+    const handleClick = () => {
+        if (value) {
+            context.toggleValue(value);
+        }
+    };
+
+    return (
+        <button
+            data-slot="accordion-trigger"
+            type="button"
+            onClick={handleClick}
+            className={cn(
+                'focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-1 items-center gap-2 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
+                className,
+            )}
         >
-            <div className={cn('pt-0 pb-4', className)}>{children}</div>
-        </AccordionPrimitive.Content>
+            <motion.div
+                animate={{ rotate: isOpen ? 0 : -90 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="pointer-events-none flex shrink-0 items-center justify-center"
+            >
+                <ChevronDownIcon className="size-4 translate-y-0.5" />
+            </motion.div>
+            {children}
+        </button>
+    );
+}
+
+type AccordionContentProps = {
+    value?: string;
+    className?: string;
+    children: React.ReactNode;
+};
+
+function AccordionContent({ value, className, children }: AccordionContentProps) {
+    const context = React.useContext(AccordionContext);
+    if (!context) throw new Error('AccordionContent must be used within Accordion');
+
+    const isOpen = context.value.includes(value || '');
+    const contentRef = React.useRef<HTMLDivElement>(null);
+    const [height, setHeight] = React.useState(0);
+
+    React.useEffect(() => {
+        if (contentRef.current) {
+            if (isOpen) {
+                // 测量内容高度
+                const measuredHeight = contentRef.current.scrollHeight;
+                setHeight(measuredHeight);
+            } else {
+                setHeight(0);
+            }
+        }
+    }, [isOpen, children]);
+
+    return (
+        <motion.div
+            data-slot="accordion-content"
+            initial={false}
+            animate={{
+                height: height,
+                opacity: isOpen ? 1 : 0,
+            }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+            className="text-sm"
+        >
+            <div ref={contentRef} className={cn('pt-0 pb-4', className)}>
+                {children}
+            </div>
+        </motion.div>
     );
 }
 

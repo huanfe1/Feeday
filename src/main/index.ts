@@ -1,4 +1,5 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import dayjs from 'dayjs';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
 import schedule from 'node-schedule';
 import { join } from 'path';
@@ -54,7 +55,7 @@ function createWindow() {
             });
     };
     ipcMain.handle('refresh-feed-start', async () => {
-        const every10minTask = schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
+        const every10minTask = schedule.scheduleJob('*/10 * * * * *', async () => refreshFeedHandle());
         app.on('before-quit', () => every10minTask.cancel());
         return refreshFeed(false);
     });

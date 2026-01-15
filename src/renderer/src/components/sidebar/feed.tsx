@@ -23,6 +23,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export default function Feed({ feed, className }: { feed: FeedType; className?: string }) {
@@ -43,17 +44,23 @@ export default function Feed({ feed, className }: { feed: FeedType; className?: 
                     <div
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
-                        className={cn('flex items-center justify-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
+                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
                     >
                         <Avatar className="size-4">
-                            <AvatarImage
-                                src={
-                                    feed.icon || `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(feed.link).origin}&size=64`
-                                }
-                            />
+                            <AvatarImage src={feed.icon} />
                             <AvatarFallback>{feed.title.slice(0, 1)}</AvatarFallback>
                         </Avatar>
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>
+                        {feed.last_fetch_error && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="i-mingcute-close-circle-fill text-red-500"></span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{feed.last_fetch_error}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
                         <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.has_unread })}></span>
                     </div>
                 </ContextMenuTrigger>
