@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,10 @@ export default function Sidebar() {
 
     const posts = usePostStore(state => state.posts);
     const refreshPosts = usePostStore(state => state.refreshPosts);
+    const loadMorePosts = usePostStore(state => state.loadMorePosts);
     const readAllPosts = usePostStore(state => state.readAllPosts);
+    const hasMore = usePostStore(state => state.hasMore);
+    const isLoading = usePostStore(state => state.isLoading);
 
     const hasUnread = usePostStore(state => state.hasUnread);
     const setHasUnread = usePostStore(state => state.setHasUnread);
@@ -39,9 +42,39 @@ export default function Sidebar() {
         readAllPosts(selectFeed?.id);
     }, [readAllPosts, selectFeed?.id]);
 
+    // 无限滚动处理
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const handleScroll = useCallback(
+        (e: React.UIEvent<HTMLDivElement>) => {
+            const target = e.currentTarget;
+            const { scrollTop, scrollHeight, clientHeight } = target;
+
+            // 当滚动到距离底部 200px 以内时，加载更多
+            if (scrollHeight - scrollTop - clientHeight < 200 && hasMore && !isLoading) {
+                // 使用防抖，避免频繁触发
+                if (scrollTimeoutRef.current) {
+                    clearTimeout(scrollTimeoutRef.current);
+                }
+                scrollTimeoutRef.current = setTimeout(() => {
+                    loadMorePosts();
+                }, 100);
+            }
+        },
+        [hasMore, isLoading, loadMorePosts]
+    );
+
     useEffect(() => {
         handleRefresh();
     }, [handleRefresh, hasUnread, selectFeedId]);
+
+    // 清理定时器
+    useEffect(() => {
+        return () => {
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <Resizable options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
@@ -89,10 +122,21 @@ export default function Sidebar() {
                                 </div>
                             </div>
                         ) : (
-                            <ScrollArea scrollKey={selectFeed?.id} className="flex h-full">
+                            <ScrollArea scrollKey={selectFeed?.id} className="flex h-full" onScroll={handleScroll}>
                                 {posts.map(post => (
                                     <Post key={post.id} post={post} />
                                 ))}
+                                {isLoading && (
+                                    <div className="flex items-center justify-center py-4 text-gray-400">
+                                        <i className="i-mingcute-loading-line animate-spin text-xl"></i>
+                                        <span className="ml-2 text-sm">加载中...</span>
+                                    </div>
+                                )}
+                                {!hasMore && posts.length > 0 && (
+                                    <div className="flex items-center justify-center py-4 text-gray-400 text-sm">
+                                        <span>没有更多了</span>
+                                    </div>
+                                )}
                             </ScrollArea>
                         )}
                     </motion.div>

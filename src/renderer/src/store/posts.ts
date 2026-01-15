@@ -17,9 +17,13 @@ export type PostType = {
 interface UsePostStore {
     posts: PostType[];
     currentPostId: number | null;
+    offset: number;
+    hasMore: boolean;
+    isLoading: boolean;
     setCurrentPost: (post_id: number | null) => void;
     getCurrentPost: () => PostType | null;
     refreshPosts: () => void;
+    loadMorePosts: () => void;
     readAllPosts: (feed_id?: number) => void;
     updatePostReadById: (post_id: number, is_read: boolean) => void;
 
@@ -78,18 +82,59 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         }
     };
 
-    const refreshPosts = () => {
+    const loadPosts = async (offset: number, append: boolean = false) => {
         const selectFeed = useFeedStore.getState().selectFeed;
-        if (selectFeed) {
-            window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectFeed, get().hasUnread).then(posts => set({ posts: posts || [] }));
-        } else {
-            window.electron.ipcRenderer.invoke('db-get-posts', get().hasUnread).then(posts => set({ posts: posts || [] }));
+        const limit = 50;
+
+        set({ isLoading: true });
+
+        try {
+            let newPosts: PostType[];
+            if (selectFeed) {
+                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectFeed, get().hasUnread, offset, limit)) || [];
+            } else {
+                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().hasUnread, offset, limit)) || [];
+            }
+
+            const hasMore = newPosts.length === limit;
+
+            if (append) {
+                set(state => ({
+                    posts: [...state.posts, ...newPosts],
+                    offset: offset + newPosts.length,
+                    hasMore,
+                    isLoading: false,
+                }));
+            } else {
+                set({
+                    posts: newPosts,
+                    offset: newPosts.length,
+                    hasMore,
+                    isLoading: false,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to load posts:', error);
+            set({ isLoading: false });
         }
+    };
+
+    const refreshPosts = () => {
+        loadPosts(0, false);
+    };
+
+    const loadMorePosts = () => {
+        const { offset, hasMore, isLoading } = get();
+        if (!hasMore || isLoading) return;
+        loadPosts(offset, true);
     };
 
     return {
         posts: [],
         currentPostId: null,
+        offset: 0,
+        hasMore: true,
+        isLoading: false,
         setCurrentPost: post_id => {
             if (!post_id) return set({ currentPostId: null });
 
@@ -104,6 +149,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         },
         getCurrentPost,
         refreshPosts,
+        loadMorePosts,
         readAllPosts,
         updatePostReadById,
 

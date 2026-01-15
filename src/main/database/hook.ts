@@ -40,18 +40,18 @@ ipcMain.handle('db-insert-post', async (_event, post) => {
     return insertPost(post);
 });
 
-ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false) => {
+ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 100`,
+        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read, p.image_url FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
     );
-    return select.all();
+    return select.all(limit, offset);
 });
 
-ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false) => {
+ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT 30`,
+        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read, p.image_url FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
     );
-    return select.all(feedId);
+    return select.all(feedId, limit, offset);
 });
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {

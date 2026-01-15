@@ -1,4 +1,5 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import dayjs from 'dayjs';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
 import schedule from 'node-schedule';
 import { join } from 'path';
@@ -44,11 +45,12 @@ function createWindow() {
     });
 
     const refreshFeedHandle = (timeLimit?: boolean) => {
+        console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refreshFeed');
         refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feed'));
     };
     refreshFeedHandle(false);
 
-    const every10minTask = schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
+    const every10minTask = schedule.scheduleJob('*/10 * * * *', () => refreshFeedHandle());
     app.on('before-quit', () => every10minTask.cancel());
 
     // HMR for renderer base on electron-vite cli.

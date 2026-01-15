@@ -136,10 +136,7 @@ export function insertPost(post: PostType) {
     }
 }
 
-let isRefreshing = false;
 export async function refreshFeed(timeLimit: boolean = true) {
-    if (isRefreshing) return;
-    isRefreshing = true;
     const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch = null;`;
     const needFetchFeeds = db.prepare(sql).all();
     if (needFetchFeeds.length === 0) return;
@@ -183,5 +180,4 @@ export async function refreshFeed(timeLimit: boolean = true) {
         });
     }
     console.log('Refresh feed completed');
-    isRefreshing = false;
 }
