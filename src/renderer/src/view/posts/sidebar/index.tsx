@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -11,16 +11,37 @@ import { cn } from '@/lib/utils';
 import Post from './post';
 
 export default function Sidebar() {
-    const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
-
-    const selectFeed = useFeedStore(state => state.getSelectFeed());
+    // 优化：直接使用selectFeed和feeds，避免函数调用
+    const selectFeedId = useFeedStore(state => state.selectFeed);
+    const feeds = useFeedStore(state => state.feeds);
+    const selectFeed = useMemo(() => {
+        if (!selectFeedId) return null;
+        return feeds.find(feed => feed.id === selectFeedId) || null;
+    }, [selectFeedId, feeds]);
 
     const posts = usePostStore(state => state.posts);
     const refreshPosts = usePostStore(state => state.refreshPosts);
     const readAllPosts = usePostStore(state => state.readAllPosts);
 
-    const loadPosts = useCallback(() => refreshPosts(selectFeed?.id, onlyUnread), [selectFeed?.id, onlyUnread, refreshPosts]);
-    useEffect(() => loadPosts(), [loadPosts]);
+    const hasUnread = usePostStore(state => state.hasUnread);
+    const setHasUnread = usePostStore(state => state.setHasUnread);
+
+    // 优化：使用useCallback稳定函数引用
+    const handleRefresh = useCallback(() => {
+        refreshPosts();
+    }, [refreshPosts]);
+
+    const handleToggleHasUnread = useCallback(() => {
+        setHasUnread(!hasUnread);
+    }, [setHasUnread, hasUnread]);
+
+    const handleReadAllPosts = useCallback(() => {
+        readAllPosts(selectFeed?.id);
+    }, [readAllPosts, selectFeed?.id]);
+
+    useEffect(() => {
+        handleRefresh();
+    }, [handleRefresh, hasUnread, selectFeedId]);
 
     return (
         <Resizable options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
@@ -31,17 +52,17 @@ export default function Sidebar() {
                         <RefreshButton />
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setOnlyUnread(!onlyUnread)}>
-                                    <i className={cn('text-xl opacity-75', onlyUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
+                                <Button variant="ghost" size="icon" onClick={handleToggleHasUnread}>
+                                    <i className={cn('text-xl opacity-75', hasUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>{onlyUnread ? '显示全部' : '只显示已读'}</p>
+                                <p>{hasUnread ? '显示全部' : '只显示已读'}</p>
                             </TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => readAllPosts(selectFeed?.id)}>
+                                <Button variant="ghost" size="icon" onClick={handleReadAllPosts}>
                                     <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
                                 </Button>
                             </TooltipTrigger>
@@ -53,7 +74,7 @@ export default function Sidebar() {
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={`${selectFeed?.id || 'all'}-${onlyUnread ? 'unread' : 'all'}`}
+                        key={`${selectFeed?.id || 'all'}-${hasUnread ? 'unread' : 'all'}`}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
@@ -85,10 +106,10 @@ const RefreshButton = memo(function RefreshButton() {
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
     const refreshPosts = usePostStore(state => state.refreshPosts);
 
-    const onClick = () => {
+    const onClick = useCallback(() => {
         refreshFeeds();
         refreshPosts();
-    };
+    }, [refreshFeeds, refreshPosts]);
 
     return (
         <Tooltip>

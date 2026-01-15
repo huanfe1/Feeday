@@ -1,6 +1,7 @@
 import { useFeedStore, usePostStore } from '@/store';
+import dayjs from 'dayjs';
 import { useEffect, useRef } from 'react';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
 
 import Sidebar from '@/components/sidebar';
 import { cn } from '@/lib/utils';
@@ -10,7 +11,6 @@ import View from './view';
 
 function App() {
     const { isDragging } = useDragging();
-    const toastId = useRef<string | number>(null);
 
     const feeds = useFeedStore(state => state.feeds);
 
@@ -24,29 +24,10 @@ function App() {
         if (isDone.current) return;
         isDone.current = true;
 
-        toast.promise(window.electron.ipcRenderer.invoke('refresh-feed-start'), {
-            loading: '重新拉取订阅源信息中...',
-            success: () => {
-                refreshFeeds();
-                refreshPosts();
-                return '拉取成功';
-            },
-            error: (error: Error) => `拉取失败：${error.message}`,
-        });
-
-        window.electron.ipcRenderer.on('refresh-feed', (_, data) => {
-            if (data.loading) {
-                toastId.current = toast.loading('重新拉取订阅源信息中...');
-            } else {
-                if (!toastId.current) return;
-                if (data.success) {
-                    refreshFeeds();
-                    refreshPosts();
-                    toast.success('拉取成功', { id: toastId.current });
-                } else {
-                    toast.error('拉取失败：' + data.message, { id: toastId.current });
-                }
-            }
+        window.electron.ipcRenderer.on('refresh-feed', () => {
+            console.log('refresh-feed', dayjs().format('YYYY-MM-DD HH:mm:ss'));
+            refreshFeeds();
+            refreshPosts();
         });
     }, []);
 

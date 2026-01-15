@@ -19,9 +19,12 @@ interface UsePostStore {
     currentPostId: number | null;
     setCurrentPost: (post_id: number | null) => void;
     getCurrentPost: () => PostType | null;
-    refreshPosts: (feed_id?: number, onlyUnread?: boolean) => void;
+    refreshPosts: () => void;
     readAllPosts: (feed_id?: number) => void;
     updatePostReadById: (post_id: number, is_read: boolean) => void;
+
+    hasUnread: boolean;
+    setHasUnread: (has_unread: boolean) => void;
 }
 
 export const usePostStore = create<UsePostStore>((set, get) => {
@@ -75,6 +78,15 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         }
     };
 
+    const refreshPosts = () => {
+        const selectFeed = useFeedStore.getState().selectFeed;
+        if (selectFeed) {
+            window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectFeed, get().hasUnread).then(posts => set({ posts: posts || [] }));
+        } else {
+            window.electron.ipcRenderer.invoke('db-get-posts', get().hasUnread).then(posts => set({ posts: posts || [] }));
+        }
+    };
+
     return {
         posts: [],
         currentPostId: null,
@@ -91,16 +103,11 @@ export const usePostStore = create<UsePostStore>((set, get) => {
             }
         },
         getCurrentPost,
-        refreshPosts: (feed_id?: number, onlyUnread?: boolean) => {
-            if (feed_id) {
-                window.electron.ipcRenderer.invoke('db-get-posts-by-id', feed_id, onlyUnread).then(posts => {
-                    set({ posts: posts || [] });
-                });
-            } else {
-                window.electron.ipcRenderer.invoke('db-get-posts', onlyUnread).then(posts => set({ posts: posts || [] }));
-            }
-        },
+        refreshPosts,
         readAllPosts,
         updatePostReadById,
+
+        hasUnread: false,
+        setHasUnread: has_unread => set({ hasUnread: has_unread }),
     };
 });

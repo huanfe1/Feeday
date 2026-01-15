@@ -149,7 +149,6 @@ export async function refreshFeed(timeLimit: boolean = true) {
         const results = await Promise.all(
             feeds.map(async feed => {
                 try {
-                    console.log(feed.id, feed.title, feed.url);
                     const result = await fetchFeed(feed.url as string);
                     return { success: true, id: feed.id, data: result, feedInfo: feed, message: null };
                 } catch (error: unknown) {
@@ -183,5 +182,6 @@ export async function refreshFeed(timeLimit: boolean = true) {
             }
         });
     }
+    console.log('Refresh feed completed');
     isRefreshing = false;
 }

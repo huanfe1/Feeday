@@ -1,5 +1,4 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
-import dayjs from 'dayjs';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
 import schedule from 'node-schedule';
 import { join } from 'path';
@@ -44,21 +43,13 @@ function createWindow() {
         return { action: 'deny' };
     });
 
-    const refreshFeedHandle = () => {
-        mainWindow.webContents.send('refresh-feed', { loading: true });
-        refreshFeed(false)
-            .then(() => {
-                mainWindow.webContents.send('refresh-feed', { loading: false, success: true });
-            })
-            .catch(error => {
-                mainWindow.webContents.send('refresh-feed', { loading: false, success: false, message: error.message });
-            });
+    const refreshFeedHandle = (timeLimit?: boolean) => {
+        refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feed'));
     };
-    ipcMain.handle('refresh-feed-start', async () => {
-        const every10minTask = schedule.scheduleJob('*/10 * * * * *', async () => refreshFeedHandle());
-        app.on('before-quit', () => every10minTask.cancel());
-        return refreshFeed(false);
-    });
+    refreshFeedHandle(false);
+
+    const every10minTask = schedule.scheduleJob('*/10 * * * *', async () => refreshFeedHandle());
+    app.on('before-quit', () => every10minTask.cancel());
 
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.

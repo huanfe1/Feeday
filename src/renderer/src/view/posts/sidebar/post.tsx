@@ -1,24 +1,45 @@
 import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn, truncate } from '@/lib/utils';
 
 function Post({ post }: { post: PostType }) {
+    // 分别使用选择器，zustand v5中的函数引用是稳定的
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
     const setCurrentPost = usePostStore(state => state.setCurrentPost);
-    const isSelected = usePostStore(state => state.currentPostId === post.id);
-    const setSelectFeed = useFeedStore(state => state.setSelectFeed);
+    // 优化：直接计算isSelected，只有当currentPostId变化时才重新计算
+    // 使用useMemo来稳定这个值，避免不必要的重新渲染
+    const currentPostId = usePostStore(state => state.currentPostId);
+    const isSelected = useMemo(() => currentPostId === post.id, [currentPostId, post.id]);
+    const setSelectFeedFromFeedStore = useFeedStore(state => state.setSelectFeed);
 
-    const onClick = () => setCurrentPost(post.id);
-    const onDoubleClick = () => window.open(post.link, '_blank');
+    const onClick = useCallback(() => {
+        setCurrentPost(post.id);
+    }, [setCurrentPost, post.id]);
 
-    const toggleReadStatus = () => {
+    const onDoubleClick = useCallback(() => {
+        window.open(post.link, '_blank');
+    }, [post.link]);
+
+    const toggleReadStatus = useCallback(() => {
         updatePostReadById(post.id, !post.is_read);
-    };
+    }, [updatePostReadById, post.id, post.is_read]);
+
+    const handleSetSelectFeed = useCallback(() => {
+        setSelectFeedFromFeedStore(post.feed_id);
+    }, [setSelectFeedFromFeedStore, post.feed_id]);
+
+    const handleOpenLink = useCallback(() => {
+        window.open(post.link, '_blank');
+    }, [post.link]);
+
+    const handleCopyLink = useCallback(() => {
+        navigator.clipboard.writeText(post.link);
+    }, [post.link]);
 
     return (
         <ContextMenu modal={false}>
@@ -39,14 +60,26 @@ function Post({ post }: { post: PostType }) {
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-                <ContextMenuItem onSelect={() => toggleReadStatus()}>{post.is_read ? '标记为未读' : '标记为已读'}</ContextMenuItem>
-                <ContextMenuItem onSelect={() => setSelectFeed(post.feed_id)}>跳转至该订阅源</ContextMenuItem>
+                <ContextMenuItem onSelect={toggleReadStatus}>{post.is_read ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+                <ContextMenuItem onSelect={handleSetSelectFeed}>跳转至该订阅源</ContextMenuItem>
                 <ContextMenuSeparator />
-                <ContextMenuItem onSelect={() => window.open(post.link, '_blank')}>在浏览器中打开文章</ContextMenuItem>
-                <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link)}>复制文章链接</ContextMenuItem>
+                <ContextMenuItem onSelect={handleOpenLink}>在浏览器中打开文章</ContextMenuItem>
+                <ContextMenuItem onSelect={handleCopyLink}>复制文章链接</ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
     );
 }
 
-export default memo(Post);
+// 自定义比较函数，只有当post的关键属性变化时才重新渲染
+export default memo(Post, (prevProps, nextProps) => {
+    // 比较post对象的关键属性
+    return (
+        prevProps.post.id === nextProps.post.id &&
+        prevProps.post.is_read === nextProps.post.is_read &&
+        prevProps.post.title === nextProps.post.title &&
+        prevProps.post.summary === nextProps.post.summary &&
+        prevProps.post.author === nextProps.post.author &&
+        prevProps.post.pub_date === nextProps.post.pub_date &&
+        prevProps.post.link === nextProps.post.link
+    );
+});
