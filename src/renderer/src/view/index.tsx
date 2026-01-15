@@ -1,8 +1,10 @@
+import { memo } from 'react';
+
 import { useView } from '@/store/common';
 
 import Posts from './posts';
 
-export default function View() {
+function View() {
     const { view } = useView();
 
     if (view === 1) {
@@ -10,3 +12,5 @@ export default function View() {
     }
     return <div>View</div>;
 }
+
+export default memo(View);

@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { Resizable } from '@/components/resizable';
 import { Separator } from '@/components/ui/separator';
 
@@ -5,7 +7,7 @@ import Settings from '../settings';
 import AddFeed from './addFeed';
 import Feeds from './feeds';
 
-export default function Sidebar() {
+function Sidebar() {
     return (
         <Resizable options={{ axis: 'x', min: 200, max: 300, initial: 250 }}>
             <div className="bg-sidebar flex h-full flex-col">
@@ -25,3 +27,5 @@ export default function Sidebar() {
         </Resizable>
     );
 }
+
+export default memo(Sidebar);

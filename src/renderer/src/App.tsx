@@ -10,7 +10,7 @@ import { useDragging } from '@/store/common';
 import View from './view';
 
 function App() {
-    const { isDragging } = useDragging();
+    const isDragging = useDragging(state => state.isDragging);
 
     const feeds = useFeedStore(state => state.feeds);
 
