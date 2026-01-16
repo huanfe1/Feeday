@@ -62,12 +62,16 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
             last_updated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
             items: feed?.items?.map(item => ({
                 title: item.title,
-                link: item.link,
-                image_url: item.enclosures?.[0]?.url,
+                link: item.guid?.value || item.link,
+                image_url: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
                 author: item.dc?.creators?.join('、') || item.authors?.join(''),
                 pub_date: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.description,
                 content: item.content?.encoded,
+                podcast: {
+                    ...item.itunes,
+                    url: item.enclosures?.find(_ => _.type?.startsWith('audio'))?.url,
+                },
             })),
         };
     } else if (format === 'atom') {
@@ -81,11 +85,15 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
             items: feed?.entries?.map(item => ({
                 title: item.title,
                 link: item?.links?.find(_ => _.rel === 'alternate')?.href || item.id,
-                image_url: item.links?.find(_ => _.rel === 'enclosure')?.href,
+                image_url: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
                 author: item.authors?.map(_ => _.name).join('、'),
                 pub_date: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.summary,
                 content: item.content,
+                podcast: {
+                    ...item.itunes,
+                    url: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('audio'))?.href,
+                },
             })),
         };
     }

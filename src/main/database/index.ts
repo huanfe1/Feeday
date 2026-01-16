@@ -37,6 +37,7 @@ const initSql = `
         author TEXT NULL, -- 文章作者
         image_url TEXT NULL, -- 文章图片URL
         summary TEXT NULL, -- 文章简略描述
+        podcast TEXT NULL, -- 文章播客信息，JSON格式
         pub_date DATETIME NULL, -- 文章发布时间
         is_read BOOLEAN DEFAULT 0 CHECK (is_read IN (0, 1)), -- 是否已读
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
