@@ -1,8 +1,9 @@
 import parse, { Element } from 'html-react-parser';
 import type { HTMLReactParserOptions } from 'html-react-parser';
+import { memo } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
-export default function Render({ content }: { content: string }) {
+function Render({ content }: { content: string }) {
     const options: HTMLReactParserOptions = {
         replace: domNode => {
             if (domNode instanceof Element && domNode.attribs) {
@@ -29,5 +30,8 @@ export default function Render({ content }: { content: string }) {
                 img: ['src', 'alt', 'title', 'width', 'height'],
             },
         }),
+        options,
     );
 }
+
+export default memo(Render);
