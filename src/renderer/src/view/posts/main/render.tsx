@@ -22,14 +22,12 @@ export default function Render({ content }: { content: string }) {
         },
     };
     return parse(
-        // sanitizeHtml(content, {
-        //     allowedAttributes: {
-        //         '*': ['href', 'src', 'alt', 'class', 'title'],
-        //         a: ['href', 'target', 'rel'],
-        //         img: ['src', 'alt', 'title', 'width', 'height'],
-        //     },
-        // }),
-        content,
-        options,
+        sanitizeHtml(content, {
+            allowedAttributes: {
+                '*': ['href', 'src', 'alt', 'class', 'title'],
+                a: ['href', 'target', 'rel'],
+                img: ['src', 'alt', 'title', 'width', 'height'],
+            },
+        }),
     );
 }

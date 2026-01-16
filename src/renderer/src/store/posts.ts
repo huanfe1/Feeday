@@ -16,29 +16,44 @@ export type PostType = {
 
 interface UsePostStore {
     posts: PostType[];
-    currentPostId: number | null;
+    selectedPostId: number | null;
+
     offset: number;
     hasMore: boolean;
     isLoading: boolean;
-    setCurrentPost: (post_id: number | null) => void;
-    getCurrentPost: () => PostType | null;
+
+    setSelectedPost: (post_id: number | null) => void;
+    getSelectedPost: () => PostType | null;
+
     refreshPosts: () => void;
     loadMorePosts: () => void;
+
     readAllPosts: (feed_id?: number) => void;
     updatePostReadById: (post_id: number, is_read: boolean) => void;
 
-    hasUnread: boolean;
-    setHasUnread: (has_unread: boolean) => void;
+    onlyUnread: boolean;
+    setOnlyUnread: (only_unread: boolean) => void;
 }
 
 export const usePostStore = create<UsePostStore>((set, get) => {
-    const getCurrentPost = () => {
-        if (!get().currentPostId) return null;
-        return get().posts.find(post => post.id === get().currentPostId) || null;
+    const setSelectedPost = (post_id: number | null) => {
+        if (!post_id) return set({ selectedPostId: null });
+
+        const post = get().posts.find(p => p.id === post_id)!;
+        set({ selectedPostId: post_id });
+
+        if (!post.is_read) {
+            updatePostReadById(post_id, true);
+        }
+    };
+
+    const getSelectedPost = () => {
+        if (!get().selectedPostId) return null;
+        return get().posts.find(post => post.id === get().selectedPostId) || null;
     };
 
     const updatePostReadById = (post_id: number, is_read: boolean = true) => {
-        window.electron.ipcRenderer.invoke('db-update-post-read-by-id', Number(post_id), is_read).then(() => {
+        window.electron.ipcRenderer.invoke('db-update-post-read-by-id', post_id, is_read).then(() => {
             const posts = get().posts.map(p => (p.id === post_id ? { ...p, is_read } : p));
             set({ posts });
 
@@ -68,32 +83,30 @@ export const usePostStore = create<UsePostStore>((set, get) => {
     };
 
     const readAllPosts = (feed_id?: number) => {
-        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id);
-        const posts = get().posts.map(p => ({ ...p, is_read: true }));
-        set({ posts });
+        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id).then(() => {
+            const posts = get().posts.map(p => ({ ...p, is_read: true }));
+            set({ posts });
 
-        if (feed_id) {
-            useFeedStore.getState().updateFeedHasUnread(feed_id, false);
-        } else {
-            const affectedFeedIds = new Set(posts.map(p => p.feed_id));
-            affectedFeedIds.forEach(id => {
-                useFeedStore.getState().updateFeedHasUnread(id, false);
-            });
-        }
+            if (feed_id) {
+                useFeedStore.getState().updateFeedHasUnread(feed_id, false);
+            } else {
+                posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feed_id, false));
+            }
+        });
     };
 
     const loadPosts = async (offset: number, append: boolean = false) => {
-        const selectFeed = useFeedStore.getState().selectFeed;
+        const selectedFeedId = useFeedStore.getState().selectedFeedId;
         const limit = 50;
 
         set({ isLoading: true });
 
         try {
             let newPosts: PostType[];
-            if (selectFeed) {
-                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectFeed, get().hasUnread, offset, limit)) || [];
+            if (selectedFeedId) {
+                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedFeedId, get().onlyUnread, offset, limit)) || [];
             } else {
-                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().hasUnread, offset, limit)) || [];
+                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().onlyUnread, offset, limit)) || [];
             }
 
             const hasMore = newPosts.length === limit;
@@ -131,29 +144,18 @@ export const usePostStore = create<UsePostStore>((set, get) => {
 
     return {
         posts: [],
-        currentPostId: null,
+        selectedPostId: null,
         offset: 0,
         hasMore: true,
         isLoading: false,
-        setCurrentPost: post_id => {
-            if (!post_id) return set({ currentPostId: null });
-
-            const post = get().posts.find(p => p.id === post_id);
-            if (!post) return;
-
-            set({ currentPostId: post_id });
-
-            if (!post.is_read) {
-                updatePostReadById(Number(post_id), true);
-            }
-        },
-        getCurrentPost,
+        setSelectedPost,
+        getSelectedPost,
         refreshPosts,
         loadMorePosts,
         readAllPosts,
         updatePostReadById,
 
-        hasUnread: false,
-        setHasUnread: has_unread => set({ hasUnread: has_unread }),
+        onlyUnread: false,
+        setOnlyUnread: has_unread => set({ onlyUnread: has_unread }),
     };
 });

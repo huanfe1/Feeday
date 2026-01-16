@@ -1,7 +1,7 @@
 import type { FeedType } from '@/store';
 import { useFeedStore, useFolderStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -26,9 +26,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-export default function Feed({ feed, className }: { feed: FeedType; className?: string }) {
-    const setSelectFeed = useFeedStore(state => state.setSelectFeed);
-    const isSelected = useFeedStore(state => state.selectFeed === feed.id);
+function Feed({ feed, className }: { feed: FeedType; className?: string }) {
+    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
+    const isSelected = useFeedStore(state => state.selectedFeedId === feed.id);
+    // 直接从 store 订阅特定 feed 的 has_unread 状态，避免因其他 feed 更新而重新渲染
+    const hasUnread = useFeedStore(state => {
+        const feedFromStore = state.feeds.find(f => f.id === feed.id);
+        return feedFromStore?.has_unread ?? feed.has_unread;
+    });
 
     const clickFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -61,7 +66,7 @@ export default function Feed({ feed, className }: { feed: FeedType; className?: 
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.has_unread })}></span>
+                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
@@ -244,3 +249,5 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         </Dialog>
     );
 }
+
+export default memo(Feed);

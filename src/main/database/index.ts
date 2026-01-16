@@ -145,6 +145,7 @@ export async function refreshFeed(timeLimit: boolean = true) {
         const feeds = needFetchFeeds.slice(index, index + 5);
         const results = await Promise.all(
             feeds.map(async feed => {
+                console.log(feed.id, feed.title, feed.url);
                 try {
                     const result = await fetchFeed(feed.url as string);
                     return { success: true, id: feed.id, data: result, feedInfo: feed, message: null };

@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { Resizable } from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -11,23 +11,20 @@ import { cn } from '@/lib/utils';
 import Post from './post';
 
 export default function Sidebar() {
-    // 优化：直接使用selectFeed和feeds，避免函数调用
-    const selectFeedId = useFeedStore(state => state.selectFeed);
-    const feeds = useFeedStore(state => state.feeds);
-    const selectFeed = useMemo(() => {
-        if (!selectFeedId) return null;
-        return feeds.find(feed => feed.id === selectFeedId) || null;
-    }, [selectFeedId, feeds]);
+    const selectFeed = useFeedStore(state => state.getSelectedFeed());
+    const selectedFeedId = useFeedStore(state => state.selectedFeedId);
 
-    const posts = usePostStore(state => state.posts);
+    const posts = usePostStore.getState().posts;
+    usePostStore(state => state.posts.length);
+
     const refreshPosts = usePostStore(state => state.refreshPosts);
     const loadMorePosts = usePostStore(state => state.loadMorePosts);
     const readAllPosts = usePostStore(state => state.readAllPosts);
     const hasMore = usePostStore(state => state.hasMore);
     const isLoading = usePostStore(state => state.isLoading);
 
-    const hasUnread = usePostStore(state => state.hasUnread);
-    const setHasUnread = usePostStore(state => state.setHasUnread);
+    const hasUnread = usePostStore(state => state.onlyUnread);
+    const setHasUnread = usePostStore(state => state.setOnlyUnread);
 
     // 优化：使用useCallback稳定函数引用
     const handleRefresh = useCallback(() => {
@@ -39,8 +36,12 @@ export default function Sidebar() {
     }, [setHasUnread, hasUnread]);
 
     const handleReadAllPosts = useCallback(() => {
-        readAllPosts(selectFeed?.id);
-    }, [readAllPosts, selectFeed?.id]);
+        readAllPosts(selectedFeedId ?? undefined);
+    }, [readAllPosts, selectedFeedId]);
+
+    useEffect(() => {
+        refreshPosts();
+    }, [refreshPosts, selectedFeedId]);
 
     // 无限滚动处理
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,12 +61,12 @@ export default function Sidebar() {
                 }, 100);
             }
         },
-        [hasMore, isLoading, loadMorePosts]
+        [hasMore, isLoading, loadMorePosts],
     );
 
     useEffect(() => {
         handleRefresh();
-    }, [handleRefresh, hasUnread, selectFeedId]);
+    }, [handleRefresh, hasUnread]);
 
     // 清理定时器
     useEffect(() => {
@@ -107,7 +108,7 @@ export default function Sidebar() {
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={`${selectFeed?.id || 'all'}-${hasUnread ? 'unread' : 'all'}`}
+                        key={`${selectedFeedId || 'all'}-${hasUnread ? 'unread' : 'all'}`}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
@@ -122,7 +123,7 @@ export default function Sidebar() {
                                 </div>
                             </div>
                         ) : (
-                            <ScrollArea scrollKey={selectFeed?.id} className="flex h-full" onScroll={handleScroll}>
+                            <ScrollArea scrollKey={selectedFeedId} className="flex h-full" onScroll={handleScroll}>
                                 {posts.map(post => (
                                     <Post key={post.id} post={post} />
                                 ))}
@@ -133,7 +134,7 @@ export default function Sidebar() {
                                     </div>
                                 )}
                                 {!hasMore && posts.length > 0 && (
-                                    <div className="flex items-center justify-center py-4 text-gray-400 text-sm">
+                                    <div className="flex items-center justify-center py-4 text-sm text-gray-400">
                                         <span>没有更多了</span>
                                     </div>
                                 )}

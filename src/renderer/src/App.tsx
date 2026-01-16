@@ -12,14 +12,14 @@ import View from './view';
 function App() {
     const isDragging = useDragging(state => state.isDragging);
 
-    const feeds = useFeedStore(state => state.feeds);
+    const feedsLength = useFeedStore(state => state.feeds.length);
 
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
     const refreshPosts = usePostStore(state => state.refreshPosts);
 
     const isDone = useRef(false);
     useEffect(() => {
-        if (feeds.length === 0) return;
+        if (feedsLength === 0) return;
 
         if (isDone.current) return;
         isDone.current = true;

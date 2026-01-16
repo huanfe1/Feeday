@@ -1,5 +1,5 @@
 import { useFeedStore, usePostStore } from '@/store';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,10 +7,12 @@ import { cn } from '@/lib/utils';
 
 import Feed from './feed';
 
-export default function Feeds({ className }: { className?: string }) {
-    const feeds = useFeedStore(state => state.feeds);
-    const setSelectFeed = useFeedStore(state => state.setSelectFeed);
-    const setCurrentPost = usePostStore(state => state.setCurrentPost);
+function Feeds({ className }: { className?: string }) {
+    const feeds = useFeedStore.getState().feeds;
+    useFeedStore(state => state.feeds.length);
+
+    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
+    const setCurrentPost = usePostStore(state => state.setSelectedPost);
 
     const cancelSelectFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.currentTarget !== e.target) return;
@@ -75,3 +77,5 @@ export default function Feeds({ className }: { className?: string }) {
         </ScrollArea>
     );
 }
+
+export default memo(Feeds);

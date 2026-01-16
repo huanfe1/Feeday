@@ -15,9 +15,9 @@ export type FeedType = {
 
 interface UseFeedStore {
     feeds: FeedType[];
-    selectFeed: number | null;
-    setSelectFeed: (feed_id: number | null) => void;
-    getSelectFeed: () => FeedType | null;
+    selectedFeedId: number | null;
+    setSelectedFeedId: (feed_id: number | null) => void;
+    getSelectedFeed: () => FeedType | null;
     refreshFeeds: () => void;
     deleteFeed: (feed_id: number) => void;
     updateFeed: (data: { id: number } & Partial<FeedType>) => Promise<void>;
@@ -31,15 +31,15 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
     refreshFeeds();
 
     const getSelectFeed = () => {
-        if (!get().selectFeed) return null;
-        return get().feeds.find(feed => feed.id === get().selectFeed) || null;
+        if (!get().selectedFeedId) return null;
+        return get().feeds.find(feed => feed.id === get().selectedFeedId) || null;
     };
 
     return {
         feeds: [],
-        selectFeed: null,
-        setSelectFeed: feed_id => set({ selectFeed: feed_id }),
-        getSelectFeed,
+        selectedFeedId: null,
+        setSelectedFeedId: feed_id => set({ selectedFeedId: feed_id }),
+        getSelectedFeed: getSelectFeed,
         refreshFeeds,
         deleteFeed: feed_id => {
             window.electron.ipcRenderer.invoke('db-delete-feed', feed_id).then(() => {
@@ -57,10 +57,19 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
             });
         },
         updateFeedHasUnread: (feed_id, has_unread) => {
-            set(state => ({
-                ...state,
-                feeds: state.feeds.map(feed => (feed.id === feed_id ? { ...feed, has_unread } : feed)),
-            }));
+            set(state => {
+                const feed = state.feeds.find(f => f.id === feed_id);
+                // 如果 feed 不存在或 has_unread 值没有变化，则不更新
+                if (!feed || feed.has_unread === has_unread) {
+                    return state;
+                }
+                // 只有当值实际变化时才创建新的数组和对象
+                return {
+                    ...state,
+                    feeds: state.feeds.map(f => (f.id === feed_id ? { ...f, has_unread } : f)),
+                };
+            });
+            // set({ feeds: get().feeds.map(f => (f.id === feed_id ? { ...f, has_unread } : f)) });
         },
     };
 });

@@ -13,9 +13,9 @@ import Render from './render';
 export default function Main() {
     const [content, setContent] = useState('');
 
-    const setSelectFeed = useFeedStore(state => state.setSelectFeed);
+    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
 
-    const currentPostId = usePostStore(state => state.currentPostId);
+    const currentPostId = usePostStore(state => state.selectedPostId);
     const posts = usePostStore(state => state.posts);
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
 

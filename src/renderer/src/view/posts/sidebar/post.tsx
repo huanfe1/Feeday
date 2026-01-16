@@ -10,12 +10,12 @@ import { cn, truncate } from '@/lib/utils';
 function Post({ post }: { post: PostType }) {
     // 分别使用选择器，zustand v5中的函数引用是稳定的
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
-    const setCurrentPost = usePostStore(state => state.setCurrentPost);
+    const setCurrentPost = usePostStore(state => state.setSelectedPost);
     // 优化：直接计算isSelected，只有当currentPostId变化时才重新计算
     // 使用useMemo来稳定这个值，避免不必要的重新渲染
-    const currentPostId = usePostStore(state => state.currentPostId);
+    const currentPostId = usePostStore(state => state.selectedPostId);
     const isSelected = useMemo(() => currentPostId === post.id, [currentPostId, post.id]);
-    const setSelectFeedFromFeedStore = useFeedStore(state => state.setSelectFeed);
+    const setSelectFeedFromFeedStore = useFeedStore(state => state.setSelectedFeedId);
 
     const onClick = useCallback(() => {
         setCurrentPost(post.id);
@@ -77,16 +77,4 @@ function Post({ post }: { post: PostType }) {
     );
 }
 
-// 自定义比较函数，只有当post的关键属性变化时才重新渲染
-export default memo(Post, (prevProps, nextProps) => {
-    // 比较post对象的关键属性
-    return (
-        prevProps.post.id === nextProps.post.id &&
-        prevProps.post.is_read === nextProps.post.is_read &&
-        prevProps.post.title === nextProps.post.title &&
-        prevProps.post.summary === nextProps.post.summary &&
-        prevProps.post.author === nextProps.post.author &&
-        prevProps.post.pub_date === nextProps.post.pub_date &&
-        prevProps.post.link === nextProps.post.link
-    );
-});
+export default memo(Post);
