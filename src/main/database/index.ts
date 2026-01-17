@@ -2,10 +2,11 @@ import { fetchFeed } from '@main/lib/rss';
 import { undefined2null } from '@main/lib/utils';
 import dayjs from 'dayjs';
 import { app } from 'electron';
+import { EventEmitter } from 'node:events';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
 
-import type { PostType } from './types';
+import type { FeedType, PostType } from './types';
 
 const dbPath = join(app.getPath('userData'), 'database.db');
 export const db = new DatabaseSync(dbPath);
@@ -105,7 +106,7 @@ app.whenReady().then(() => {
     app.on('before-quit', () => db.close());
 });
 
-export function insertPost(post: PostType) {
+export function insertPost(feed_id: number, post: PostType) {
     post = undefined2null(post);
     const insert = db.prepare(
         'INSERT INTO posts (feed_id, title, link, author, image_url, summary, pub_date) VALUES ($feed_id, $title, $link, $author, $image_url, $summary, $pub_date)',
@@ -114,7 +115,7 @@ export function insertPost(post: PostType) {
 
     try {
         const params = {
-            feed_id: post.feed_id,
+            feed_id,
             title: post.title,
             link: post.link,
             author: post.author,
@@ -137,49 +138,56 @@ export function insertPost(post: PostType) {
     }
 }
 
+const emitter = new EventEmitter();
+
+emitter.on('insertPost', (feed_id: number, feed: FeedType, posts: PostType[]) => {
+    console.log('insertPost', feed_id, feed.title, feed.url);
+    db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon, last_fetch_error = null WHERE id = $id').run({
+        id: feed_id,
+        description: feed.description || null,
+        link: feed.link || null,
+        icon: feed.icon || null,
+        last_fetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+    });
+    posts.forEach(post => insertPost(feed_id, post));
+});
+
+emitter.on('errorFeed', (feed_id: number, message: string) => {
+    db.prepare('UPDATE feeds SET last_fetch = $last_fetch, last_fetch_error = $message WHERE id = $id').run({
+        id: feed_id,
+        message: message || 'Unknown error',
+        last_fetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+    });
+});
+
 export async function refreshFeed(timeLimit: boolean = true) {
     const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch = null;`;
     const needFetchFeeds = db.prepare(sql).all();
+
+    console.log(`Need fetch feeds: ${needFetchFeeds.length}`);
+
     if (needFetchFeeds.length === 0) return;
 
-    for (let index = 0; index < needFetchFeeds.length; index += 5) {
-        const feeds = needFetchFeeds.slice(index, index + 5);
-        const results = await Promise.all(
-            feeds.map(async feed => {
-                console.log(feed.id, feed.title, feed.url);
-                try {
-                    const result = await fetchFeed(feed.url as string);
-                    return { success: true, id: feed.id, data: result, feedInfo: feed, message: null };
-                } catch (error: unknown) {
-                    const message = error instanceof Error ? error.message : String(error);
-                    return { success: false, id: feed.id, data: null, feedInfo: feed, message };
-                }
-            }),
-        );
-        results.forEach(result => {
-            if (result.success) {
-                const { data, feedInfo } = result;
-                try {
-                    db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon, last_fetch_error = null WHERE id = $id').run({
-                        id: feedInfo.id,
-                        description: data?.description || null,
-                        link: data?.link || null,
-                        icon: data?.icon || null,
-                        last_fetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                    });
-                    data?.items?.forEach(item => insertPost({ feed_id: feedInfo.id, ...item } as PostType));
-                } catch (error: unknown) {
-                    console.error(error);
-                }
-            } else {
-                const { message, id } = result as { message: string; id: number };
-                db.prepare('UPDATE feeds SET last_fetch = $last_fetch, last_fetch_error = $message WHERE id = $id').run({
-                    id,
-                    message: message || 'Unknown error',
-                    last_fetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                });
-            }
-        });
+    const maxParallel = 5;
+    let index = 0;
+
+    async function fetchNext() {
+        if (index >= needFetchFeeds.length) return null;
+        const feed = needFetchFeeds[index];
+        index += 1;
+
+        try {
+            const result = await fetchFeed(feed.url as string);
+            emitter.emit('insertPost', feed.id, result, result.items);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            emitter.emit('errorFeed', feed.id, message);
+        }
+
+        return fetchNext();
     }
-    console.log('Refresh feed completed');
+
+    for (let i = 0; i < maxParallel; i += 1) {
+        fetchNext();
+    }
 }

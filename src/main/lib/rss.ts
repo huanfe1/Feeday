@@ -3,30 +3,6 @@ import dayjs from 'dayjs';
 import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
 
-// async function validateIcon(iconUrl: string): Promise<string | undefined> {
-//     try {
-//         // 使用 Promise.race 实现超时
-//         const timeoutPromise = new Promise<never>((_, reject) => {
-//             setTimeout(() => reject(new Error('Timeout')), 5000);
-//         });
-
-//         const fetchPromise = net.fetch(iconUrl, {
-//             method: 'HEAD',
-//         });
-
-//         const response = await Promise.race([fetchPromise, timeoutPromise]);
-
-//         // 如果状态码是 2xx 或 3xx，认为可以访问
-//         if (response.ok || (response.status >= 300 && response.status < 400)) {
-//             return iconUrl;
-//         }
-//         return undefined;
-//     } catch {
-//         // 如果请求失败或超时，返回 undefined
-//         return undefined;
-//     }
-// }
-
 export async function fetchFeed(url: string, timeout: number = 10000) {
     // 添加超时控制
     const timeoutPromise = new Promise<never>((_, reject) => {
