@@ -109,7 +109,7 @@ app.whenReady().then(() => {
 export function insertPost(feed_id: number, post: PostType) {
     post = undefined2null(post);
     const insert = db.prepare(
-        'INSERT INTO posts (feed_id, title, link, author, image_url, summary, pub_date) VALUES ($feed_id, $title, $link, $author, $image_url, $summary, $pub_date)',
+        'INSERT INTO posts (feed_id, title, link, author, image_url, summary, podcast, pub_date) VALUES ($feed_id, $title, $link, $author, $image_url, $summary, $podcast, $pub_date)',
     );
     const insertContent = db.prepare('INSERT INTO post_contents (post_id, content) VALUES ($post_id, $content)');
 
@@ -121,6 +121,7 @@ export function insertPost(feed_id: number, post: PostType) {
             author: post.author,
             image_url: post.image_url ?? null,
             summary: post.summary ?? null,
+            podcast: post.podcast ? JSON.stringify(post.podcast) : null,
             pub_date: post.pub_date,
         };
 
@@ -140,8 +141,8 @@ export function insertPost(feed_id: number, post: PostType) {
 
 const emitter = new EventEmitter();
 
-emitter.on('insertPost', (feed_id: number, feed: FeedType, posts: PostType[]) => {
-    console.log('insertPost', feed_id, feed.title);
+emitter.on('updateFeed', (feed_id: number, feed: FeedType, posts: PostType[]) => {
+    console.log('updateFeed', feed_id, feed.title);
     db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon, last_fetch_error = null WHERE id = $id').run({
         id: feed_id,
         description: feed.description || null,
@@ -178,7 +179,7 @@ export async function refreshFeed(timeLimit: boolean = true) {
 
         try {
             const result = await fetchFeed(feed.url as string);
-            emitter.emit('insertPost', feed.id, result, result.items);
+            emitter.emit('updateFeed', feed.id, result, result.items);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error);
             emitter.emit('errorFeed', feed.id, message);

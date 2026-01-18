@@ -234,10 +234,7 @@ export default function AddFeed() {
                 .then(feedId => {
                     if (feedInfo) {
                         feedInfo.items.forEach((post: unknown) => {
-                            window.electron.ipcRenderer.invoke('db-insert-post', {
-                                feed_id: feedId,
-                                ...(post as Record<string, unknown>),
-                            });
+                            window.electron.ipcRenderer.invoke('db-insert-post', feedId, post);
                         });
                     }
                     refreshFeeds();

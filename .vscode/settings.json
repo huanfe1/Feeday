@@ -7,5 +7,10 @@
     },
     "[json]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "workbench.editor.customLabels.patterns": {
+        "**/src/main/**/*.*": "main - ${filename}",
+        "**/src/preload/**/*.*": "preload - ${filename}",
+        "**/src/renderer/src/**/*.*": "renderer - ${dirname} - ${filename}"
     }
 }

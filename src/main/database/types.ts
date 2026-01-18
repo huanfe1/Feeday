@@ -19,6 +19,7 @@ export type PostType = {
     author: string;
     image_url?: string;
     summary?: string;
+    podcast?: Record<string, unknown>;
     pub_date: string;
     content?: string;
     is_read: boolean;

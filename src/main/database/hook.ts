@@ -3,6 +3,8 @@ import { type OPMLFeed, parseOPML, parseOPMLFromContent } from '@main/lib/opml';
 import { fetchFeed } from '@main/lib/rss';
 import { dialog, ipcMain } from 'electron';
 
+import type { PostType } from './types';
+
 ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
     try {
         return await fetchFeed(feedUrl);
@@ -36,8 +38,8 @@ ipcMain.handle('db-delete-feed', async (_event, feedId: number) => {
     return del.run(feedId);
 });
 
-ipcMain.handle('db-insert-post', async (_event, post) => {
-    return insertPost(post);
+ipcMain.handle('db-insert-post', async (_event, feed_id: number, post: PostType) => {
+    return insertPost(feed_id, post);
 });
 
 ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
