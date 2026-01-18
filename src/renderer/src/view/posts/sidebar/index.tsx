@@ -14,30 +14,21 @@ export default function Sidebar() {
     const selectFeed = useFeedStore(state => state.getSelectedFeed());
     const selectedFeedId = useFeedStore(state => state.selectedFeedId);
 
-    const posts = usePostStore.getState().posts;
-    usePostStore(state => state.posts.length);
+    // const posts = usePostStore.getState().posts;
+    // usePostStore(state => state.posts.length);
+    const posts = usePostStore(state => state.posts);
 
     const refreshPosts = usePostStore(state => state.refreshPosts);
     const loadMorePosts = usePostStore(state => state.loadMorePosts);
-    const readAllPosts = usePostStore(state => state.readAllPosts);
     const hasMore = usePostStore(state => state.hasMore);
     const isLoading = usePostStore(state => state.isLoading);
 
     const hasUnread = usePostStore(state => state.onlyUnread);
-    const setHasUnread = usePostStore(state => state.setOnlyUnread);
 
     // 优化：使用useCallback稳定函数引用
     const handleRefresh = useCallback(() => {
         refreshPosts();
     }, [refreshPosts]);
-
-    const handleToggleHasUnread = useCallback(() => {
-        setHasUnread(!hasUnread);
-    }, [setHasUnread, hasUnread]);
-
-    const handleReadAllPosts = useCallback(() => {
-        readAllPosts(selectedFeedId ?? undefined);
-    }, [readAllPosts, selectedFeedId]);
 
     useEffect(() => {
         refreshPosts();
@@ -82,29 +73,7 @@ export default function Sidebar() {
             <div className="flex h-full w-full flex-col overflow-y-hidden">
                 <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
                     <h3 className="truncate text-lg font-bold">{selectFeed?.title || '文章列表'}</h3>
-                    <span className="flex-none space-x-1 text-xl text-gray-500">
-                        <RefreshButton />
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={handleToggleHasUnread}>
-                                    <i className={cn('text-xl opacity-75', hasUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{hasUnread ? '显示全部' : '只显示已读'}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={handleReadAllPosts}>
-                                    <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>全部标为已读</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </span>
+                    <Buttons />
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
@@ -123,7 +92,7 @@ export default function Sidebar() {
                                 </div>
                             </div>
                         ) : (
-                            <ScrollArea scrollKey={selectedFeedId} className="flex h-full" onScroll={handleScroll}>
+                            <ScrollArea scrollKey={selectedFeedId ?? ''} className="flex h-full" onScroll={handleScroll}>
                                 {posts.map(post => (
                                     <Post key={post.id} post={post} />
                                 ))}
@@ -147,7 +116,7 @@ export default function Sidebar() {
     );
 }
 
-const RefreshButton = memo(function RefreshButton() {
+const Buttons = memo(function Buttons({ className }: { className?: string }) {
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
     const refreshPosts = usePostStore(state => state.refreshPosts);
 
@@ -156,16 +125,42 @@ const RefreshButton = memo(function RefreshButton() {
         refreshPosts();
     }, [refreshFeeds, refreshPosts]);
 
+    const onlyUnread = usePostStore(state => state.onlyUnread);
+    const setOnlyUnread = usePostStore(state => state.setOnlyUnread);
+
+    const readAllPosts = usePostStore(state => state.readAllPosts);
+    const selectedFeedId = useFeedStore(state => state.selectedFeedId);
+
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Button variant="ghost" className="" size="icon" onClick={onClick}>
-                    <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>刷新</p>
-            </TooltipContent>
-        </Tooltip>
+        <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className="" size="icon" onClick={onClick}>
+                        <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>刷新</p>
+                </TooltipContent>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => setOnlyUnread(!onlyUnread)}>
+                        <i className={cn('text-xl opacity-75', onlyUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{onlyUnread ? '显示全部' : '只显示已读'}</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => readAllPosts(selectedFeedId ?? undefined)}>
+                        <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>全部标为已读</p>
+                </TooltipContent>
+            </Tooltip>
+        </span>
     );
 });

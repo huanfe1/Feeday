@@ -29,11 +29,6 @@ import { cn } from '@/lib/utils';
 function Feed({ feed, className }: { feed: FeedType; className?: string }) {
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
     const isSelected = useFeedStore(state => state.selectedFeedId === feed.id);
-    // 直接从 store 订阅特定 feed 的 has_unread 状态，避免因其他 feed 更新而重新渲染
-    const hasUnread = useFeedStore(state => {
-        const feedFromStore = state.feeds.find(f => f.id === feed.id);
-        return feedFromStore?.has_unread ?? feed.has_unread;
-    });
 
     const clickFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -66,7 +61,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !hasUnread })}></span>
+                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.has_unread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>

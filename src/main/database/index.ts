@@ -2,7 +2,7 @@ import { fetchFeed } from '@main/lib/rss';
 import { undefined2null } from '@main/lib/utils';
 import dayjs from 'dayjs';
 import { app } from 'electron';
-import { EventEmitter } from 'node:events';
+import { EventEmitter } from 'events';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
 
@@ -141,7 +141,7 @@ export function insertPost(feed_id: number, post: PostType) {
 const emitter = new EventEmitter();
 
 emitter.on('insertPost', (feed_id: number, feed: FeedType, posts: PostType[]) => {
-    console.log('insertPost', feed_id, feed.title, feed.url);
+    console.log('insertPost', feed_id, feed.title);
     db.prepare('UPDATE feeds SET last_fetch = $last_fetch, description = $description, link = $link, icon = $icon, last_fetch_error = null WHERE id = $id').run({
         id: feed_id,
         description: feed.description || null,

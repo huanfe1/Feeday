@@ -19,30 +19,24 @@ function Post({ post }: { post: PostType }) {
     return (
         <ContextMenu modal={false}>
             <ContextMenuTrigger asChild>
-                <div
-                    onClick={() => setSelectedPost(post.id)}
-                    onDoubleClick={openLink}
-                    className={cn('flex bg-white px-4 py-3 duration-200 select-none', { 'bg-gray-200': isSelected })}
-                >
-                    <div className="overflow-hidden">
-                        <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
-                            <span className="truncate" title={post.title}>
-                                {post.title}
-                            </span>
-                            <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
-                        </h3>
-                        <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
-                        <div className="mt-1 space-x-2 text-xs text-gray-500">
-                            <span>{post.author}</span>
-                            <span>·</span>
-                            <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
-                        </div>
+                <div onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink} className={cn('bg-white p-4 duration-200 select-none', { 'bg-gray-200': isSelected })}>
+                    <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
+                        <span className="truncate" title={post.title}>
+                            {post.title}
+                        </span>
+                        <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
+                    </h3>
+                    <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
+                    <div className="mt-1 space-x-2 text-xs text-gray-500">
+                        <span>{post.author}</span>
+                        <span>·</span>
+                        <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
                     </div>
-                    {post.image_url && (
+                    {/* {post.image_url && (
                         <div className="ml-2 flex max-w-18 flex-none items-center">
                             <img src={post.image_url} alt={post.title} className="h-auto w-full rounded-md" />
                         </div>
-                    )}
+                    )} */}
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>

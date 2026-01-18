@@ -8,8 +8,7 @@ import { cn } from '@/lib/utils';
 import Feed from './feed';
 
 function Feeds({ className }: { className?: string }) {
-    const feeds = useFeedStore.getState().feeds;
-    useFeedStore(state => state.feeds.length);
+    const feeds = useFeedStore(state => state.feeds);
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
     const setCurrentPost = usePostStore(state => state.setSelectedPost);
