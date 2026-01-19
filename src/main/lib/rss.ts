@@ -12,16 +12,7 @@ export async function fetchFeed(url: string, timeout: number = 10000) {
     const fetchPromise = net
         .fetch(url)
         .then(res => res.text())
-        .then(async data => {
-            const result = rssParser(data);
-            if (!result.icon && result.link) {
-                result.icon = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${new URL(result.link).origin}&size=64`;
-                net.fetch(result.icon).then(res => {
-                    if (!res.ok) result.icon = undefined;
-                });
-            }
-            return result;
-        });
+        .then(data => rssParser(data));
 
     return Promise.race([fetchPromise, timeoutPromise]);
 }

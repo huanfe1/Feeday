@@ -47,7 +47,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
                     >
                         <Avatar className="size-4">
-                            <AvatarImage src={feed.icon} />
+                            <AvatarImage src={feed.icon ?? `https://unavatar.webp.se/${new URL(feed.link).hostname}?fallback=true`} />
                             <AvatarFallback>{feed.title.slice(0, 1)}</AvatarFallback>
                         </Avatar>
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>

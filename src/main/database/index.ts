@@ -63,6 +63,14 @@ const initSql = `
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
     );
 
+    CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, -- 设置ID
+        key TEXT NOT NULL UNIQUE, -- 设置键
+        value TEXT, -- 设置值
+        created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
+        updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
+    );
+
     CREATE TRIGGER IF NOT EXISTS update_feeds_updated_at
     AFTER UPDATE ON feeds
     FOR EACH ROW
@@ -94,17 +102,33 @@ const initSql = `
     BEGIN
         UPDATE folders SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
     END;
+
+    CREATE TRIGGER IF NOT EXISTS update_settings_updated_at
+    AFTER UPDATE ON settings
+    FOR EACH ROW
+    WHEN NEW.updated_at = OLD.updated_at
+    BEGIN
+        UPDATE settings SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
+    END;
 `;
 
-app.whenReady().then(() => {
-    try {
-        db.exec(initSql);
-        db.exec('PRAGMA foreign_keys = ON;');
-    } catch (error: unknown) {
-        console.error(error);
-    }
-    app.on('before-quit', () => db.close());
-});
+const initSettings = `
+    INSERT OR IGNORE INTO settings (key, value) VALUES
+    ('window_width', '1280'),
+    ('window_height', '720'),
+    ('is_maximized', false),
+    ('rsshub_source', 'https://rsshub.app'),
+    ('avatar_proxy', 'https://unavatar.webp.se');
+`;
+
+try {
+    db.exec(initSql);
+    db.exec(initSettings);
+    db.exec('PRAGMA foreign_keys = ON;');
+} catch (error: unknown) {
+    console.error(error);
+}
+app.on('before-quit', () => db.close());
 
 export function insertPost(feed_id: number, post: PostType) {
     post = undefined2null(post);

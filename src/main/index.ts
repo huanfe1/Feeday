@@ -5,18 +5,24 @@ import schedule from 'node-schedule';
 import { join } from 'path';
 
 import icon from '../../resources/icon.png?asset';
-import { refreshFeed } from './database';
+import { db, refreshFeed } from './database';
 
 function createWindow() {
-    // Create the browser window.
+    const settingList = db.prepare(`SELECT key, value FROM settings WHERE key IN ('window_width', 'window_height', 'is_maximized');`).all();
+    const settings = settingList.reduce((obj, item) => {
+        obj[item.key as keyof typeof obj] = item.value;
+        return obj;
+    }, {});
     const mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 720,
+        width: Number(settings.window_width),
+        height: Number(settings.window_height),
         minWidth: 1000,
         minHeight: 600,
         show: false,
         frame: false,
         autoHideMenuBar: true,
+        center: true,
+        fullscreenable: true,
         ...(process.platform === 'linux' ? { icon } : {}),
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
@@ -24,10 +30,12 @@ function createWindow() {
         },
     });
 
+    settings.is_maximized === '1' && mainWindow.maximize();
     mainWindow.on('ready-to-show', () => {
         mainWindow.show();
     });
 
+    // header buttons
     ipcMain.on('window-close', () => {
         mainWindow.close();
     });
@@ -48,10 +56,23 @@ function createWindow() {
         console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refreshFeed');
         refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feed'));
     };
-    refreshFeedHandle(false);
+    refreshFeedHandle();
 
     const every10minTask = schedule.scheduleJob('*/10 * * * *', () => refreshFeedHandle());
     app.on('before-quit', () => every10minTask.cancel());
+
+    mainWindow.on('resized', () => {
+        const size = mainWindow.getSize();
+        const sql = `UPDATE settings SET value = CASE key WHEN 'window_width' THEN ? WHEN 'window_height' THEN ? ELSE value END WHERE key IN ('window_width', 'window_height');`;
+        db.prepare(sql).run(...size);
+    });
+
+    mainWindow.on('maximize', () => {
+        db.prepare("UPDATE settings SET value = true WHERE key = 'is_maximized'").run();
+    });
+    mainWindow.on('unmaximize', () => {
+        db.prepare("UPDATE settings SET value = false WHERE key = 'is_maximized'").run();
+    });
 
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.

@@ -14,6 +14,7 @@ export default function Header() {
         const handleResize = () => {
             window.electron.ipcRenderer.invoke('get-window-state').then(data => setIsMaximized(data));
         };
+        handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
