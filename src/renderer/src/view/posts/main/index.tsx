@@ -142,7 +142,7 @@ export default function Main() {
 
                                 {podcast && podcast.url && (
                                     <div className="mb-8">
-                                        <AudioPlayer url={podcast.url} title={podcast.title} duration={podcast.duration} />
+                                        <AudioPlayer url={podcast.url} title={podcast.title} duration={podcast.duration} postId={currentPost.id} feedId={currentPost.feed_id} />
                                     </div>
                                 )}
 

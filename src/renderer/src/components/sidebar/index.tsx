@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { Resizable } from '@/components/resizable';
 import { Separator } from '@/components/ui/separator';
 
+import { GlobalAudioPlayer } from '../global-audio-player';
 import Settings from '../settings';
 import AddFeed from './addFeed';
 import Feeds from './feeds';
@@ -23,6 +24,7 @@ function Sidebar() {
                 </div>
                 <Separator />
                 <Feeds />
+                <GlobalAudioPlayer />
             </div>
         </Resizable>
     );
