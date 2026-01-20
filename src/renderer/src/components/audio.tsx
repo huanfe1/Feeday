@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface AudioPlayerProps {
@@ -11,15 +12,17 @@ interface AudioPlayerProps {
     className?: string;
 }
 
-export function AudioPlayer({ url, duration: initialDuration, className }: AudioPlayerProps) {
+export function AudioPlayer({ url, duration: initialDuration, title, className }: AudioPlayerProps) {
     const audioRef = useRef<HTMLAudioElement>(null);
 
     const VOLUME_DEFAULT = 0.2;
+    const SEEK_STEP = 5;
 
     const [duration, setDuration] = useState(initialDuration || 0);
     const [currentTime, setCurrentTime] = useState(0);
     const [volume, setVolume] = useState(VOLUME_DEFAULT);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
 
     const [_currentTime, set_CurrentTime] = useState<number | null>(null);
 
@@ -29,6 +32,20 @@ export function AudioPlayer({ url, duration: initialDuration, className }: Audio
         } else {
             audioRef.current?.play();
         }
+    };
+
+    const seekBackward = () => {
+        if (!audioRef.current) return;
+        const newTime = Math.max(0, audioRef.current.currentTime - SEEK_STEP);
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+    };
+
+    const seekForward = () => {
+        if (!audioRef.current) return;
+        const newTime = Math.min(duration, audioRef.current.currentTime + SEEK_STEP);
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
     };
 
     const currentTimeChangeHandler = (values: number[]) => {
@@ -46,6 +63,19 @@ export function AudioPlayer({ url, duration: initialDuration, className }: Audio
         if (!audioRef.current) return;
         audioRef.current.volume = values[0];
         setVolume(values[0]);
+        // const newVolume = values[0];
+        // audioRef.current.volume = newVolume;
+        // setVolume(newVolume);
+        // if (newVolume > 0 && isMuted) {
+        //     audioRef.current.muted = false;
+        //     setIsMuted(false);
+        // }
+    };
+
+    const toggleMuteHandler = () => {
+        if (!audioRef.current) return;
+        audioRef.current.muted = !isMuted;
+        setIsMuted(!isMuted);
     };
 
     useEffect(() => {
@@ -94,18 +124,48 @@ export function AudioPlayer({ url, duration: initialDuration, className }: Audio
 
     return (
         <div className={cn('bg-card rounded-lg border p-4', className)}>
-            <audio className="hidden" ref={audioRef} preload="none" controls src={url}></audio>
+            <audio className="hidden" ref={audioRef} preload="metadata" src={url}></audio>
+
+            {title && (
+                <div className="mb-3">
+                    <h3 className="text-foreground line-clamp-1 text-sm font-medium">{title}</h3>
+                </div>
+            )}
 
             <div className="flex items-center gap-3">
-                <Button className="h-10 w-10 shrink-0" variant="ghost" onClick={togglePlayPause} size="icon">
-                    {isPlaying ? <i className="i-mingcute-pause-fill text-xl"></i> : <i className="i-mingcute-play-fill text-xl"></i>}
-                </Button>
+                <div className="flex items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button className="h-9 w-9" variant="ghost" size="icon" onClick={seekBackward}>
+                                <i className="i-mingcute-rewind-backward-5-line text-lg" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>后退 {SEEK_STEP} 秒</TooltipContent>
+                    </Tooltip>
 
-                {/* 进度条和时间 */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button className="h-10 w-10 rounded-full" variant="default" size="icon" onClick={togglePlayPause}>
+                                <i className={cn('text-xl', isPlaying ? 'i-mingcute-pause-fill' : 'i-mingcute-play-fill')} />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isPlaying ? '暂停' : '播放'}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button className="h-9 w-9" variant="ghost" size="icon" onClick={seekForward}>
+                                <i className="i-mingcute-rewind-forward-5-line text-lg" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>前进 {SEEK_STEP} 秒</TooltipContent>
+                    </Tooltip>
+                </div>
+
                 {duration > 0 && (
                     <div className="flex flex-1 items-center gap-3">
-                        <span className="text-muted-foreground min-w-[45px] text-xs font-medium tabular-nums select-none">
-                            {formatTime(currentTime)} / {formatTime(duration)}
+                        <span className="text-muted-foreground min-w-[70px] text-right text-xs font-medium tabular-nums select-none">
+                            {formatTime(_currentTime ?? currentTime)} / {formatTime(duration)}
                         </span>
                         <div className="flex-1">
                             <Slider
@@ -122,9 +182,16 @@ export function AudioPlayer({ url, duration: initialDuration, className }: Audio
                 )}
 
                 <div className="flex shrink-0 items-center gap-2">
-                    <i className={cn('text-lg', volume === 0 ? 'i-mingcute-volume-mute-line' : 'i-mingcute-volume-fill')}></i>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button className="h-9 w-9" variant="ghost" size="icon" onClick={toggleMuteHandler}>
+                                <i className={cn('text-lg', volume === 0 || isMuted ? 'i-mingcute-volume-mute-line' : 'i-mingcute-volume-fill')} />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isMuted || volume === 0 ? '取消静音' : '静音'}</TooltipContent>
+                    </Tooltip>
                     <div className="w-24">
-                        <Slider onValueChange={volumeChangeHandler} value={[volume]} min={0} max={1} step={0.01} />
+                        <Slider onValueChange={volumeChangeHandler} value={[isMuted ? 0 : volume]} min={0} max={1} step={0.01} />
                     </div>
                 </div>
             </div>
