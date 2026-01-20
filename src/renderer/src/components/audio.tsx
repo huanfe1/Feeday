@@ -188,11 +188,10 @@ export function AudioPlayer({ url, duration: initialDuration, title, className }
                                 <i className={cn('text-lg', volume === 0 || isMuted ? 'i-mingcute-volume-mute-line' : 'i-mingcute-volume-fill')} />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{isMuted || volume === 0 ? '取消静音' : '静音'}</TooltipContent>
+                        <TooltipContent theme="light">
+                            <Slider orientation="vertical" onValueChange={volumeChangeHandler} value={[isMuted ? 0 : volume]} min={0} max={1} step={0.01} />
+                        </TooltipContent>
                     </Tooltip>
-                    <div className="w-24">
-                        <Slider onValueChange={volumeChangeHandler} value={[isMuted ? 0 : volume]} min={0} max={1} step={0.01} />
-                    </div>
                 </div>
             </div>
         </div>
