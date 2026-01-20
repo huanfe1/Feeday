@@ -1,5 +1,5 @@
 {
-    "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+    "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss", "@xeonlink/prettier-plugin-organize-attributes"],
     "printWidth": 180,
     "tabWidth": 4,
     "semi": true,

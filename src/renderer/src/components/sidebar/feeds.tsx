@@ -49,11 +49,11 @@ function Feeds({ className }: { className?: string }) {
             ) : (
                 <>
                     <div className="mt-3 mb-2 ml-2 text-sm font-medium select-none">订阅源</div>
-                    <Accordion type="multiple" className="w-full">
+                    <Accordion className="w-full" type="multiple">
                         {Object.entries(groupedFeeds.groups).map(([folderId, folderFeeds]) => {
                             const folderName = folderFeeds[0]?.folder_name || '未命名文件夹';
                             return (
-                                <AccordionItem key={folderId} value={`folder-${folderId}`} className="border-none">
+                                <AccordionItem className="border-none" key={folderId} value={`folder-${folderId}`}>
                                     <AccordionTrigger className="px-2 py-2 text-sm font-medium hover:no-underline">{folderName}</AccordionTrigger>
                                     <AccordionContent className="pb-1">
                                         {folderFeeds.map(item => (

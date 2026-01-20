@@ -9,6 +9,7 @@ export type PostType = {
     author: string;
     image_url: string;
     summary: string;
+    podcast: string;
     is_read: boolean;
     pub_date: string;
     feed_id: number;

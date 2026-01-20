@@ -49,7 +49,7 @@ function Accordion({ type = 'single', value, defaultValue = [], onValueChange, c
 
     return (
         <AccordionContext.Provider value={{ value: currentValue, toggleValue, type }}>
-            <div data-slot="accordion" className={className}>
+            <div className={className} data-slot="accordion">
                 {children}
             </div>
         </AccordionContext.Provider>
@@ -64,7 +64,7 @@ type AccordionItemProps = {
 
 function AccordionItem({ value, className, children }: AccordionItemProps) {
     return (
-        <div data-slot="accordion-item" className={cn('border-b last:border-b-0', className)}>
+        <div className={cn('border-b last:border-b-0', className)} data-slot="accordion-item">
             {React.Children.map(children, child => {
                 if (React.isValidElement(child)) {
                     return React.cloneElement(child, { value } as { value: string });
@@ -95,18 +95,18 @@ function AccordionTrigger({ value, className, children }: AccordionTriggerProps)
 
     return (
         <button
-            data-slot="accordion-trigger"
-            type="button"
-            onClick={handleClick}
             className={cn(
                 'focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-1 items-center gap-2 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
                 className,
             )}
+            data-slot="accordion-trigger"
+            type="button"
+            onClick={handleClick}
         >
             <motion.div
+                className="pointer-events-none flex shrink-0 items-center justify-center"
                 animate={{ rotate: isOpen ? 0 : -90 }}
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="pointer-events-none flex shrink-0 items-center justify-center"
             >
                 <ChevronDownIcon className="size-4 translate-y-0.5" />
             </motion.div>
@@ -143,6 +143,7 @@ function AccordionContent({ value, className, children }: AccordionContentProps)
 
     return (
         <motion.div
+            className="text-sm"
             data-slot="accordion-content"
             initial={false}
             animate={{
@@ -151,9 +152,8 @@ function AccordionContent({ value, className, children }: AccordionContentProps)
             }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
-            className="text-sm"
         >
-            <div ref={contentRef} className={cn('pt-0 pb-4', className)}>
+            <div className={cn('pt-0 pb-4', className)} ref={contentRef}>
                 {children}
             </div>
         </motion.div>

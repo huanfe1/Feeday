@@ -42,9 +42,9 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
             <ContextMenu modal={false}>
                 <ContextMenuTrigger asChild>
                     <div
+                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
-                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
                     >
                         <Avatar className="size-4">
                             <AvatarImage src={feed.icon ?? `https://unavatar.webp.se/${new URL(feed.link).hostname}?fallback=true`} />
@@ -158,7 +158,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                     <DialogDescription>修改订阅源的基本信息</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
                         <FormField
                             control={form.control}
                             name="title"

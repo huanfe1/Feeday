@@ -285,7 +285,7 @@ export default function AddFeed() {
                     </TabsList>
                     <TabsContent value="single">
                         <Form {...form}>
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form className="space-y-4" onSubmit={handleSubmit}>
                                 <FormField
                                     control={form.control}
                                     name="url"
@@ -297,12 +297,12 @@ export default function AddFeed() {
                                                     <InputGroup className="flex-1">
                                                         <InputGroupAddon align="inline-end">
                                                             <InputGroupButton
+                                                                className="rounded-full"
                                                                 onClick={() => {
                                                                     form.setValue('url', '');
                                                                     form.setValue('title', '');
                                                                     feedRef.current = null;
                                                                 }}
-                                                                className="rounded-full"
                                                                 size="icon-xs"
                                                                 type="button"
                                                             >

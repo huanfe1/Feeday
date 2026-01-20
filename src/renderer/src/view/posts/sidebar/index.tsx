@@ -77,12 +77,12 @@ export default function Sidebar() {
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
+                        className="w-full flex-1 overflow-y-hidden"
                         key={`${selectedFeedId || 'all'}-${hasUnread ? 'unread' : 'all'}`}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.1, ease: 'easeIn' }}
-                        className="w-full flex-1 overflow-y-hidden"
                     >
                         {posts.length === 0 ? (
                             <div className="flex h-full items-center justify-center text-gray-400 select-none">
@@ -92,7 +92,7 @@ export default function Sidebar() {
                                 </div>
                             </div>
                         ) : (
-                            <ScrollArea scrollKey={selectedFeedId ?? ''} className="flex h-full" onScroll={handleScroll}>
+                            <ScrollArea className="flex h-full" scrollKey={selectedFeedId ?? ''} onScroll={handleScroll}>
                                 {posts.map(post => (
                                     <Post key={post.id} post={post} />
                                 ))}
@@ -135,7 +135,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
         <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" className="" size="icon" onClick={onClick}>
+                    <Button className="" variant="ghost" size="icon" onClick={onClick}>
                         <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
                     </Button>
                 </TooltipTrigger>

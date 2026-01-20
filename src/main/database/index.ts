@@ -145,7 +145,7 @@ export function insertPost(feed_id: number, post: PostType) {
             author: post.author,
             image_url: post.image_url ?? null,
             summary: post.summary ?? null,
-            podcast: post.podcast ? JSON.stringify(post.podcast) : null,
+            podcast: post?.podcast?.url ? JSON.stringify(post.podcast) : null,
             pub_date: post.pub_date,
         };
 

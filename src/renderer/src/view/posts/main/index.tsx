@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { AudioPlayer } from '@/components/audio';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,19 +17,37 @@ export default function Main() {
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
 
     const currentPostId = usePostStore(state => state.selectedPostId);
-    const posts = usePostStore(state => state.posts);
-    const updatePostReadById = usePostStore(state => state.updatePostReadById);
+    const currentPost = usePostStore(state => state.getSelectedPost());
 
-    // 使用 useMemo 基于 currentPostId 和 posts 计算 currentPost
-    const currentPost = useMemo(() => {
-        if (!currentPostId) return null;
-        return posts.find(post => post.id === currentPostId) || null;
-    }, [currentPostId, posts]);
+    const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         setIsScrolled(e.currentTarget.scrollTop > 50);
     };
+
+    const podcast = useMemo(() => {
+        if (!currentPost?.podcast) return null;
+        const parsed = JSON.parse(currentPost.podcast);
+        // 处理 duration：如果是字符串格式（如 "01:23:45"），转换为秒数
+        if (parsed.duration) {
+            if (typeof parsed.duration === 'string') {
+                const parts = parsed.duration.split(':').map(Number);
+                if (parts.length === 3) {
+                    // HH:MM:SS
+                    parsed.duration = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                } else if (parts.length === 2) {
+                    // MM:SS
+                    parsed.duration = parts[0] * 60 + parts[1];
+                } else {
+                    parsed.duration = Number(parsed.duration) || 0;
+                }
+            } else {
+                parsed.duration = Number(parsed.duration) || 0;
+            }
+        }
+        return parsed;
+    }, [currentPost]);
 
     useEffect(() => {
         if (!currentPostId) return;
@@ -42,11 +61,11 @@ export default function Main() {
         return (
             <div className="h-full overflow-hidden">
                 <motion.div
+                    className="flex h-full items-center justify-center text-gray-400 select-none"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="flex h-full items-center justify-center text-gray-400 select-none"
                 >
                     <div className="flex flex-col items-center gap-y-3">
                         <i className="i-mingcute-follow-fill text-[60px] opacity-50"></i>
@@ -84,23 +103,23 @@ export default function Main() {
             </div>
             <AnimatePresence mode="wait">
                 <motion.div
+                    className="h-full"
                     key={currentPost?.id}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="h-full"
                 >
-                    <ScrollArea onScroll={handleScroll} className="h-full" scrollKey={currentPost.id}>
+                    <ScrollArea className="h-full" onScroll={handleScroll} scrollKey={currentPost.id}>
                         <div className="mx-auto max-w-2xl px-8 pt-4 pb-12 2xl:max-w-4xl">
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
                                     <h1>
                                         <a
+                                            className="text-foreground block text-2xl leading-tight font-bold tracking-tight lg:text-3xl"
                                             href={currentPost.link}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-foreground block text-2xl leading-tight font-bold tracking-tight lg:text-3xl"
                                         >
                                             {currentPost.title}
                                         </a>
@@ -120,6 +139,12 @@ export default function Main() {
                                         )}
                                     </div>
                                 </header>
+
+                                {podcast && podcast.url && (
+                                    <div className="mb-8">
+                                        <AudioPlayer url={podcast.url} title={podcast.title} duration={podcast.duration} />
+                                    </div>
+                                )}
 
                                 <div className="prose max-w-none">
                                     <Render content={content} />

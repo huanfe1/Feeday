@@ -10,7 +10,7 @@ function Render({ content }: { content: string }) {
                 if (domNode.name === 'a') {
                     const href = domNode.attribs.href?.replace(/^.*http/, 'http')?.replace('javascript:', '') || '';
                     return (
-                        <a href={href} className="no-underline hover:underline" target="_blank" rel="noopener noreferrer">
+                        <a className="no-underline hover:underline" href={href} target="_blank" rel="noopener noreferrer">
                             {domNode.children.map(child => (child.type === 'text' ? child.data : null))}
                         </a>
                     );

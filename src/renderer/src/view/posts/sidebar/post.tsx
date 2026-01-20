@@ -19,7 +19,7 @@ function Post({ post }: { post: PostType }) {
     return (
         <ContextMenu modal={false}>
             <ContextMenuTrigger asChild>
-                <div onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink} className={cn('bg-white p-4 duration-200 select-none', { 'bg-gray-200': isSelected })}>
+                <div className={cn('bg-white p-4 duration-200 select-none', { 'bg-gray-200': isSelected })} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
                     <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
                         <span className="truncate" title={post.title}>
                             {post.title}

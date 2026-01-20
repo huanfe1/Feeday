@@ -35,7 +35,12 @@ function createWindow() {
         mainWindow.show();
     });
 
-    // header buttons
+    mainWindow.webContents.setWindowOpenHandler(details => {
+        shell.openExternal(details.url);
+        return { action: 'deny' };
+    });
+
+    // Header control buttons
     ipcMain.on('window-close', () => {
         mainWindow.close();
     });
@@ -46,11 +51,6 @@ function createWindow() {
         mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
     });
     ipcMain.handle('get-window-state', () => mainWindow.isMaximized());
-
-    mainWindow.webContents.setWindowOpenHandler(details => {
-        shell.openExternal(details.url);
-        return { action: 'deny' };
-    });
 
     const refreshFeedHandle = (timeLimit?: boolean) => {
         console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refreshFeed');
