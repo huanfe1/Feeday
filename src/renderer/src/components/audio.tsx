@@ -112,7 +112,15 @@ const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDurat
             <span className="text-muted-foreground min-w-[70px] shrink-0 text-right text-xs font-medium tabular-nums select-none">
                 {formatTime(displayTime)} / {formatTime(displayDuration)}
             </span>
-            <Slider className="w-full" value={[displayTime]} onValueCommit={currentTimeCommitHandler} onValueChange={currentTimeChangeHandler} min={0} max={duration} step={0.1} />
+            <Slider
+                className="w-full"
+                value={[displayTime]}
+                onValueCommit={currentTimeCommitHandler}
+                onValueChange={currentTimeChangeHandler}
+                min={0}
+                max={displayDuration}
+                step={1}
+            />
         </div>
     );
 });

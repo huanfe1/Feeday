@@ -1,5 +1,6 @@
 import { memo } from 'react';
 
+import { Logo, LogoText } from '@/components/icon';
 import { Resizable } from '@/components/resizable';
 import { Separator } from '@/components/ui/separator';
 
@@ -14,8 +15,8 @@ function Sidebar() {
             <div className="bg-sidebar flex h-full flex-col">
                 <div className="drag-region flex h-[60px] justify-between px-3">
                     <div className="flex items-center gap-1">
-                        <i className="i-mingcute-follow-fill text-4xl text-[#FF5C00]" />
-                        <span className="font-bold">Folo</span>
+                        <Logo className="size-10" />
+                        <LogoText className="mt-1 ml-1" />
                     </div>
                     <div className="no-drag-region flex items-center">
                         <AddFeed />

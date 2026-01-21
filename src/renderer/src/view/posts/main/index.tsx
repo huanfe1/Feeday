@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio';
+import { Logo } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,7 +56,7 @@ export default function Main() {
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
                     <div className="flex flex-col items-center gap-y-3">
-                        <i className="i-mingcute-follow-fill text-[60px] opacity-50"></i>
+                        <Logo className="size-25 opacity-50" />
                     </div>
                 </motion.div>
             </div>
