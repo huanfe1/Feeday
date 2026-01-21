@@ -7,5 +7,6 @@ import { usePostStore } from './posts';
 export type { FeedType } from './feeds';
 export type { FolderType } from './folders';
 export type { PostType } from './posts';
+export type { AudioTrack } from './audio';
 
 export { useDragging, useFeedStore, useFolderStore, usePostStore, useView, useAudioStore };

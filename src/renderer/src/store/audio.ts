@@ -2,22 +2,21 @@ import { create } from 'zustand';
 
 const VOLUME_DEFAULT = 0.2;
 
-interface AudioTrack {
+type PodcastType = {
     url: string;
     title?: string;
     duration?: number;
-    feedId?: number;
-    postId?: number;
-}
+    image?: string;
+};
 
-interface AudioState {
+export type AudioTrack = {
+    feedId: number | null;
+    postId: number | null;
+    podcast: PodcastType;
+};
+
+type AudioState = AudioTrack & {
     audio: HTMLAudioElement;
-
-    // 当前音频信息
-    src: string | null;
-    title?: string;
-    feedId?: number | null;
-    postId?: number | null;
 
     // 播放状态
     duration: number;
@@ -25,17 +24,20 @@ interface AudioState {
     volume: number;
     isPlaying: boolean;
     isMuted: boolean;
+    rate: number;
+    setRate: (rate: number) => void;
 
     // actions
     setTrack: (track: AudioTrack) => void;
-    play: () => Promise<void>;
+    clearTrack: () => void;
+    play: () => void;
     pause: () => void;
     togglePlayPause: () => void;
     seekBy: (delta: number) => void;
     setCurrentTime: (time: number) => void;
     setVolume: (volume: number) => void;
     toggleMute: () => void;
-}
+};
 
 export const useAudioStore = create<AudioState>((set, get) => {
     const audio = new Audio();
@@ -43,18 +45,15 @@ export const useAudioStore = create<AudioState>((set, get) => {
     audio.volume = VOLUME_DEFAULT;
 
     audio.addEventListener('durationchange', () => {
-        set({ duration: audio.duration || 0 });
+        set({ duration: audio.duration });
     });
 
     audio.addEventListener('timeupdate', () => {
-        set({ currentTime: audio.currentTime || 0 });
+        set({ currentTime: audio.currentTime });
     });
 
     audio.addEventListener('volumechange', () => {
-        set({
-            volume: audio.volume,
-            isMuted: audio.muted || audio.volume === 0,
-        });
+        set({ volume: audio.volume });
     });
 
     audio.addEventListener('play', () => {
@@ -69,13 +68,18 @@ export const useAudioStore = create<AudioState>((set, get) => {
         set({ isPlaying: false });
     });
 
-    // 拖动/跳转进度完成后，同步当前时间并根据实际状态更新 isPlaying
-    audio.addEventListener('seeked', () => {
-        set({
-            currentTime: audio.currentTime || 0,
-            isPlaying: !audio.paused,
-        });
+    audio.addEventListener('ratechange', () => {
+        set({ rate: audio.playbackRate });
     });
+
+    // audio.addEventListener('seeking', () => {
+    //     get().pause();
+    // });
+
+    // audio.addEventListener('seeked', () => {
+    //     set({ currentTime: audio.currentTime });
+    //     get().play();
+    // });
 
     const clampTime = (time: number) => {
         const duration = get().duration || audio.duration || 0;
@@ -88,57 +92,53 @@ export const useAudioStore = create<AudioState>((set, get) => {
     return {
         audio,
 
-        src: null,
-        title: undefined,
         feedId: null,
         postId: null,
+        podcast: { url: '' },
 
         duration: 0,
         currentTime: 0,
         volume: VOLUME_DEFAULT,
         isPlaying: false,
         isMuted: false,
+        rate: 1,
 
-        setTrack: ({ url, title, duration, feedId, postId }: AudioTrack) => {
+        setTrack: ({ feedId, postId, podcast }: AudioTrack) => {
             const { audio } = get();
+            const url = podcast.url;
 
-            // 如果是新的音频地址，更新 src 并从头开始
             if (audio.src !== url) {
                 audio.src = url;
                 audio.currentTime = 0;
             }
 
             set({
-                src: url,
-                title,
                 feedId: feedId ?? null,
                 postId: postId ?? null,
-                // 如果后端有提供 duration，优先用提供的；否则等待 durationchange 事件更新
-                duration: duration ?? get().duration,
+                podcast: podcast ?? null,
                 currentTime: 0,
+                duration: podcast.duration ?? get().duration,
             });
         },
 
-        play: async () => {
-            const { audio } = get();
-            try {
-                await audio.play();
-            } catch (e) {
-                console.error('Audio play failed:', e);
-            }
+        clearTrack: () => {
+            set({ feedId: null, postId: null, podcast: { url: '' } });
+            audio.src = '';
+        },
+
+        play: () => {
+            get().audio.play();
         },
 
         pause: () => {
-            const { audio } = get();
-            audio.pause();
+            get().audio.pause();
         },
 
         togglePlayPause: () => {
-            const { audio } = get();
-            if (audio.paused) {
+            if (get().audio.paused) {
                 get().play();
             } else {
-                audio.pause();
+                get().audio.pause();
             }
         },
 
@@ -157,22 +157,20 @@ export const useAudioStore = create<AudioState>((set, get) => {
         },
 
         setVolume: (volume: number) => {
-            const { audio } = get();
-            const v = Math.min(Math.max(volume, 0), 1);
-            audio.volume = v;
-            if (v > 0 && audio.muted) {
-                audio.muted = false;
-            }
-            set({
-                volume: v,
-                isMuted: audio.muted || v === 0,
-            });
+            const audio = get().audio;
+            audio.volume = Math.min(Math.max(volume, 0), 1);
+            audio.muted && get().toggleMute();
         },
 
         toggleMute: () => {
             const { audio } = get();
             audio.muted = !audio.muted;
             set({ isMuted: audio.muted });
+        },
+
+        setRate: (rate: number) => {
+            get().audio.playbackRate = rate;
+            set({ rate });
         },
     };
 });

@@ -18,3 +18,18 @@ export function truncate(str: string, length = 60) {
     if (str.length <= length) return str;
     return str.slice(0, length - omissionLength) + omission;
 }
+
+export function formatTime(seconds: number): string {
+    if (isNaN(seconds) || !isFinite(seconds)) return '00:00';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hrs > 0) {
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    if (mins > 0) {
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `00:${secs.toString().padStart(2, '0')}`;
+}

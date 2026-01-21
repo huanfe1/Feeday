@@ -29,23 +29,10 @@ export default function Main() {
     const podcast = useMemo(() => {
         if (!currentPost?.podcast) return null;
         const parsed = JSON.parse(currentPost.podcast);
-        // 处理 duration：如果是字符串格式（如 "01:23:45"），转换为秒数
-        if (parsed.duration) {
-            if (typeof parsed.duration === 'string') {
-                const parts = parsed.duration.split(':').map(Number);
-                if (parts.length === 3) {
-                    // HH:MM:SS
-                    parsed.duration = parts[0] * 3600 + parts[1] * 60 + parts[2];
-                } else if (parts.length === 2) {
-                    // MM:SS
-                    parsed.duration = parts[0] * 60 + parts[1];
-                } else {
-                    parsed.duration = Number(parsed.duration) || 0;
-                }
-            } else {
-                parsed.duration = Number(parsed.duration) || 0;
-            }
-        }
+
+        parsed.image ??= currentPost.image_url;
+        parsed.title ??= currentPost.title;
+
         return parsed;
     }, [currentPost]);
 
@@ -142,7 +129,7 @@ export default function Main() {
 
                                 {podcast && podcast.url && (
                                     <div className="mb-8">
-                                        <AudioPlayer url={podcast.url} title={podcast.title} duration={podcast.duration} postId={currentPost.id} feedId={currentPost.feed_id} />
+                                        <AudioPlayer postId={currentPost.id} feedId={currentPost.feed_id} podcast={podcast} />
                                     </div>
                                 )}
 

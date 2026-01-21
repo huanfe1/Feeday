@@ -25,7 +25,7 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
             link: feed.link,
             url: feed.atom?.links?.find(_ => _.rel === 'self')?.href,
             description: feed.description,
-            icon: feed.image?.url,
+            icon: feed.image?.url ?? feed.itunes?.image,
             last_updated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
             items: feed?.items?.map(item => ({
                 title: item.title,
@@ -37,6 +37,7 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
                 content: item.content?.encoded,
                 podcast: {
                     ...item.itunes,
+                    image: item.itunes?.image ?? feed.itunes?.image,
                     url: item.enclosures?.find(_ => _.type?.startsWith('audio'))?.url,
                 },
             })),
@@ -47,7 +48,7 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
             link: getLink(feed?.links?.find(_ => _.rel === 'alternate')?.href, feed.id),
             url: feed?.links?.find(_ => _.rel === 'self')?.href,
             description: feed.subtitle,
-            icon: feed.icon,
+            icon: feed.icon ?? feed.itunes?.image,
             last_updated: dayjs(feed.updated).format('YYYY-MM-DD HH:mm:ss'),
             items: feed?.entries?.map(item => ({
                 title: item.title,
@@ -60,6 +61,7 @@ export function rssParser(data: string): Partial<FeedType> & { items?: Partial<P
                 podcast: {
                     ...item.itunes,
                     url: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('audio'))?.href,
+                    image: item.itunes?.image ?? feed.itunes?.image,
                 },
             })),
         };
