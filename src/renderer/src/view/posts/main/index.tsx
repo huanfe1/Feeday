@@ -45,6 +45,11 @@ export default function Main() {
         return () => setIsScrolled(false);
     }, [currentPostId]);
 
+    const handleClickFeed = (id: number) => {
+        setSelectFeed(id);
+        document.dispatchEvent(new CustomEvent('jump-to-feed', { detail: id }));
+    };
+
     if (!currentPost)
         return (
             <div className="h-full overflow-hidden">
@@ -114,7 +119,7 @@ export default function Main() {
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
                                         {currentPost.author && (
-                                            <div className="flex cursor-pointer items-center gap-2" onClick={() => setSelectFeed(currentPost.feed_id)}>
+                                            <div className="flex cursor-pointer items-center gap-2" onClick={() => handleClickFeed(currentPost.feed_id)}>
                                                 <i className="i-mingcute-user-3-line h-4 w-4" />
                                                 <span className="font-medium">{currentPost.author}</span>
                                             </div>

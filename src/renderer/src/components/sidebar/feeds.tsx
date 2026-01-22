@@ -1,14 +1,16 @@
-import { useFeedStore, usePostStore } from '@/store';
-import { memo, useMemo } from 'react';
+import { useFeedStore, useFolderStore, usePostStore } from '@/store';
+import { motion } from 'motion/react';
+import { memo, useEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import Feed from './feed';
 
 function Feeds({ className }: { className?: string }) {
-    const feeds = useFeedStore(state => state.feeds);
+    const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => !feed.folder_id)));
+    const folders = useFolderStore(state => state.folders);
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
     const setCurrentPost = usePostStore(state => state.setSelectedPost);
@@ -18,25 +20,6 @@ function Feeds({ className }: { className?: string }) {
         setSelectFeed(null);
         setCurrentPost(null);
     };
-
-    // 按文件夹分组 feeds
-    const groupedFeeds = useMemo(() => {
-        const groups: Record<string | number, typeof feeds> = {};
-        const ungrouped: typeof feeds = [];
-
-        feeds.forEach(feed => {
-            if (feed.folder_id && feed.folder_name) {
-                if (!groups[feed.folder_id]) {
-                    groups[feed.folder_id] = [];
-                }
-                groups[feed.folder_id].push(feed);
-            } else {
-                ungrouped.push(feed);
-            }
-        });
-
-        return { groups, ungrouped };
-    }, [feeds]);
 
     return (
         <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={cancelSelectFeed}>
@@ -49,32 +32,45 @@ function Feeds({ className }: { className?: string }) {
             ) : (
                 <>
                     <div className="mt-3 mb-2 ml-2 text-sm font-medium select-none">订阅源</div>
-                    <Accordion className="w-full" type="multiple">
-                        {Object.entries(groupedFeeds.groups).map(([folderId, folderFeeds]) => {
-                            const folderName = folderFeeds[0]?.folder_name || '未命名文件夹';
-                            return (
-                                <AccordionItem className="border-none" key={folderId} value={`folder-${folderId}`}>
-                                    <AccordionTrigger className="px-2 py-2 text-sm font-medium hover:no-underline">{folderName}</AccordionTrigger>
-                                    <AccordionContent className="pb-1">
-                                        {folderFeeds.map(item => (
-                                            <Feed className="pl-5" key={item.id} feed={item} />
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            );
-                        })}
-                        {groupedFeeds.ungrouped.length > 0 && (
-                            <div className="mt-1">
-                                {groupedFeeds.ungrouped.map(item => (
-                                    <Feed key={item.id} feed={item} />
-                                ))}
-                            </div>
-                        )}
-                    </Accordion>
+                    {folders.map(folder => (
+                        <FolderItem key={folder.id} folder={folder} />
+                    ))}
+                    {feeds.map(item => (
+                        <Feed className="pl-5" key={item.id} feed={item} />
+                    ))}
                 </>
             )}
         </ScrollArea>
     );
 }
+
+const FolderItem = memo(function FolderItem({ folder }: { folder: { id: number | null; name?: string } }) {
+    const DURATION = 0.2;
+
+    const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => feed.folder_id === folder.id)));
+    const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        const handleJumpToFeed = ({ detail: id }: CustomEvent<number>) => {
+            feeds.some(feed => feed.id === id) && setOpen(true);
+        };
+        document.addEventListener('jump-to-feed', handleJumpToFeed as EventListener);
+        return () => document.removeEventListener('jump-to-feed', handleJumpToFeed as EventListener);
+    }, [feeds]);
+
+    return (
+        <div>
+            <div className="flex cursor-default items-center gap-x-1 p-2" onClick={() => setOpen(!open)}>
+                <motion.span className="i-mingcute-right-line" animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }}></motion.span>
+                <span className="text-sm font-medium">{folder.name || '未命名文件夹'}</span>
+            </div>
+            <motion.div className="overflow-hidden" initial={{ height: 0 }} animate={{ height: open ? 'auto' : 0 }} transition={{ duration: DURATION }}>
+                {feeds.map(item => (
+                    <Feed className="pl-5" key={item.id} feed={item} />
+                ))}
+            </motion.div>
+        </div>
+    );
+});
 
 export default memo(Feeds);
