@@ -11,7 +11,7 @@ import Feeds from './feeds';
 
 function Sidebar() {
     return (
-        <Resizable options={{ axis: 'x', min: 200, max: 300, initial: 250 }}>
+        <Resizable id="feeds-sidebar" options={{ axis: 'x', min: 200, max: 300, initial: 250 }}>
             <div className="bg-sidebar flex h-full flex-col">
                 <div className="drag-region flex h-[60px] justify-between px-3">
                     <div className="flex items-center gap-1">
