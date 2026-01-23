@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-const VOLUME_DEFAULT = 0.2;
+const value = localStorage.getItem('audio-volume');
+const VOLUME_DEFAULT = value ? Number(value) : 0.2;
 
 type PodcastType = {
     url: string;
@@ -54,6 +55,7 @@ export const useAudioStore = create<AudioState>((set, get) => {
 
     audio.addEventListener('volumechange', () => {
         set({ volume: audio.volume });
+        localStorage.setItem('audio-volume', audio.volume.toString());
     });
 
     audio.addEventListener('play', () => {
