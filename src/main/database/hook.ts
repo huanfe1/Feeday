@@ -17,7 +17,11 @@ ipcMain.handle('db-get-feeds', async () => {
     const select = db.prepare(
         'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, f.folder_id, fo.name AS folder_name, f.last_fetch_error, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f LEFT JOIN folders fo ON f.folder_id = fo.id ORDER BY (fo.name IS NULL), fo.name ASC, f.title ASC',
     );
-    return select.all();
+    const avatar_proxy = db.prepare("SELECT value FROM settings WHERE key = 'avatar_proxy'").get()!.value as string;
+    return select.all().map(feed => ({
+        ...feed,
+        icon: feed.icon ? feed.icon : avatar_proxy.replace('${url}', new URL(feed.link as string).hostname),
+    }));
 });
 
 ipcMain.handle('db-insert-feed', async (_event, feed) => {
@@ -44,14 +48,14 @@ ipcMain.handle('db-insert-post', async (_event, feed_id: number, post: PostType)
 
 ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read, p.image_url, p.podcast FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id ${only_unread ? 'WHERE p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
+        `SELECT id, title, link, summary, feed_id, author, pub_date, is_read, image_url, podcast FROM posts ${only_unread ? 'WHERE is_read = 0' : ''} ORDER BY is_read ASC, pub_date DESC LIMIT ? OFFSET ?`,
     );
     return select.all(limit, offset);
 });
 
 ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
     const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, f.title as author, p.pub_date, p.is_read, p.image_url, p.podcast FROM posts p LEFT JOIN feeds f ON f.id = p.feed_id WHERE p.feed_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
+        `SELECT id, title, link, summary, feed_id, author, pub_date, is_read, image_url, podcast FROM posts WHERE feed_id = ? ${only_unread ? 'AND is_read = 0' : ''} ORDER BY is_read ASC, pub_date DESC LIMIT ? OFFSET ?`,
     );
     return select.all(feedId, limit, offset);
 });

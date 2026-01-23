@@ -23,7 +23,7 @@ function Feeds({ className }: { className?: string }) {
 
     return (
         <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={cancelSelectFeed}>
-            {feeds.length === 0 ? (
+            {feeds.length === 0 && folders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
                     <p className="text-muted-foreground text-sm">暂无订阅源</p>

@@ -17,8 +17,8 @@ export default function Main() {
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
 
-    const currentPostId = usePostStore(state => state.selectedPostId);
     const currentPost = usePostStore(state => state.getSelectedPost());
+    const currentFeed = useFeedStore(state => state.feeds.find(f => f.id === currentPost?.feed_id))!;
 
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
@@ -38,12 +38,12 @@ export default function Main() {
     }, [currentPost]);
 
     useEffect(() => {
-        if (!currentPostId) return;
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPostId)).then(data => {
+        if (!currentPost?.id) return;
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost?.id)).then(data => {
             setContent(data?.content || data?.summary || '');
         });
         return () => setIsScrolled(false);
-    }, [currentPostId]);
+    }, [currentPost?.id]);
 
     const handleClickFeed = (id: number) => {
         setSelectFeed(id);
@@ -118,15 +118,19 @@ export default function Main() {
                                         </a>
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
-                                        {currentPost.author && (
-                                            <div className="flex cursor-pointer items-center gap-2" onClick={() => handleClickFeed(currentPost.feed_id)}>
-                                                <i className="i-mingcute-user-3-line h-4 w-4" />
+                                        <div className="flex cursor-pointer items-center gap-x-1" onClick={() => handleClickFeed(currentPost.feed_id)}>
+                                            <img className="size-4 rounded-full" src={currentFeed.icon} alt={currentPost.title} />
+                                            <span className="font-medium">{currentFeed.title}</span>
+                                        </div>
+                                        {currentPost.author && currentPost.author !== currentFeed.title && (
+                                            <div className="flex items-center gap-2">
+                                                <i className="i-mingcute-user-3-line size-4" />
                                                 <span className="font-medium">{currentPost.author}</span>
                                             </div>
                                         )}
                                         {currentPost.pub_date && (
                                             <div className="flex items-center gap-2">
-                                                <i className="i-mingcute-calendar-time-add-line h-4 w-4" />
+                                                <i className="i-mingcute-calendar-time-add-line size-4" />
                                                 <time dateTime={currentPost.pub_date}>{dayjs(currentPost.pub_date).format('YYYY年MM月DD日')}</time>
                                             </div>
                                         )}
@@ -140,7 +144,7 @@ export default function Main() {
                                 )}
 
                                 <div className="prose max-w-none">
-                                    <Render content={content} />
+                                    <Render content={content} podcast={{ ...podcast, postId: currentPost.id }} />
                                 </div>
                             </article>
                         </div>

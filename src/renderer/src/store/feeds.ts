@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { usePostStore } from './posts';
+
 export type FeedType = {
     id: number;
     title: string;
@@ -42,6 +44,8 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
         getSelectedFeed: getSelectFeed,
         refreshFeeds,
         deleteFeed: feed_id => {
+            usePostStore.getState().setSelectedPost(null);
+            get().setSelectedFeedId(null);
             window.electron.ipcRenderer.invoke('db-delete-feed', feed_id).then(() => {
                 set(state => ({
                     ...state,

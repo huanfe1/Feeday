@@ -47,7 +47,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
                         <Avatar className="size-4">
-                            <AvatarImage src={feed.icon ?? `https://unavatar.webp.se/${new URL(feed.link).hostname}?fallback=true`} />
+                            <AvatarImage src={feed.icon} />
                             <AvatarFallback>{feed.title.slice(0, 1)}</AvatarFallback>
                         </Avatar>
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>

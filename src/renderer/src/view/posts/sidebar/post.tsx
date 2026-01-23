@@ -13,9 +13,11 @@ function Post({ post }: { post: PostType }) {
     const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
+    const feed = useFeedStore(state => state.feeds.find(f => f.id === post.feed_id));
 
     const openLink = () => window.open(post.link, '_blank');
 
+    if (!feed) return null;
     return (
         <ContextMenu modal={false}>
             <ContextMenuTrigger asChild>
@@ -27,16 +29,14 @@ function Post({ post }: { post: PostType }) {
                         <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
                     </h3>
                     <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
-                    <div className="mt-1 space-x-2 text-xs text-gray-500">
-                        <span>{post.author}</span>
-                        <span>·</span>
+                    <div className="mt-1 flex text-xs text-gray-500">
+                        <div className="flex items-center gap-x-1">
+                            <img className="size-3 rounded-full" src={feed.icon} alt={post.title} />
+                            <span>{feed.title}</span>
+                        </div>
+                        <span className="mx-2">·</span>
                         <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
                     </div>
-                    {/* {post.image_url && (
-                        <div className="ml-2 flex max-w-18 flex-none items-center">
-                            <img src={post.image_url} alt={post.title} className="h-auto w-full rounded-md" />
-                        </div>
-                    )} */}
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
