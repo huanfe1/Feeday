@@ -3,17 +3,22 @@ productName: feeday
 directories:
     buildResources: build
 files:
-    - '!**/.vscode/*'
-    - '!src/*'
-    - '!electron.vite.config.{js,ts,mjs,cjs}'
-    - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-    - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-    - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+    - "!**/.vscode/*"
+    - "!src/*"
+    - "!electron.vite.config.{js,ts,mjs,cjs}"
+    - "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+    - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
+    - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
     - resources/**
 win:
     executableName: feeday
 nsis:
+    oneClick: false
+    allowToChangeInstallationDirectory: true
+    perMachine: true
+    allowElevation: true
+    runAfterFinish: true
     artifactName: ${name}-${version}-setup.${ext}
     shortcutName: ${productName}
     uninstallDisplayName: ${productName}
