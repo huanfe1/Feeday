@@ -1,13 +1,13 @@
 import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn, truncate } from '@/lib/utils';
 
-function Post({ post }: { post: PostType }) {
+function Post({ post, className }: { post: PostType; className?: string }) {
     const isSelected = usePostStore(state => state.selectedPostId === post.id);
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
     const setSelectedPost = usePostStore(state => state.setSelectedPost);
@@ -17,18 +17,20 @@ function Post({ post }: { post: PostType }) {
 
     const openLink = () => window.open(post.link, '_blank');
 
+    const summary = useMemo(() => truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} })), [post.summary]);
+
     if (!feed) return null;
     return (
-        <ContextMenu modal={false}>
+        <ContextMenu>
             <ContextMenuTrigger asChild>
-                <div className={cn('bg-white p-4 select-none', { 'bg-gray-200': isSelected })} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
+                <div className={cn('bg-white p-4 select-none', { 'bg-gray-200': isSelected }, className)} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
                     <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
                         <span className="truncate" title={post.title}>
                             {post.title}
                         </span>
                         <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
                     </h3>
-                    <p className="line-clamp-2 text-sm text-gray-500">{truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} }))}</p>
+                    <p className="line-clamp-2 text-sm text-gray-500">{summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
                         <div className="flex items-center gap-x-1">
                             <img className="size-3 rounded-full" src={feed.icon} alt={post.title} />

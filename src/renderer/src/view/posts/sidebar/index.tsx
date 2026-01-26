@@ -1,4 +1,5 @@
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 
@@ -17,44 +18,21 @@ export default function Sidebar() {
     const selectedFolder = useFolderStore(state => state.getSelectedFolder());
 
     const posts = usePostStore(state => state.posts);
-
-    const loadMorePosts = usePostStore(state => state.loadMorePosts);
-    const hasMore = usePostStore(state => state.hasMore);
-    const isLoading = usePostStore(state => state.isLoading);
-
     const onlyUnread = usePostStore(state => state.onlyUnread);
 
-    useEffect(() => usePostStore.getState().refreshPosts(), [onlyUnread, selectedFeedId, selectedFolderId]);
+    const parentRef = useRef<HTMLDivElement>(null);
+    // eslint-disable-next-line react-hooks/incompatible-library
+    const virtualizer = useVirtualizer({
+        count: posts.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 125,
+        overscan: 3,
+    });
 
-    // 无限滚动处理
-    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const handleScroll = useCallback(
-        (e: React.UIEvent<HTMLDivElement>) => {
-            const target = e.currentTarget;
-            const { scrollTop, scrollHeight, clientHeight } = target;
-
-            // 当滚动到距离底部 200px 以内时，加载更多
-            if (scrollHeight - scrollTop - clientHeight < 200 && hasMore && !isLoading) {
-                // 使用防抖，避免频繁触发
-                if (scrollTimeoutRef.current) {
-                    clearTimeout(scrollTimeoutRef.current);
-                }
-                scrollTimeoutRef.current = setTimeout(() => {
-                    loadMorePosts();
-                }, 100);
-            }
-        },
-        [hasMore, isLoading, loadMorePosts],
-    );
-
-    // 清理定时器
     useEffect(() => {
-        return () => {
-            if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
-            }
-        };
-    }, []);
+        virtualizer.scrollToIndex(0);
+        usePostStore.getState().refreshPosts();
+    }, [onlyUnread, selectedFeedId, selectedFolderId, virtualizer]);
 
     return (
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
@@ -72,31 +50,45 @@ export default function Sidebar() {
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.1, ease: 'easeIn' }}
                     >
-                        {posts.length === 0 ? (
-                            <div className="flex h-full items-center justify-center text-gray-400 select-none">
-                                <div className="flex flex-col items-center gap-y-3">
-                                    <i className="i-mingcute-celebrate-line text-3xl"></i>
-                                    <span>全部已读</span>
+                        <ScrollArea className="flex h-full" viewportRef={parentRef}>
+                            {posts.length === 0 ? (
+                                <div className="flex h-[calc(100vh-60px)] items-center justify-center text-gray-400 select-none">
+                                    <div className="flex flex-col items-center gap-y-3">
+                                        <i className="i-mingcute-celebrate-line text-3xl"></i>
+                                        <span>全部已读</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <ScrollArea className="flex h-full" scrollKey={selectedFeedId ?? ''} onScroll={handleScroll}>
-                                {posts.map(post => (
-                                    <Post key={post.id} post={post} />
-                                ))}
-                                {isLoading && (
-                                    <div className="flex items-center justify-center py-4 text-gray-400">
-                                        <i className="i-mingcute-loading-line animate-spin text-xl"></i>
-                                        <span className="ml-2 text-sm">加载中...</span>
-                                    </div>
-                                )}
-                                {!hasMore && posts.length > 0 && (
-                                    <div className="flex items-center justify-center py-4 text-sm text-gray-400">
-                                        <span>没有更多了</span>
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        )}
+                            ) : (
+                                <div
+                                    style={{
+                                        height: `${virtualizer.getTotalSize()}px`,
+                                        width: '100%',
+                                        position: 'relative',
+                                    }}
+                                >
+                                    {virtualizer.getVirtualItems().map(virtualItem => {
+                                        const post = posts[virtualItem.index];
+                                        return (
+                                            <div
+                                                key={post.id}
+                                                data-index={virtualItem.index}
+                                                ref={virtualizer.measureElement}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    width: '100%',
+                                                    transform: `translateY(${virtualItem.start}px)`,
+                                                    willChange: 'transform',
+                                                }}
+                                            >
+                                                <Post post={post} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </ScrollArea>
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -105,25 +97,25 @@ export default function Sidebar() {
 }
 
 const Buttons = memo(function Buttons({ className }: { className?: string }) {
-    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
-    const refreshPosts = usePostStore(state => state.refreshPosts);
+    const refreshHandle = () => {
+        useFeedStore.getState().refreshFeeds();
+        usePostStore.getState().refreshPosts();
+    };
 
-    const onClick = useCallback(() => {
-        refreshFeeds();
-        refreshPosts();
-    }, [refreshFeeds, refreshPosts]);
+    const selectedFeedId = useFeedStore(state => state.selectedFeedId);
+    const selectedFolderId = useFolderStore(state => state.selectedFolderId);
+    const readAllPostsHandle = useCallback(() => {
+        usePostStore.getState().readAllPosts(selectedFeedId ?? undefined, selectedFolderId ?? undefined);
+    }, [selectedFeedId, selectedFolderId]);
 
     const onlyUnread = usePostStore(state => state.onlyUnread);
     const setOnlyUnread = usePostStore(state => state.setOnlyUnread);
-
-    const readAllPosts = usePostStore(state => state.readAllPosts);
-    const selectedFeedId = useFeedStore(state => state.selectedFeedId);
 
     return (
         <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button className="" variant="ghost" size="icon" onClick={onClick}>
+                    <Button className="" variant="ghost" size="icon" onClick={refreshHandle}>
                         <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
                     </Button>
                 </TooltipTrigger>
@@ -141,7 +133,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => readAllPosts(selectedFeedId ?? undefined)}>
+                    <Button variant="ghost" size="icon" onClick={readAllPostsHandle}>
                         <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
                     </Button>
                 </TooltipTrigger>

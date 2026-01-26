@@ -6,16 +6,15 @@ import { cn } from '@/lib/utils';
 interface ScrollAreaProps extends React.ComponentProps<typeof ScrollAreaPrimitive.Root> {
     scrollKey?: string | number;
     viewportRef?: React.RefObject<HTMLDivElement | null>;
+    viewportStyle?: React.CSSProperties;
 }
 
-const ScrollArea = ({ className, children, scrollKey, onScroll, viewportRef, ...props }: ScrollAreaProps) => {
+const ScrollArea = ({ className, children, onScroll, scrollKey, viewportRef, viewportStyle, ...props }: ScrollAreaProps) => {
     const rootRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        if (viewportRef?.current && scrollKey !== undefined) {
-            viewportRef.current.scrollTop = 0;
-        }
-    }, [scrollKey, viewportRef]);
+        scrollKey && rootRef.current?.scrollTo({ top: 0 });
+    }, [scrollKey]);
 
     return (
         <ScrollAreaPrimitive.Root
@@ -30,6 +29,7 @@ const ScrollArea = ({ className, children, scrollKey, onScroll, viewportRef, ...
                 data-slot="scroll-area-viewport"
                 onScroll={onScroll}
                 ref={viewportRef}
+                style={viewportStyle}
             >
                 {children}
             </ScrollAreaPrimitive.Viewport>

@@ -7,9 +7,9 @@ export type FolderType = {
 
 interface UseFolderStore {
     folders: FolderType[];
-    selectedFolderId: number | string | null;
+    selectedFolderId: number | null;
 
-    setSelectedFolderId: (folder_id: number | string | null) => void;
+    setSelectedFolderId: (folder_id: number | null) => void;
     getSelectedFolder: () => FolderType | null;
     refreshFolders: () => void;
     createFolder: (name: string) => Promise<number>;

@@ -46,25 +46,56 @@ ipcMain.handle('db-insert-post', async (_event, feed_id: number, post: PostType)
     return insertPost(feed_id, post);
 });
 
-ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
-    const select = db.prepare(
-        `SELECT id, title, link, summary, feed_id, author, pub_date, is_read, image_url, podcast FROM posts ${only_unread ? 'WHERE is_read = 0' : ''} ORDER BY is_read ASC, pub_date DESC LIMIT ? OFFSET ?`,
-    );
-    return select.all(limit, offset);
-});
+type GetPostsParams = {
+    onlyUnread: boolean;
+    feedId?: number;
+    folderId?: number;
+    view: number;
+};
+ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
+    const { onlyUnread, feedId, folderId, view } = params;
 
-ipcMain.handle('db-get-posts-by-id', async (_, feedId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
-    const select = db.prepare(
-        `SELECT id, title, link, summary, feed_id, author, pub_date, is_read, image_url, podcast FROM posts WHERE feed_id = ? ${only_unread ? 'AND is_read = 0' : ''} ORDER BY is_read ASC, pub_date DESC LIMIT ? OFFSET ?`,
-    );
-    return select.all(feedId, limit, offset);
-});
+    // 构建 WHERE 条件
+    const conditions: string[] = [];
+    const values: number[] = [];
 
-ipcMain.handle('db-get-posts-by-folder-id', async (_, folderId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
-    const select = db.prepare(
-        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, p.author, p.pub_date, p.is_read, p.image_url, p.podcast FROM posts p INNER JOIN feeds f ON p.feed_id = f.id WHERE f.folder_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
-    );
-    return select.all(folderId, limit, offset);
+    if (onlyUnread) {
+        conditions.push('p.is_read = 0');
+    }
+
+    if (feedId !== undefined && feedId !== null) {
+        conditions.push('p.feed_id = ?');
+        values.push(feedId);
+    }
+
+    // 构建 SQL 语句
+    let sql = 'SELECT p.id, p.title, p.link, p.summary, p.feed_id, p.author, p.pub_date, p.is_read, p.image_url, p.podcast FROM posts p';
+
+    // 如果需要 folderId 或 view，需要 JOIN feeds 表
+    const needsJoinFeeds = (folderId !== undefined && folderId !== null) || (view !== undefined && view !== null);
+
+    if (needsJoinFeeds) {
+        sql += ' INNER JOIN feeds f ON p.feed_id = f.id';
+    }
+
+    if (folderId !== undefined && folderId !== null) {
+        conditions.push('f.folder_id = ?');
+        values.push(folderId);
+    }
+
+    if (view !== undefined && view !== null) {
+        conditions.push('f.view = ?');
+        values.push(view);
+    }
+
+    if (conditions.length > 0) {
+        sql += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    sql += ' ORDER BY p.is_read ASC, p.pub_date DESC';
+
+    const select = db.prepare(sql);
+    return select.all(...values);
 });
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {
@@ -77,8 +108,16 @@ ipcMain.handle('db-update-post-read-by-id', async (_event, post_id: number, is_r
     return update.run({ post_id: post_id, is_read: is_read ? 1 : 0 });
 });
 
-ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number) => {
-    const update = db.prepare(`UPDATE posts SET is_read = 1 WHERE ${feed_id ? 'feed_id = ' + feed_id : 'is_read = 0'}`);
+ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number, folder_id?: number) => {
+    let sql: string;
+    if (folder_id) {
+        sql = `UPDATE posts SET is_read = 1 WHERE feed_id IN (SELECT id FROM feeds WHERE folder_id = ${folder_id})`;
+    } else if (feed_id) {
+        sql = `UPDATE posts SET is_read = 1 WHERE feed_id = ${feed_id}`;
+    } else {
+        sql = `UPDATE posts SET is_read = 1 WHERE is_read = 0`;
+    }
+    const update = db.prepare(sql);
     return update.run();
 });
 

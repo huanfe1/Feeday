@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { useView } from './common';
 import { useFeedStore } from './feeds';
 import { useFolderStore } from './folders';
 
@@ -28,9 +29,7 @@ interface UsePostStore {
     getSelectedPost: () => PostType | null;
 
     refreshPosts: () => void;
-    loadMorePosts: () => void;
-
-    readAllPosts: (feed_id?: number) => void;
+    readAllPosts: (feed_id?: number, folder_id?: number) => void;
     updatePostReadById: (post_id: number, is_read: boolean) => void;
 
     onlyUnread: boolean;
@@ -84,12 +83,16 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         });
     };
 
-    const readAllPosts = (feed_id?: number) => {
-        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id).then(() => {
+    const readAllPosts = (feed_id?: number, folder_id?: number) => {
+        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id, folder_id).then(() => {
             const posts = get().posts.map(p => ({ ...p, is_read: true }));
             set({ posts });
 
-            if (feed_id) {
+            if (folder_id) {
+                // 更新文件夹下所有 feed 的 has_unread 状态
+                const feedStore = useFeedStore.getState();
+                feedStore.feeds.filter(feed => feed.folder_id === folder_id).forEach(feed => feedStore.updateFeedHasUnread(feed.id, false));
+            } else if (feed_id) {
                 useFeedStore.getState().updateFeedHasUnread(feed_id, false);
             } else {
                 posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feed_id, false));
@@ -97,54 +100,49 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         });
     };
 
-    const loadPosts = async (offset: number, append: boolean = false) => {
-        const selectedFeedId = useFeedStore.getState().selectedFeedId;
-        const selectedFolderId = useFolderStore.getState().selectedFolderId;
-        const limit = 50;
+    //     set({ isLoading: true });
 
-        set({ isLoading: true });
+    //     try {
+    //         let newPosts: PostType[];
+    //         if (selectedFeedId) {
+    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedFeedId, get().onlyUnread, offset, limit)) || [];
+    //         } else if (selectedFolderId) {
+    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-folder-id', selectedFolderId, get().onlyUnread, offset, limit)) || [];
+    //         } else {
+    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().onlyUnread, offset, limit)) || [];
+    //         }
 
-        try {
-            let newPosts: PostType[];
-            if (selectedFeedId) {
-                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedFeedId, get().onlyUnread, offset, limit)) || [];
-            } else if (selectedFolderId) {
-                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-folder-id', selectedFolderId, get().onlyUnread, offset, limit)) || [];
-            } else {
-                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().onlyUnread, offset, limit)) || [];
-            }
+    //         const hasMore = newPosts.length === limit;
 
-            const hasMore = newPosts.length === limit;
-
-            if (append) {
-                set(state => ({
-                    posts: [...state.posts, ...newPosts],
-                    offset: offset + newPosts.length,
-                    hasMore,
-                    isLoading: false,
-                }));
-            } else {
-                set({
-                    posts: newPosts,
-                    offset: newPosts.length,
-                    hasMore,
-                    isLoading: false,
-                });
-            }
-        } catch (error) {
-            console.error('Failed to load posts:', error);
-            set({ isLoading: false });
-        }
-    };
+    //         if (append) {
+    //             set(state => ({
+    //                 posts: [...state.posts, ...newPosts],
+    //                 offset: offset + newPosts.length,
+    //                 hasMore,
+    //                 isLoading: false,
+    //             }));
+    //         } else {
+    //             set({
+    //                 posts: newPosts,
+    //                 offset: newPosts.length,
+    //                 hasMore,
+    //                 isLoading: false,
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.error('Failed to load posts:', error);
+    //         set({ isLoading: false });
+    //     }
+    // };
 
     const refreshPosts = () => {
-        loadPosts(0, false);
-    };
-
-    const loadMorePosts = () => {
-        const { offset, hasMore, isLoading } = get();
-        if (!hasMore || isLoading) return;
-        loadPosts(offset, true);
+        const selectedFeedId = useFeedStore.getState().selectedFeedId;
+        const selectedFolderId = useFolderStore.getState().selectedFolderId;
+        const view = useView.getState().view;
+        console.log('refreshPosts', selectedFeedId, selectedFolderId, get().onlyUnread);
+        window.electron.ipcRenderer.invoke('db-get-posts', { onlyUnread: get().onlyUnread, feedId: selectedFeedId, folderId: selectedFolderId, view }).then(posts => {
+            set({ posts });
+        });
     };
 
     return {
@@ -156,7 +154,6 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         setSelectedPost,
         getSelectedPost,
         refreshPosts,
-        loadMorePosts,
         readAllPosts,
         updatePostReadById,
 
