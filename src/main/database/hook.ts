@@ -53,11 +53,18 @@ ipcMain.handle('db-get-posts', async (_event, only_unread: boolean = false, offs
     return select.all(limit, offset);
 });
 
-ipcMain.handle('db-get-posts-by-id', async (_event, feedId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
+ipcMain.handle('db-get-posts-by-id', async (_, feedId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
     const select = db.prepare(
         `SELECT id, title, link, summary, feed_id, author, pub_date, is_read, image_url, podcast FROM posts WHERE feed_id = ? ${only_unread ? 'AND is_read = 0' : ''} ORDER BY is_read ASC, pub_date DESC LIMIT ? OFFSET ?`,
     );
     return select.all(feedId, limit, offset);
+});
+
+ipcMain.handle('db-get-posts-by-folder-id', async (_, folderId: number, only_unread: boolean = false, offset: number = 0, limit: number = 50) => {
+    const select = db.prepare(
+        `SELECT p.id, p.title, p.link, p.summary, p.feed_id, p.author, p.pub_date, p.is_read, p.image_url, p.podcast FROM posts p INNER JOIN feeds f ON p.feed_id = f.id WHERE f.folder_id = ? ${only_unread ? 'AND p.is_read = 0' : ''} ORDER BY p.is_read ASC, p.pub_date DESC LIMIT ? OFFSET ?`,
+    );
+    return select.all(folderId, limit, offset);
 });
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {

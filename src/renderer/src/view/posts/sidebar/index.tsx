@@ -1,4 +1,4 @@
-import { useFeedStore, usePostStore } from '@/store';
+import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 
@@ -13,26 +13,18 @@ import Post from './post';
 export default function Sidebar() {
     const selectFeed = useFeedStore(state => state.getSelectedFeed());
     const selectedFeedId = useFeedStore(state => state.selectedFeedId);
+    const selectedFolderId = useFolderStore(state => state.selectedFolderId);
+    const selectedFolder = useFolderStore(state => state.getSelectedFolder());
 
-    // const posts = usePostStore.getState().posts;
-    // usePostStore(state => state.posts.length);
     const posts = usePostStore(state => state.posts);
 
-    const refreshPosts = usePostStore(state => state.refreshPosts);
     const loadMorePosts = usePostStore(state => state.loadMorePosts);
     const hasMore = usePostStore(state => state.hasMore);
     const isLoading = usePostStore(state => state.isLoading);
 
-    const hasUnread = usePostStore(state => state.onlyUnread);
+    const onlyUnread = usePostStore(state => state.onlyUnread);
 
-    // 优化：使用useCallback稳定函数引用
-    const handleRefresh = useCallback(() => {
-        refreshPosts();
-    }, [refreshPosts]);
-
-    useEffect(() => {
-        refreshPosts();
-    }, [refreshPosts, selectedFeedId]);
+    useEffect(() => usePostStore.getState().refreshPosts(), [onlyUnread, selectedFeedId, selectedFolderId]);
 
     // 无限滚动处理
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,10 +47,6 @@ export default function Sidebar() {
         [hasMore, isLoading, loadMorePosts],
     );
 
-    useEffect(() => {
-        handleRefresh();
-    }, [handleRefresh, hasUnread]);
-
     // 清理定时器
     useEffect(() => {
         return () => {
@@ -72,13 +60,13 @@ export default function Sidebar() {
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
             <div className="flex h-full w-full flex-col overflow-y-hidden">
                 <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
-                    <h3 className="truncate text-lg font-bold">{selectFeed?.title || '文章列表'}</h3>
+                    <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectFeed?.title || '文章列表'}</h3>
                     <Buttons />
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
                         className="w-full flex-1 overflow-y-hidden"
-                        key={`${selectedFeedId || 'all'}-${hasUnread ? 'unread' : 'all'}`}
+                        key={[onlyUnread, selectedFeedId, selectedFolderId].join('-')}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}

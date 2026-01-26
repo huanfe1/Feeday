@@ -1,9 +1,11 @@
+import { memo } from 'react';
+
 import Header from '@/components/header';
 
 import Main from './main';
 import Sidebar from './sidebar';
 
-export default function Posts() {
+function Posts() {
     return (
         <>
             <Sidebar />
@@ -14,3 +16,5 @@ export default function Posts() {
         </>
     );
 }
+
+export default memo(Posts);

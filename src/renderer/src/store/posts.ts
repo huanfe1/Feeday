@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { useFeedStore } from './feeds';
+import { useFolderStore } from './folders';
 
 export type PostType = {
     id: number;
@@ -98,6 +99,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
 
     const loadPosts = async (offset: number, append: boolean = false) => {
         const selectedFeedId = useFeedStore.getState().selectedFeedId;
+        const selectedFolderId = useFolderStore.getState().selectedFolderId;
         const limit = 50;
 
         set({ isLoading: true });
@@ -106,6 +108,8 @@ export const usePostStore = create<UsePostStore>((set, get) => {
             let newPosts: PostType[];
             if (selectedFeedId) {
                 newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedFeedId, get().onlyUnread, offset, limit)) || [];
+            } else if (selectedFolderId) {
+                newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-folder-id', selectedFolderId, get().onlyUnread, offset, limit)) || [];
             } else {
                 newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().onlyUnread, offset, limit)) || [];
             }

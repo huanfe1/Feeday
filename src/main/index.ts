@@ -7,6 +7,8 @@ import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
 import { db, refreshFeed } from './database';
 
+// app.commandLine.appendSwitch('use-gl', 'egl');
+
 function createWindow() {
     const settingList = db.prepare(`SELECT key, value FROM settings WHERE key IN ('window_width', 'window_height', 'is_maximized');`).all();
     const settings = settingList.reduce((obj, item) => {

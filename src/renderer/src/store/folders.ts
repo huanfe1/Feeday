@@ -7,6 +7,10 @@ export type FolderType = {
 
 interface UseFolderStore {
     folders: FolderType[];
+    selectedFolderId: number | string | null;
+
+    setSelectedFolderId: (folder_id: number | string | null) => void;
+    getSelectedFolder: () => FolderType | null;
     refreshFolders: () => void;
     createFolder: (name: string) => Promise<number>;
     updateFolder: (id: number, name: string) => Promise<void>;
@@ -21,6 +25,9 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
 
     return {
         folders: [],
+        selectedFolderId: null,
+        setSelectedFolderId: folder_id => set({ selectedFolderId: folder_id }),
+        getSelectedFolder: () => get().folders.find(folder => folder.id === get().selectedFolderId) || null,
         refreshFolders,
         createFolder: async (name: string) => {
             const result = await window.electron.ipcRenderer.invoke('db-insert-folder', name);

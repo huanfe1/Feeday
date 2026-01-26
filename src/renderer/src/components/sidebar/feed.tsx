@@ -27,12 +27,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 function Feed({ feed, className }: { feed: FeedType; className?: string }) {
-    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
     const isSelected = useFeedStore(state => state.selectedFeedId === feed.id);
 
     const clickFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        setSelectFeed(feed.id);
+        useFeedStore.getState().setSelectedFeedId(feed.id);
+        useFolderStore.getState().setSelectedFolderId(null);
     };
 
     const [active, setActive] = useState<string | null>(null);

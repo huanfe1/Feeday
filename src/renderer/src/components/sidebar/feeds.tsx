@@ -10,15 +10,13 @@ import Feed from './feed';
 
 function Feeds({ className }: { className?: string }) {
     const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => !feed.folder_id)));
+    const feedsLength = useFeedStore(state => state.feeds.length);
     const folders = useFolderStore(state => state.folders);
 
-    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
-    const setCurrentPost = usePostStore(state => state.setSelectedPost);
-
-    const cancelSelectFeed = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.currentTarget !== e.target) return;
-        setSelectFeed(null);
-        setCurrentPost(null);
+    const cancelSelectFeed = () => {
+        useFeedStore.getState().setSelectedFeedId(null);
+        useFolderStore.getState().setSelectedFolderId(null);
+        usePostStore.getState().setSelectedPost(null);
     };
 
     return (
@@ -50,6 +48,7 @@ const FolderItem = memo(function FolderItem({ folder }: { folder: { id: number |
     const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => feed.folder_id === folder.id)));
     const [open, setOpen] = useState(false);
 
+    const isSelected = useFolderStore(state => state.selectedFolderId === folder.id);
     useEffect(() => {
         const handleJumpToFeed = ({ detail: id }: CustomEvent<number>) => {
             feeds.some(feed => feed.id === id) && setOpen(true);
@@ -58,11 +57,23 @@ const FolderItem = memo(function FolderItem({ folder }: { folder: { id: number |
         return () => document.removeEventListener('jump-to-feed', handleJumpToFeed as EventListener);
     }, [feeds]);
 
+    const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        useFolderStore.getState().setSelectedFolderId(folder.id);
+        useFeedStore.getState().setSelectedFeedId(null);
+    };
+
+    const clickOpen = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        setOpen(!open);
+    };
+
+    if (feeds.length === 0) return null;
     return (
         <div>
-            <div className="flex cursor-default items-center gap-x-1 p-2" onClick={() => setOpen(!open)}>
-                <motion.span className="i-mingcute-right-line" animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }}></motion.span>
-                <span className="text-sm font-medium">{folder.name || '未命名文件夹'}</span>
+            <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-gray-300/70')} onClick={clickFolder}>
+                <motion.span className="i-mingcute-right-line" onClick={clickOpen} animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }}></motion.span>
+                <span className="w-full text-sm font-medium">{folder.name || '未命名文件夹'}</span>
             </div>
             <motion.div className="overflow-hidden" initial={{ height: 0 }} animate={{ height: open ? 'auto' : 0 }} transition={{ duration: DURATION }}>
                 {feeds.map(item => (
