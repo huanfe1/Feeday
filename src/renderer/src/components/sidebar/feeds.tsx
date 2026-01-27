@@ -1,17 +1,20 @@
-import { useFeedStore, useFolderStore, usePostStore } from '@/store';
-import { motion } from 'motion/react';
-import { memo, useEffect, useState } from 'react';
+import { useFeedStore, useFolderStore, usePostStore, useView } from '@/store';
+import type { FeedType } from '@/store';
+import { AnimatePresence, motion } from 'motion/react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 import Feed from './feed';
 
 function Feeds({ className }: { className?: string }) {
-    const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => !feed.folder_id)));
-    const feedsLength = useFeedStore(state => state.feeds.length);
+    const allFeeds = useFeedStore(useShallow(state => state.feeds));
     const folders = useFolderStore(state => state.folders);
+    const view = useView(state => state.view);
+    const feeds = useMemo(() => allFeeds.filter(feed => feed.view === view), [allFeeds, view]);
 
     const cancelSelectFeed = () => {
         useFeedStore.getState().setSelectedFeedId(null);
@@ -19,36 +22,49 @@ function Feeds({ className }: { className?: string }) {
         usePostStore.getState().setSelectedPost(null);
     };
 
+    const setView = useView(state => state.setView);
+
+    useEffect(() => useFeedStore.getState().refreshFeeds(), [view]);
+
     return (
         <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={cancelSelectFeed}>
-            {feeds.length === 0 && folders.length === 0 ? (
+            <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
+                <span>订阅源</span>
+                <Tabs value={view.toString()} onValueChange={value => setView(Number(value))}>
+                    <TabsList className="h-8 bg-gray-200/75 px-1">
+                        <TabsTrigger className="h-full px-3" value="1">
+                            文章
+                        </TabsTrigger>
+                        <TabsTrigger className="h-full px-3" value="2">
+                            媒体
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+            {feeds.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
                     <p className="text-muted-foreground text-sm">暂无订阅源</p>
                     <p className="text-muted-foreground/70 mt-1 text-xs">点击上方按钮添加订阅源</p>
                 </div>
             ) : (
-                <>
-                    <div className="mt-3 mb-2 ml-2 text-sm font-medium select-none">订阅源</div>
+                <div>
                     {folders.map(folder => (
-                        <FolderItem key={folder.id} folder={folder} />
+                        <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folder_id === folder.id)} />
                     ))}
-                    {feeds.map(item => (
-                        <Feed className="pl-5" key={item.id} feed={item} />
-                    ))}
-                </>
+                    <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folder_id === null)} />
+                </div>
             )}
         </ScrollArea>
     );
 }
 
-const FolderItem = memo(function FolderItem({ folder }: { folder: { id: number | null; name?: string } }) {
+const FolderItem = memo(function FolderItem({ name, id, feeds }: { name?: string; id: number | null; feeds: FeedType[] }) {
     const DURATION = 0.2;
 
-    const feeds = useFeedStore(useShallow(state => state.feeds.filter(feed => feed.folder_id === folder.id)));
     const [open, setOpen] = useState(false);
 
-    const isSelected = useFolderStore(state => state.selectedFolderId === folder.id);
+    const isSelected = useFolderStore(state => state.selectedFolderId === id);
     useEffect(() => {
         const handleJumpToFeed = ({ detail: id }: CustomEvent<number>) => {
             feeds.some(feed => feed.id === id) && setOpen(true);
@@ -59,27 +75,39 @@ const FolderItem = memo(function FolderItem({ folder }: { folder: { id: number |
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        useFolderStore.getState().setSelectedFolderId(folder.id);
+        useFolderStore.getState().setSelectedFolderId(id);
         useFeedStore.getState().setSelectedFeedId(null);
     };
 
-    const clickOpen = (e: React.MouseEvent<HTMLDivElement>) => {
+    const clickHandle = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        setOpen(!open);
+        setOpen(prev => !prev);
     };
 
     if (feeds.length === 0) return null;
+    if (id === 0) return feeds.map(item => <Feed className="pl-5" key={item.id} feed={item} />);
     return (
         <div>
             <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-gray-300/70')} onClick={clickFolder}>
-                <motion.span className="i-mingcute-right-line" onClick={clickOpen} animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }}></motion.span>
-                <span className="w-full text-sm font-medium">{folder.name || '未命名文件夹'}</span>
+                <motion.span className="i-mingcute-right-line" initial={false} onClick={clickHandle} animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }} />
+                <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>
             </div>
-            <motion.div className="overflow-hidden" initial={{ height: 0 }} animate={{ height: open ? 'auto' : 0 }} transition={{ duration: DURATION }}>
-                {feeds.map(item => (
-                    <Feed className="pl-5" key={item.id} feed={item} />
-                ))}
-            </motion.div>
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        key="folder-content"
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        exit={{ height: 0 }}
+                        transition={{ duration: DURATION, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                    >
+                        {feeds.map(item => (
+                            <Feed className="pl-5" key={item.id} feed={item} />
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 });
