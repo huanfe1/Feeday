@@ -16,6 +16,9 @@ function Feeds({ className }: { className?: string }) {
     const view = useView(state => state.view);
     const feeds = useMemo(() => allFeeds.filter(feed => feed.view === view), [allFeeds, view]);
 
+    const [direction, setDirection] = useState<'left' | 'right' | null>(null);
+    const width = Number(localStorage.getItem('resizable:feeds-sidebar'));
+
     const cancelSelectFeed = () => {
         useFeedStore.getState().setSelectedFeedId(null);
         useFolderStore.getState().setSelectedFolderId(null);
@@ -23,14 +26,18 @@ function Feeds({ className }: { className?: string }) {
     };
 
     const setView = useView(state => state.setView);
+    const toggleView = (value: number) => {
+        setDirection(value > view ? 'right' : 'left');
+        setView(value);
+    };
 
-    useEffect(() => useFeedStore.getState().refreshFeeds(), [view]);
+    useEffect(() => cancelSelectFeed(), [view]);
 
     return (
-        <ScrollArea className={cn('min-h-0 flex-1 px-3', className)} onClick={cancelSelectFeed}>
+        <ScrollArea className={cn('min-h-0 flex-1 overflow-hidden px-3', className)} onClick={cancelSelectFeed}>
             <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
                 <span>订阅源</span>
-                <Tabs value={view.toString()} onValueChange={value => setView(Number(value))}>
+                <Tabs value={view.toString()} onValueChange={value => toggleView(Number(value))}>
                     <TabsList className="h-8 bg-gray-200/75 px-1">
                         <TabsTrigger className="h-full px-3" value="1">
                             文章
@@ -41,37 +48,50 @@ function Feeds({ className }: { className?: string }) {
                     </TabsList>
                 </Tabs>
             </div>
-            {feeds.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
-                    <p className="text-muted-foreground text-sm">暂无订阅源</p>
-                    <p className="text-muted-foreground/70 mt-1 text-xs">点击上方按钮添加订阅源</p>
-                </div>
-            ) : (
-                <div>
-                    {folders.map(folder => (
-                        <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folder_id === folder.id)} />
-                    ))}
-                    <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folder_id === null)} />
-                </div>
-            )}
+            <AnimatePresence mode="popLayout">
+                <motion.div
+                    key={view.toString()}
+                    initial={{ x: direction === 'right' ? width : -width }}
+                    animate={{ x: 0 }}
+                    exit={{ x: direction === 'right' ? width : -width }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                    {feeds.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <i className="i-mingcute-rss-line text-muted-foreground mb-3 text-4xl"></i>
+                            <p className="text-muted-foreground text-sm">暂无订阅源</p>
+                            <p className="text-muted-foreground/70 mt-1 text-xs">点击上方按钮添加订阅源</p>
+                        </div>
+                    ) : (
+                        <div>
+                            {folders.map(folder => (
+                                <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folder_id === folder.id)} isOpen={folder.isOpen} />
+                            ))}
+                            <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folder_id === null)} />
+                        </div>
+                    )}
+                </motion.div>
+            </AnimatePresence>
         </ScrollArea>
     );
 }
 
-const FolderItem = memo(function FolderItem({ name, id, feeds }: { name?: string; id: number | null; feeds: FeedType[] }) {
+const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen }: { name?: string; id: number | null; feeds: FeedType[]; isOpen?: boolean }) {
     const DURATION = 0.2;
 
-    const [open, setOpen] = useState(false);
-
     const isSelected = useFolderStore(state => state.selectedFolderId === id);
+    const open = isOpen ?? false;
+    const setFolderOpen = useFolderStore(state => state.setFolderOpen);
+
     useEffect(() => {
         const handleJumpToFeed = ({ detail: id }: CustomEvent<number>) => {
-            feeds.some(feed => feed.id === id) && setOpen(true);
+            if (feeds.some(feed => feed.id === id) && id !== null) {
+                setFolderOpen(id, true);
+            }
         };
         document.addEventListener('jump-to-feed', handleJumpToFeed as EventListener);
         return () => document.removeEventListener('jump-to-feed', handleJumpToFeed as EventListener);
-    }, [feeds]);
+    }, [feeds, setFolderOpen]);
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -81,7 +101,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds }: { name?: string
 
     const clickHandle = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        setOpen(prev => !prev);
+        if (id !== null) setFolderOpen(id, !open);
     };
 
     if (feeds.length === 0) return null;

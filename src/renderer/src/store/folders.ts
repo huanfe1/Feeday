@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export type FolderType = {
     id: number;
     name: string;
+    isOpen?: boolean;
 };
 
 interface UseFolderStore {
@@ -15,6 +16,7 @@ interface UseFolderStore {
     createFolder: (name: string) => Promise<number>;
     updateFolder: (id: number, name: string) => Promise<void>;
     deleteFolder: (id: number) => Promise<void>;
+    setFolderOpen: (id: number, open: boolean) => void;
 }
 
 export const useFolderStore = create<UseFolderStore>((set, get) => {
@@ -44,6 +46,11 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
             await window.electron.ipcRenderer.invoke('db-delete-folder', id);
             set(state => ({
                 folders: state.folders.filter(folder => folder.id !== id),
+            }));
+        },
+        setFolderOpen: (id: number, open: boolean) => {
+            set(state => ({
+                folders: state.folders.map(folder => (folder.id === id ? { ...folder, isOpen: open } : folder)),
             }));
         },
     };
