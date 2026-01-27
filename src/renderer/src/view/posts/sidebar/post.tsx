@@ -17,8 +17,6 @@ function Post({ post, className }: { post: PostType; className?: string }) {
 
     const openLink = () => window.open(post.link, '_blank');
 
-    const summary = useMemo(() => truncate(sanitizeHtml(post.summary, { allowedTags: [], allowedAttributes: {} })), [post.summary]);
-
     if (!feed) return null;
     return (
         <ContextMenu>
@@ -30,7 +28,7 @@ function Post({ post, className }: { post: PostType; className?: string }) {
                         </span>
                         <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
                     </h3>
-                    <p className="line-clamp-2 text-sm text-gray-500">{summary}</p>
+                    <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
                         <div className="flex items-center gap-x-1">
                             <img className="size-3 rounded-full" src={feed.icon} alt={post.title} />

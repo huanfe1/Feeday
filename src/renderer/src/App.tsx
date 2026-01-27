@@ -12,22 +12,16 @@ import View from './view';
 function App() {
     const isDragging = useDragging(state => state.isDragging);
 
-    const feedsLength = useFeedStore(state => state.feeds.length);
-
-    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
-    const refreshPosts = usePostStore(state => state.refreshPosts);
-
     const isDone = useRef(false);
     useEffect(() => {
-        if (feedsLength === 0) return;
-
+        if (useFeedStore.getState().feeds.length === 0) return;
         if (isDone.current) return;
         isDone.current = true;
 
         window.electron.ipcRenderer.on('refresh-feed', () => {
             console.log('refresh-feed', dayjs().format('YYYY-MM-DD HH:mm:ss'));
-            refreshFeeds();
-            refreshPosts();
+            useFeedStore.getState().refreshFeeds();
+            usePostStore.getState().refreshPosts();
         });
     }, []);
 

@@ -141,9 +141,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.1.1
         version: 5.1.2(vite@7.3.0(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
-      '@welldone-software/why-did-you-render':
-        specifier: ^10.0.1
-        version: 10.0.1(react@19.2.3)
       '@xeonlink/prettier-plugin-organize-attributes':
         specifier: ^1.1.0
         version: 1.1.0
@@ -1765,11 +1762,6 @@ packages:
 
   '@vue/shared@3.5.26':
     resolution: {integrity: sha512-7Z6/y3uFI5PRoKeorTOSXKcDj0MSasfNNltcslbFrPpcw6aXRUALq4IfJlaTRspiWIUOEZbrpM+iQGmCOiWe4A==}
-
-  '@welldone-software/why-did-you-render@10.0.1':
-    resolution: {integrity: sha512-tMgGkt30iVYeLMUKExNmtm019QgyjLtA7lwB0QAizYNEuihlCG2eoAWBBaz/bDeI7LeqAJ9msC6hY3vX+JB97g==}
-    peerDependencies:
-      react: ^19
 
   '@xeonlink/prettier-plugin-organize-attributes@1.1.0':
     resolution: {integrity: sha512-1Vmv+7zkQvPSgiBX0HsrZL4Xf6MYFinS3VE+dXeJCbF2i3BOM+nYQk1iRbcnnSTsJ+IB1IP5X5o3O4zp2ccTgg==}
@@ -5759,11 +5751,6 @@ snapshots:
       '@vue/shared': 3.5.26
 
   '@vue/shared@3.5.26': {}
-
-  '@welldone-software/why-did-you-render@10.0.1(react@19.2.3)':
-    dependencies:
-      lodash: 4.17.21
-      react: 19.2.3
 
   '@xeonlink/prettier-plugin-organize-attributes@1.1.0':
     dependencies:

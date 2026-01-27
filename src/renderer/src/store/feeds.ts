@@ -11,6 +11,7 @@ export type FeedType = {
     has_unread: boolean;
     fetch_frequency: number;
     folder_id: number | null;
+    view: number;
     folder_name: string | null;
     last_fetch_error: string | null;
 };
@@ -73,7 +74,6 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
                     feeds: state.feeds.map(f => (f.id === feed_id ? { ...f, has_unread } : f)),
                 };
             });
-            // set({ feeds: get().feeds.map(f => (f.id === feed_id ? { ...f, has_unread } : f)) });
         },
     };
 });

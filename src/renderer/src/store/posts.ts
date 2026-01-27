@@ -100,41 +100,6 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         });
     };
 
-    //     set({ isLoading: true });
-
-    //     try {
-    //         let newPosts: PostType[];
-    //         if (selectedFeedId) {
-    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedFeedId, get().onlyUnread, offset, limit)) || [];
-    //         } else if (selectedFolderId) {
-    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts-by-folder-id', selectedFolderId, get().onlyUnread, offset, limit)) || [];
-    //         } else {
-    //             newPosts = (await window.electron.ipcRenderer.invoke('db-get-posts', get().onlyUnread, offset, limit)) || [];
-    //         }
-
-    //         const hasMore = newPosts.length === limit;
-
-    //         if (append) {
-    //             set(state => ({
-    //                 posts: [...state.posts, ...newPosts],
-    //                 offset: offset + newPosts.length,
-    //                 hasMore,
-    //                 isLoading: false,
-    //             }));
-    //         } else {
-    //             set({
-    //                 posts: newPosts,
-    //                 offset: newPosts.length,
-    //                 hasMore,
-    //                 isLoading: false,
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to load posts:', error);
-    //         set({ isLoading: false });
-    //     }
-    // };
-
     const refreshPosts = () => {
         const selectedFeedId = useFeedStore.getState().selectedFeedId;
         const selectedFolderId = useFolderStore.getState().selectedFolderId;
