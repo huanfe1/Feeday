@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 
-import { Resizable } from '@/components/resizable';
+import Resizable from '@/components/resizable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -29,15 +29,12 @@ export default function Sidebar() {
         overscan: 3,
     });
 
-    useEffect(() => {
-        virtualizer.scrollToIndex(0);
-        usePostStore.getState().refreshPosts();
-    }, [onlyUnread, selectedFeedId, selectedFolderId, virtualizer]);
+    useEffect(() => virtualizer.scrollToIndex(0), [posts, virtualizer]);
 
     return (
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
             <div className="flex h-full w-full flex-col overflow-y-hidden">
-                <div className="drag-region mx-4 flex h-[60px] items-center justify-between gap-4">
+                <div className="mx-4 flex h-15 items-center justify-between gap-4">
                     <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectFeed?.title || '文章列表'}</h3>
                     <Buttons />
                 </div>
@@ -109,7 +106,10 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
     }, [selectedFeedId, selectedFolderId]);
 
     const onlyUnread = usePostStore(state => state.onlyUnread);
-    const setOnlyUnread = usePostStore(state => state.setOnlyUnread);
+    const onlyUnreadHandle = () => {
+        usePostStore.getState().setOnlyUnread(!onlyUnread);
+        refreshHandle();
+    };
 
     return (
         <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
@@ -122,8 +122,10 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
                 <TooltipContent>
                     <p>刷新</p>
                 </TooltipContent>
+            </Tooltip>
+            <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => setOnlyUnread(!onlyUnread)}>
+                    <Button variant="ghost" size="icon" onClick={onlyUnreadHandle}>
                         <i className={cn('text-xl opacity-75', onlyUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                     </Button>
                 </TooltipTrigger>

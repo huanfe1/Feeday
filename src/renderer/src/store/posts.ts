@@ -84,19 +84,24 @@ export const usePostStore = create<UsePostStore>((set, get) => {
     };
 
     const readAllPosts = (feed_id?: number, folder_id?: number) => {
+        if (feed_id && folder_id) throw new Error('feed_id and folder_id cannot be provided at the same time');
+
         window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id, folder_id).then(() => {
             const posts = get().posts.map(p => ({ ...p, is_read: true }));
             set({ posts });
 
+            if (feed_id) {
+                useFeedStore.getState().updateFeedHasUnread(feed_id, false);
+                return;
+            }
+
             if (folder_id) {
-                // 更新文件夹下所有 feed 的 has_unread 状态
                 const feedStore = useFeedStore.getState();
                 feedStore.feeds.filter(feed => feed.folder_id === folder_id).forEach(feed => feedStore.updateFeedHasUnread(feed.id, false));
-            } else if (feed_id) {
-                useFeedStore.getState().updateFeedHasUnread(feed_id, false);
-            } else {
-                posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feed_id, false));
+                return;
             }
+
+            posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feed_id, false));
         });
     };
 

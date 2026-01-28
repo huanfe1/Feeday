@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { memo } from 'react';
 import { useResizable } from 'react-resizable-layout';
 import type { UseResizableProps } from 'react-resizable-layout';
 
@@ -34,4 +35,4 @@ function Resizable({ children, options, id }: { children: React.ReactNode; optio
     );
 }
 
-export { Resizable };
+export default memo(Resizable);

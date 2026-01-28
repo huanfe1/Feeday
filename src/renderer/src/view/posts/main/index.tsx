@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio';
+import Avatar from '@/components/avatar';
 import { Logo } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,8 +15,6 @@ import Render from './render';
 
 export default function Main() {
     const [content, setContent] = useState('');
-
-    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
 
     const currentPost = usePostStore(state => state.getSelectedPost());
     const currentFeed = useFeedStore(state => state.feeds.find(f => f.id === currentPost?.feed_id))!;
@@ -46,7 +45,6 @@ export default function Main() {
     }, [currentPost?.id]);
 
     const handleClickFeed = (id: number) => {
-        setSelectFeed(id);
         document.dispatchEvent(new CustomEvent('jump-to-feed', { detail: id }));
     };
 
@@ -119,7 +117,7 @@ export default function Main() {
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
                                         <div className="flex cursor-pointer items-center gap-x-1" onClick={() => handleClickFeed(currentPost.feed_id)}>
-                                            <img className="size-4 rounded-full" src={currentFeed.icon} alt={currentPost.title} />
+                                            <Avatar src={currentFeed.icon} title={currentPost.title} />
                                             <span className="font-medium">{currentFeed.title}</span>
                                         </div>
                                         {currentPost.author && currentPost.author !== currentFeed.title && (

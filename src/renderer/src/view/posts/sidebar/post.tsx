@@ -1,11 +1,11 @@
 import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo, useMemo } from 'react';
-import sanitizeHtml from 'sanitize-html';
+import { memo } from 'react';
 
+import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { cn, truncate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 function Post({ post, className }: { post: PostType; className?: string }) {
     const isSelected = usePostStore(state => state.selectedPostId === post.id);
@@ -31,7 +31,7 @@ function Post({ post, className }: { post: PostType; className?: string }) {
                     <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
                         <div className="flex items-center gap-x-1">
-                            <img className="size-3 rounded-full" src={feed.icon} alt={post.title} />
+                            <Avatar title={feed.title} src={feed.icon} />
                             <span>{feed.title}</span>
                         </div>
                         <span className="mx-2">·</span>

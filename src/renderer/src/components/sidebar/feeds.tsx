@@ -23,6 +23,7 @@ function Feeds({ className }: { className?: string }) {
         useFeedStore.getState().setSelectedFeedId(null);
         useFolderStore.getState().setSelectedFolderId(null);
         usePostStore.getState().setSelectedPost(null);
+        usePostStore.getState().refreshPosts();
     };
 
     const setView = useView(state => state.setView);
@@ -76,32 +77,37 @@ function Feeds({ className }: { className?: string }) {
     );
 }
 
-const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen }: { name?: string; id: number | null; feeds: FeedType[]; isOpen?: boolean }) {
+const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }: { name?: string; id: number | null; feeds: FeedType[]; isOpen?: boolean }) {
     const DURATION = 0.2;
 
     const isSelected = useFolderStore(state => state.selectedFolderId === id);
-    const open = isOpen ?? false;
     const setFolderOpen = useFolderStore(state => state.setFolderOpen);
 
     useEffect(() => {
-        const handleJumpToFeed = ({ detail: id }: CustomEvent<number>) => {
-            if (feeds.some(feed => feed.id === id) && id !== null) {
+        const handleJumpToFeed = ({ detail: feedId }: CustomEvent<number>) => {
+            if (feeds.some(feed => feed.id === feedId) && feedId !== null && id !== null) {
                 setFolderOpen(id, true);
+                useFolderStore.getState().setSelectedFolderId(null);
+                requestAnimationFrame(() => {
+                    useFeedStore.getState().setSelectedFeedId(feedId);
+                    usePostStore.getState().refreshPosts();
+                });
             }
         };
         document.addEventListener('jump-to-feed', handleJumpToFeed as EventListener);
         return () => document.removeEventListener('jump-to-feed', handleJumpToFeed as EventListener);
-    }, [feeds, setFolderOpen]);
+    }, [feeds, setFolderOpen, id]);
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         useFolderStore.getState().setSelectedFolderId(id);
         useFeedStore.getState().setSelectedFeedId(null);
+        usePostStore.getState().refreshPosts();
     };
 
     const clickHandle = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        if (id !== null) setFolderOpen(id, !open);
+        if (id !== null) setFolderOpen(id, !isOpen);
     };
 
     if (feeds.length === 0) return null;
@@ -109,11 +115,11 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen }: { name?
     return (
         <div>
             <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-gray-300/70')} onClick={clickFolder}>
-                <motion.span className="i-mingcute-right-line" initial={false} onClick={clickHandle} animate={{ rotate: open ? 90 : 0 }} transition={{ duration: DURATION }} />
+                <motion.span className="i-mingcute-right-line" initial={false} onClick={clickHandle} animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: DURATION }} />
                 <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>
             </div>
             <AnimatePresence initial={false}>
-                {open && (
+                {isOpen && (
                     <motion.div
                         key="folder-content"
                         initial={{ height: 0 }}

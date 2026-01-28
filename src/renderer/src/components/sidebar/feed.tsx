@@ -1,11 +1,12 @@
 import type { FeedType } from '@/store';
-import { useFeedStore, useFolderStore } from '@/store';
+import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { memo, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import Avatar from '@/components/avatar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,7 +17,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -33,6 +33,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
         e.stopPropagation();
         useFeedStore.getState().setSelectedFeedId(feed.id);
         useFolderStore.getState().setSelectedFolderId(null);
+        usePostStore.getState().refreshPosts();
     };
 
     const [active, setActive] = useState<string | null>(null);
@@ -46,10 +47,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
-                        <Avatar className="size-4">
-                            <AvatarImage src={feed.icon} />
-                            <AvatarFallback>{feed.title.slice(0, 1)}</AvatarFallback>
-                        </Avatar>
+                        <Avatar src={feed.icon} title={feed.title} />
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>
                         {feed.last_fetch_error && (
                             <Tooltip>
@@ -74,8 +72,8 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                     <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.url)}>复制订阅源地址</ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
-            <DeleteModal open={active === 'delete'} onOpenChange={() => setActive(null)} feed={feed} />
-            <EditModal open={active === 'edit'} onOpenChange={() => setActive(null)} feed={feed} />
+            {active === 'delete' && <DeleteModal open={active === 'delete'} onOpenChange={() => setActive(null)} feed={feed} />}
+            {active === 'edit' && <EditModal open={active === 'edit'} onOpenChange={() => setActive(null)} feed={feed} />}
         </>
     );
 }
