@@ -11,7 +11,10 @@ function Main() {
         <ScrollArea className="min-h-0 flex-1 pt-3">
             <div className="grid grid-cols-3 gap-2 px-4 2xl:grid-cols-4">
                 {mediaList.map(media => (
-                    <div className="overflow-hidden rounded p-2 transition-colors hover:bg-gray-200" key={media.id} onDoubleClick={() => window.open(media.link, '_blank')}>
+                    <div className="overflow-hidden rounded p-2 hover:bg-gray-200" key={media.id} onDoubleClick={() => window.open(media.link, '_blank')}>
+                        <div className="object-video overflow-hidden rounded">
+                            <img className="w-full" src={media.image_url} alt={media.title} />
+                        </div>
                         <div className="mt-2 truncate text-sm font-medium text-gray-600 select-none">{media.title}</div>
                     </div>
                 ))}

@@ -1,7 +1,7 @@
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio';
 import Avatar from '@/components/avatar';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 import Render from './render';
 
-export default function Main() {
+function Main() {
     const [content, setContent] = useState('');
 
     const currentPost = usePostStore(state => state.getSelectedPost());
@@ -152,3 +152,5 @@ export default function Main() {
         </div>
     );
 }
+
+export default memo(Main);

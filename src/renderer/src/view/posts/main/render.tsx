@@ -3,9 +3,8 @@ import { useAudioStore } from '@/store';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
 import { memo, useMemo } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
-import rehypeParse from 'rehype-parse';
-import rehypeSanitize from 'rehype-sanitize';
-import { unified } from 'unified';
+
+import parseHtml from '@/lib/parse-html';
 
 type PodcastType = AudioTrack['podcast'] & { postId: number };
 
@@ -49,10 +48,8 @@ function Render({ content, podcast }: { content: string; podcast: PodcastType })
         img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} loading="lazy" />,
     };
 
-    const tree = useMemo(() => unified().use(rehypeParse, { fragment: true }).use(rehypeSanitize).parse(content), [content]);
-    const jsxRuntime = toJsxRuntime(tree, { Fragment, jsxs, jsx, components });
-
-    return jsxRuntime;
+    const tree = useMemo(() => parseHtml(content), [content]);
+    return toJsxRuntime(tree, { Fragment, jsxs, jsx, components });
 }
 
 export default memo(Render);

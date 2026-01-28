@@ -19,7 +19,7 @@ ipcMain.handle('get-feed-info', async (_event, feedUrl: string) => {
 
 ipcMain.handle('db-get-feeds', async () => {
     const select = db.prepare(
-        'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, f.folder_id, fo.name AS folder_name, f.view, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f LEFT JOIN folders fo ON f.folder_id = fo.id ORDER BY (fo.name IS NULL), fo.name ASC, f.title ASC',
+        'SELECT f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, f.folder_id, fo.name AS folder_name, f.view, f.last_fetch_error, EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread FROM feeds f LEFT JOIN folders fo ON f.folder_id = fo.id ORDER BY (fo.name IS NULL), fo.name ASC, f.title ASC',
     );
     const avatar_proxy = db.prepare("SELECT value FROM settings WHERE key = 'avatar_proxy'").get()!.value as string;
     return select.all().map(feed => ({
