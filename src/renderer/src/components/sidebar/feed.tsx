@@ -101,6 +101,7 @@ const editFeedSchema = z.object({
     link: z.url('请输入正确的网站地址'),
     fetch_frequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
     folder_id: z.number().nullable().optional(),
+    view: z.number().int().min(1).max(2),
 });
 
 type EditFeedFormValues = z.infer<typeof editFeedSchema>;
@@ -114,6 +115,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             link: feed.link,
             fetch_frequency: feed.fetch_frequency,
             folder_id: feed.folder_id ?? null,
+            view: feed.view,
         },
     });
 
@@ -124,6 +126,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             link: feed.link,
             fetch_frequency: feed.fetch_frequency,
             folder_id: feed.folder_id ?? null,
+            view: feed.view,
         });
     }, [open, form, feed]);
 
@@ -137,6 +140,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             link: data.link,
             fetch_frequency: data.fetch_frequency,
             folder_id: data.folder_id ?? null,
+            view: data.view,
         })
             .then(() => {
                 refreshFeeds();
@@ -222,6 +226,27 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                                     {folder.name}
                                                 </SelectItem>
                                             ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="view"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>视图</FormLabel>
+                                    <Select value={field.value.toString()} onValueChange={value => field.onChange(parseInt(value))}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="选择视图" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="1">文章</SelectItem>
+                                            <SelectItem value="2">媒体</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

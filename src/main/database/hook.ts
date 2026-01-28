@@ -37,7 +37,7 @@ ipcMain.handle('db-insert-feed', async (_event, feed) => {
 });
 
 ipcMain.handle('db-update-feed', async (_event, feed) => {
-    const update = db.prepare('UPDATE feeds SET title = $title, link = $link, fetch_frequency = $fetch_frequency, folder_id = $folder_id WHERE id = $id');
+    const update = db.prepare('UPDATE feeds SET title = $title, link = $link, fetch_frequency = $fetch_frequency, folder_id = $folder_id, view = $view WHERE id = $id');
     return update.run(feed);
 });
 

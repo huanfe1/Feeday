@@ -12,7 +12,7 @@ function Main() {
             <div className="grid grid-cols-3 gap-2 px-4 2xl:grid-cols-4">
                 {mediaList.map(media => (
                     <div className="overflow-hidden rounded p-2 hover:bg-gray-200" key={media.id} onDoubleClick={() => window.open(media.link, '_blank')}>
-                        <div className="object-video overflow-hidden rounded">
+                        <div className="aspect-video overflow-hidden rounded bg-gray-100">
                             <img className="w-full" src={media.image_url} alt={media.title} />
                         </div>
                         <div className="mt-2 truncate text-sm font-medium text-gray-600 select-none">{media.title}</div>
