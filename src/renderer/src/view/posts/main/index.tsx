@@ -141,7 +141,7 @@ export default function Main() {
                                     </div>
                                 )}
 
-                                <div className="prose max-w-none">
+                                <div className="prose prose-img:mx-auto max-w-none">
                                     <Render content={content} podcast={{ ...podcast, postId: currentPost.id }} />
                                 </div>
                             </article>

@@ -18,8 +18,8 @@ function App() {
         if (isDone.current) return;
         isDone.current = true;
 
-        window.electron.ipcRenderer.on('refresh-feed', () => {
-            console.log('refresh-feed', dayjs().format('YYYY-MM-DD HH:mm:ss'));
+        window.electron.ipcRenderer.on('refresh-feeds', () => {
+            console.log('refresh-feeds', dayjs().format('YYYY-MM-DD HH:mm:ss'));
             useFeedStore.getState().refreshFeeds();
             usePostStore.getState().refreshPosts();
         });

@@ -27,7 +27,7 @@ function createWindow() {
         fullscreenable: true,
         ...(process.platform === 'linux' ? { icon } : {}),
         webPreferences: {
-            preload: join(__dirname, '../preload/index.js'),
+            preload: join(__dirname, '../preload/index.mjs'),
             sandbox: false,
         },
     });
@@ -55,8 +55,8 @@ function createWindow() {
     ipcMain.handle('get-window-state', () => mainWindow.isMaximized());
 
     const refreshFeedHandle = (timeLimit?: boolean) => {
-        console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refreshFeed');
-        refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feed'));
+        console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refresh-feeds');
+        refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feeds'));
     };
     refreshFeedHandle();
 

@@ -3,7 +3,9 @@ import { type OPMLFeed, parseOPML, parseOPMLFromContent } from '@main/lib/opml';
 import { fetchFeed } from '@main/lib/rss';
 import { truncate } from '@main/lib/utils';
 import { dialog, ipcMain } from 'electron';
-import sanitizeHtml from 'sanitize-html';
+import { toString } from 'hast-util-to-string';
+import rehypeParse from 'rehype-parse';
+import { unified } from 'unified';
 
 import type { PostType } from './types';
 
@@ -97,7 +99,12 @@ ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
     sql += ' ORDER BY p.is_read ASC, p.pub_date DESC';
 
     const select = db.prepare(sql);
-    return select.all(...values).map(post => ({ ...post, summary: truncate(sanitizeHtml(post.summary as string, { allowedTags: [], allowedAttributes: {} })) }));
+    const getSummary = (summary: string) => {
+        if (!summary) return '';
+        const result = unified().use(rehypeParse, { fragment: true }).parse(summary.slice(0, 500));
+        return truncate(toString(result));
+    };
+    return select.all(...values).map(post => ({ ...post, summary: getSummary(post.summary as string) }));
 });
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {

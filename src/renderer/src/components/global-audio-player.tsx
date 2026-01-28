@@ -25,6 +25,7 @@ export function GlobalAudioPlayer() {
         if (feedId && postId) {
             setSelectedFeedId(feedId);
             setSelectedPost(postId);
+            usePostStore.getState().refreshPosts();
         }
     };
 
