@@ -64,7 +64,7 @@ function Feeds({ className }: { className?: string }) {
                             <p className="text-muted-foreground/70 mt-1 text-xs">点击上方按钮添加订阅源</p>
                         </div>
                     ) : (
-                        <div>
+                        <div onClick={e => e.stopPropagation()}>
                             {folders.map(folder => (
                                 <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folder_id === folder.id)} isOpen={folder.isOpen} />
                             ))}
