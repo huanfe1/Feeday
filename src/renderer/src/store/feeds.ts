@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { useFolderStore } from './folders';
 import { usePostStore } from './posts';
 
 export type FeedType = {
@@ -29,7 +30,10 @@ interface UseFeedStore {
 
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
-        window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => set({ feeds: feeds || [] }));
+        window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => {
+            set({ feeds: feeds || [] });
+            useFolderStore.getState().refreshFolders();
+        });
     };
     refreshFeeds();
 

@@ -1,7 +1,7 @@
 import { fetchFeed } from '@main/lib/rss';
 import { undefined2null } from '@main/lib/utils';
 import dayjs from 'dayjs';
-import { app } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import { EventEmitter } from 'events';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
@@ -186,8 +186,9 @@ emitter.on('errorFeed', (feed_id: number, message: string) => {
     });
 });
 
+let isDone = false;
 export async function refreshFeed(timeLimit: boolean = true) {
-    const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch = null;`;
+    const sql = `SELECT id, url, title FROM feeds WHERE ((strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60) > ${timeLimit ? 'fetch_frequency' : 5} OR last_fetch IS NULL;`;
     const needFetchFeeds = db.prepare(sql).all();
 
     console.log(`Need fetch feeds: ${needFetchFeeds.length}`);
@@ -196,9 +197,19 @@ export async function refreshFeed(timeLimit: boolean = true) {
 
     const maxParallel = 5;
     let index = 0;
+    isDone = false;
 
     async function fetchNext() {
-        if (index >= needFetchFeeds.length) return null;
+        if (index >= needFetchFeeds.length) {
+            if (isDone) return;
+            isDone = true;
+            console.log('refresh-feeds-done', dayjs().format('YYYY-MM-DD HH:mm:ss'));
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('refresh-feeds');
+            }
+            return;
+        }
         const feed = needFetchFeeds[index];
         index += 1;
 

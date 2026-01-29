@@ -56,7 +56,7 @@ function createWindow() {
 
     const refreshFeedHandle = (timeLimit?: boolean) => {
         console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refresh-feeds');
-        refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feeds'));
+        refreshFeed(timeLimit);
     };
     refreshFeedHandle();
 

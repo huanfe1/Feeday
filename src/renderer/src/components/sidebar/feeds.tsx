@@ -15,7 +15,6 @@ function Feeds({ className }: { className?: string }) {
     const folders = useFolderStore(state => state.folders);
     const view = useView(state => state.view);
     const feeds = useMemo(() => allFeeds.filter(feed => feed.view === view), [allFeeds, view]);
-
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
     const width = Number(localStorage.getItem('resizable:feeds-sidebar'));
 
