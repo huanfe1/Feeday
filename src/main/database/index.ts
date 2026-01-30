@@ -1,10 +1,11 @@
-import { fetchFeed } from '@main/lib/rss';
-import { undefined2null } from '@main/lib/utils';
 import dayjs from 'dayjs';
 import { BrowserWindow, app } from 'electron';
 import { EventEmitter } from 'events';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
+
+import { fetchFeed } from '@/lib/rss';
+import { undefined2null } from '@/lib/utils';
 
 import type { FeedType, PostType } from './types';
 
@@ -119,7 +120,7 @@ const initSettings = `
     ('window_height', '720'),
     ('is_maximized', false),
     ('rsshub_source', 'https://rsshub.app'),
-    ('avatar_proxy', 'https://unavatar.webp.se');
+    ('avatar_proxy', 'https://unavatar.webp.se/\${url}');
 `;
 
 try {

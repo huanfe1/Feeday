@@ -1,11 +1,12 @@
 {
     "name": "feeday",
+    "productName": "Feeday",
     "version": "0.0.1",
     "type": "module",
     "description": "A RSS reader",
     "main": "./out/main/index.js",
     "author": "huanfe1",
-    "homepage": "https://github.com/huanfe1/feeday",
+    "homepage": "https://github.com/huanfe1/Feeday",
     "scripts": {
         "format": "prettier --write .",
         "lint": "eslint --cache .",
@@ -40,7 +41,6 @@
         "@tanstack/react-virtual": "^3.13.18",
         "dayjs": "^1.11.19",
         "electron-updater": "^6.3.9",
-        "fast-xml-parser": "^5.3.3",
         "feedsmith": "^2.8.0",
         "hast-util-find-and-replace": "^5.0.1",
         "hast-util-to-jsx-runtime": "^2.3.6",

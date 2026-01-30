@@ -1,10 +1,10 @@
-import type { FeedType, PostType } from '@main/database/types';
 import dayjs from 'dayjs';
 import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
 
-export async function fetchFeed(url: string, timeout: number = 10000) {
-    // 添加超时控制
+import type { FeedType, PostType } from '@/database/types';
+
+export async function fetchFeed(url: string, timeout: number = 20000) {
     const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`获取订阅源超时: ${url}`)), timeout);
     });
@@ -17,7 +17,7 @@ export async function fetchFeed(url: string, timeout: number = 10000) {
     return Promise.race([fetchPromise, timeoutPromise]);
 }
 
-export function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType>[] } {
+function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType>[] } {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
         return {

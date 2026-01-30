@@ -8,7 +8,7 @@ export default defineConfig({
     main: {
         resolve: {
             alias: {
-                '@main': resolve(__dirname, './src/main'),
+                '@': resolve(__dirname, './src/main'),
             },
         },
     },
@@ -19,6 +19,6 @@ export default defineConfig({
                 '@': resolve(__dirname, './src/renderer/src'),
             },
         },
-        plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: 'vite' })],
+        plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: 'vite', behavior: { locate: false, copy: true } })],
     },
 });

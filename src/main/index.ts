@@ -85,7 +85,6 @@ function createWindow() {
     }
 
     app.commandLine.appendSwitch('disable-autofill-keyboard-accessory-view');
-    // 或者尝试禁用自动填充相关功能
     app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication');
 
     const { platform } = process;
@@ -117,7 +116,7 @@ app.whenReady().then(() => {
         proxyRules: 'http://127.0.0.1:7890',
     });
 
-    import('./database/hook');
+    import('./ipc');
 
     createWindow();
 
