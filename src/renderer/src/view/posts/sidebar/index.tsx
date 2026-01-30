@@ -34,7 +34,7 @@ export default function Sidebar() {
     return (
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
             <div className="flex h-full w-full flex-col overflow-y-hidden">
-                <div className="mx-4 flex h-15 items-center justify-between gap-4">
+                <div className="drag-region mx-4 flex h-15 items-center justify-between gap-4">
                     <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectFeed?.title || '文章列表'}</h3>
                     <Buttons />
                 </div>

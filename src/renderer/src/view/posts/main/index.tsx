@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useEffect, useMemo, useState } from 'react';
 
-import { AudioPlayer } from '@/components/audio';
+import { PostAudio } from '@/components/audio/post';
 import Avatar from '@/components/avatar';
 import { Logo } from '@/components/icon';
 import { Button } from '@/components/ui/button';
@@ -137,7 +137,7 @@ function Main() {
 
                                 {podcast && podcast.url && (
                                     <div className="mb-8">
-                                        <AudioPlayer postId={currentPost.id} feedId={currentPost.feed_id} podcast={podcast} />
+                                        <PostAudio postId={currentPost.id} feedId={currentPost.feed_id} podcast={podcast} />
                                     </div>
                                 )}
 

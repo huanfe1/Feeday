@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
+import AddFeed from '@/components/add-feed';
 import { Logo, LogoText } from '@/components/icon';
 import Resizable from '@/components/resizable';
 import { Separator } from '@/components/ui/separator';
 
-import { GlobalAudioPlayer } from '../global-audio-player';
+import { GlobalAudio } from '../audio/global';
 import Settings from '../settings';
-import AddFeed from './addFeed';
 import Feeds from './feeds';
 
 function Sidebar() {
@@ -25,7 +25,7 @@ function Sidebar() {
                 </div>
                 <Separator />
                 <Feeds />
-                <GlobalAudioPlayer />
+                <GlobalAudio />
             </div>
         </Resizable>
     );
