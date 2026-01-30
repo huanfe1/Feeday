@@ -1,26 +1,76 @@
 import type { PostType } from '@/store';
 import { useFeedStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo, useMemo } from 'react';
+import type { Root } from 'hast';
+import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
+import { memo, useRef, useState } from 'react';
+import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
+import rehypeParse from 'rehype-parse';
+import { unified } from 'unified';
+import { EXIT, visit } from 'unist-util-visit';
 
 import Avatar from '@/components/avatar';
 import { cn } from '@/lib/utils';
 
+const Image = memo(function Image(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+    const ErrorHandle = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        e.currentTarget.style.display = 'none';
+    };
+    return <img className={cn('w-full', props.className)} src={props.src} alt={props.alt} loading="lazy" onError={ErrorHandle} />;
+});
+
+const VideoPreview = memo(function VideoPreview({ ...props }: React.VideoHTMLAttributes<HTMLVideoElement>) {
+    const [isHover, setIsHover] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    const handleMouseEnter = () => {
+        setIsHover(true);
+        videoRef.current?.play();
+    };
+    const handleMouseLeave = () => {
+        setIsHover(false);
+        videoRef.current?.pause();
+    };
+
+    return (
+        <div className="relative flex h-full w-full items-center justify-center" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+            <video className="absolute w-full" {...props} controls={false} ref={videoRef} loop muted />
+            <Image className={cn('absolute min-h-full transition-opacity', { 'opacity-0': isHover })} src={props.poster} alt={props.title} loading="lazy" />
+        </div>
+    );
+});
+
+const components = {
+    video: VideoPreview,
+    img: Image,
+};
+
+const Display = memo(function Display({ media }: { media: PostType }) {
+    if (media.link.startsWith('https://www.youtube.com/watch?v=')) {
+        const imgUrl = media.image_url.replace(new URL(media.image_url).search, '');
+        return <img className="w-full" src={imgUrl} alt={media.title} loading="lazy" />;
+    }
+    const tree = unified().use(rehypeParse, { fragment: true }).parse(media.summary);
+
+    const newTree: Root = { type: 'root', children: [] };
+    visit(tree, 'element', node => {
+        if (node.tagName === 'img' || node.tagName === 'video') {
+            newTree.children.push(node);
+            return EXIT;
+        }
+        return;
+    });
+    return toJsxRuntime(newTree, { Fragment, jsxs, jsx, components });
+});
+
 function Render({ media }: { media: PostType }) {
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media.feed_id));
-
-    const imgUrl = useMemo(() => {
-        if (media.link.startsWith('https://www.youtube.com/watch?v=')) {
-            return media.image_url.replace(new URL(media.image_url).search, '');
-        }
-        return media.image_url;
-    }, [media.image_url, media.link]);
 
     if (!feed) return null;
     return (
         <div className="relative rounded p-2 select-none hover:bg-gray-200" key={media.id} onDoubleClick={() => window.open(media.link, '_blank')}>
             <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
-                <img className="w-full" src={imgUrl} alt={media.title} loading="lazy" />
+                <Display media={media} />
             </div>
             <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title}</div>
             <div className="mt-1 flex text-xs text-gray-600">

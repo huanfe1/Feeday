@@ -105,6 +105,7 @@ ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
 
     const select = db.prepare(sql);
     const getSummary = (summary: string) => {
+        if (view === 2) return summary;
         if (!summary) return '';
         const result = unified().use(rehypeParse, { fragment: true }).parse(summary.slice(0, 500));
         return truncate(toString(result));

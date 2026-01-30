@@ -116,6 +116,27 @@ app.whenReady().then(() => {
         proxyRules: 'http://127.0.0.1:7890',
     });
 
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Cross-Origin-Resource-Policy': ['cross-origin'],
+                'Access-Control-Allow-Origin': ['*'],
+            },
+        });
+    });
+
+    session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+        const { url, requestHeaders } = details;
+        const targetOrigin = new URL(url).origin;
+
+        delete requestHeaders['Referer'];
+        delete requestHeaders['Origin'];
+        requestHeaders['Referer'] = targetOrigin + '/';
+        requestHeaders['Origin'] = targetOrigin;
+        callback({ requestHeaders });
+    });
+
     import('./ipc');
 
     createWindow();
