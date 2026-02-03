@@ -1,4 +1,4 @@
-import { useAudioStore, useFeedStore, usePostStore } from '@/store';
+import { useAudioStore } from '@/store';
 import { memo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { VolumeBar } from './volume';
 
 export function GlobalAudio() {
     const feedId = useAudioStore(state => state.feedId);
-    const postId = useAudioStore(state => state.postId);
     const isPlaying = useAudioStore(state => state.isPlaying);
 
     const togglePlayPause = useAudioStore(state => state.togglePlayPause);
@@ -18,7 +17,6 @@ export function GlobalAudio() {
     const podcast = useAudioStore(state => state.podcast);
     const clearTrack = useAudioStore(state => state.clearTrack);
 
-    // 如果没有音频在播放，不显示播放器
     if (!podcast.url) return null;
 
     const handleJumpToPost = () => {
@@ -62,29 +60,6 @@ export function GlobalAudio() {
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {/* <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button className="h-7 w-12" variant="ghost">
-                                <span className="text-xs font-medium">{rate}x</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="p-1" theme="light">
-                            <div className="flex flex-col gap-y-1">
-                                {[0.5, 0.75, 1, 1.25, 1.5, 2.0].map(r => (
-                                    <div
-                                        className={cn(
-                                            'flex h-8 w-16 cursor-default items-center justify-center rounded duration-200',
-                                            r === rate ? 'bg-primary text-primary-foreground' : '',
-                                        )}
-                                        key={r}
-                                        onClick={() => setRate(r)}
-                                    >
-                                        <span className="text-xs font-medium">{r}x</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </TooltipContent>
-                    </Tooltip> */}
                     <RateButton />
                     <VolumeBar />
                 </div>

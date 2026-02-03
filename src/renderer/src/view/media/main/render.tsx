@@ -46,12 +46,14 @@ const components = {
     img: Image,
 };
 
+const parser = unified().use(rehypeParse, { fragment: true });
+
 const Display = memo(function Display({ media }: { media: PostType }) {
     if (media.link.startsWith('https://www.youtube.com/watch?v=')) {
         const imgUrl = media.image_url.replace(new URL(media.image_url).search, '');
         return <img className="w-full" src={imgUrl} alt={media.title} loading="lazy" />;
     }
-    const tree = unified().use(rehypeParse, { fragment: true }).parse(media.summary);
+    const tree = parser.parse(media.summary);
 
     const newTree: Root = { type: 'root', children: [] };
     visit(tree, 'element', node => {
@@ -66,7 +68,7 @@ const Display = memo(function Display({ media }: { media: PostType }) {
 
 function Render({ media }: { media: PostType }) {
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media.feed_id));
-    const updatePostReadById = usePostStore(state => state.setPostReadById);
+    const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
     if (!feed) return null;
     return (
