@@ -6,7 +6,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, enterVariants } from '@/lib/utils';
 
 import Render from './render';
 
@@ -119,7 +119,7 @@ function Main() {
 
     useEffect(() => {
         virtualizer.scrollToIndex(0);
-    }, [mediaList, columnsPerRow, virtualizer]);
+    }, [columnsPerRow, virtualizer]);
 
     if (mediaList.length === 0) return null;
 
@@ -130,14 +130,7 @@ function Main() {
                 <Buttons />
             </div>
             <AnimatePresence mode="wait">
-                <motion.div
-                    className="h-full"
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    key={[onlyUnread, selectedFeedId, selectedFolderId].join('-')}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                >
+                <motion.div className="h-full" key={[onlyUnread, selectedFeedId, selectedFolderId].join('-')} {...enterVariants}>
                     <ScrollArea className="h-full min-h-0" viewportRef={parentRef}>
                         <div
                             ref={containerRef}

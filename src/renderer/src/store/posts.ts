@@ -21,10 +21,6 @@ interface UsePostStore {
     posts: PostType[];
     selectedPostId: number | null;
 
-    offset: number;
-    hasMore: boolean;
-    isLoading: boolean;
-
     setSelectedPost: (post_id: number | null) => void;
     getSelectedPost: () => PostType | null;
 
@@ -109,7 +105,6 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         const selectedFeedId = useFeedStore.getState().selectedFeedId;
         const selectedFolderId = useFolderStore.getState().selectedFolderId;
         const view = useView.getState().view;
-        // console.log('refreshPosts', selectedFeedId, selectedFolderId, get().onlyUnread);
         window.electron.ipcRenderer.invoke('db-get-posts', { onlyUnread: get().onlyUnread, feedId: selectedFeedId, folderId: selectedFolderId, view }).then(posts => {
             set({ posts });
         });
@@ -118,9 +113,6 @@ export const usePostStore = create<UsePostStore>((set, get) => {
     return {
         posts: [],
         selectedPostId: null,
-        offset: 0,
-        hasMore: true,
-        isLoading: false,
         setSelectedPost,
         getSelectedPost,
         refreshPosts,

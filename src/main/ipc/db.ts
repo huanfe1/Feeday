@@ -20,8 +20,10 @@ ipcMain.handle('db-get-feeds', async () => {
         f.folder_id, 
         f.view, 
         f.last_fetch_error, 
-        EXISTS (SELECT 1 FROM posts p WHERE p.feed_id = f.id AND p.is_read = 0) AS has_unread 
+        CASE WHEN COUNT(p.id) > 0 THEN 1 ELSE 0 END AS has_unread 
     FROM feeds f
+    LEFT JOIN posts p ON p.feed_id = f.id AND p.is_read = 0
+    GROUP BY f.id, f.title, f.link, f.url, f.icon, f.fetch_frequency, f.folder_id, f.view, f.last_fetch_error
     ORDER BY f.title ASC;`;
     const select = db.prepare(sql);
     const avatar_proxy = db.prepare("SELECT value FROM settings WHERE key = 'avatar_proxy'").get()!.value as string;

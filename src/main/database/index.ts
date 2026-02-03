@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { BrowserWindow, app } from 'electron';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'path';
 

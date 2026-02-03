@@ -1,4 +1,5 @@
 import { useFeedStore, usePostStore } from '@/store';
+import type { AudioTrack } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useEffect, useMemo, useState } from 'react';
@@ -9,7 +10,7 @@ import { Logo } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, enterVariants } from '@/lib/utils';
 
 import Render from './render';
 
@@ -26,14 +27,14 @@ function Main() {
         setIsScrolled(e.currentTarget.scrollTop > 50);
     };
 
-    const podcast = useMemo(() => {
+    const audio: AudioTrack | null = useMemo(() => {
         if (!currentPost?.podcast) return null;
         const parsed = JSON.parse(currentPost.podcast);
 
         parsed.image ??= currentPost.image_url;
         parsed.title ??= currentPost.title;
 
-        return parsed;
+        return { postId: currentPost.id, feedId: currentPost.feed_id, podcast: parsed };
     }, [currentPost]);
 
     useEffect(() => {
@@ -93,15 +94,8 @@ function Main() {
                 </div>
             </div>
             <AnimatePresence mode="wait">
-                <motion.div
-                    className="h-full"
-                    key={currentPost?.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                >
-                    <ScrollArea className="h-full" onScroll={handleScroll} scrollKey={currentPost.id}>
+                <motion.div className="h-full" key={currentPost?.id} {...enterVariants}>
+                    <ScrollArea className="h-full" onScroll={handleScroll}>
                         <div className="mx-auto max-w-2xl px-8 pt-4 pb-12 2xl:max-w-4xl">
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
@@ -135,14 +129,14 @@ function Main() {
                                     </div>
                                 </header>
 
-                                {podcast && podcast.url && (
+                                {audio && audio?.podcast?.url && (
                                     <div className="mb-8">
-                                        <PostAudio postId={currentPost.id} feedId={currentPost.feed_id} podcast={podcast} />
+                                        <PostAudio audio={audio} />
                                     </div>
                                 )}
 
                                 <div className="prose prose-img:mx-auto max-w-none">
-                                    <Render content={content} podcast={{ ...podcast, postId: currentPost.id }} />
+                                    <Render content={content} audio={audio} />
                                 </div>
                             </article>
                         </div>

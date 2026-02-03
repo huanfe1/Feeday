@@ -1,7 +1,5 @@
-import { usePostStore } from '@/store';
-import { useView } from '@/store';
-import { memo } from 'react';
-import { useEffect } from 'react';
+import { usePostStore, useView } from '@/store';
+import { memo, useEffect } from 'react';
 
 import Media from './media';
 import Posts from './posts';
@@ -12,12 +10,8 @@ function View() {
         usePostStore.getState().refreshPosts();
     }, [view]);
 
-    if (view === 1) {
-        return <Posts />;
-    }
-    if (view === 2) {
-        return <Media />;
-    }
+    if (view === 1) return <Posts />;
+    if (view === 2) return <Media />;
     return null;
 }
 

@@ -11,7 +11,6 @@ if (import.meta.env.DEV) {
     });
 }
 
-// 渲染应用
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <App />

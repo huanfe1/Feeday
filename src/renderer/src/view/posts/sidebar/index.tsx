@@ -7,13 +7,12 @@ import Resizable from '@/components/resizable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, enterVariants } from '@/lib/utils';
 
 import Post from './post';
 
 export default function Sidebar() {
-    const selectFeed = useFeedStore(state => state.getSelectedFeed());
-    const selectedFeedId = useFeedStore(state => state.selectedFeedId);
+    const selectedFeed = useFeedStore(state => state.getSelectedFeed());
     const selectedFolderId = useFolderStore(state => state.selectedFolderId);
     const selectedFolder = useFolderStore(state => state.getSelectedFolder());
 
@@ -35,16 +34,14 @@ export default function Sidebar() {
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
             <div className="flex h-full w-full flex-col overflow-y-hidden">
                 <div className="drag-region mx-4 flex h-15 items-center justify-between gap-4">
-                    <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectFeed?.title || '文章列表'}</h3>
+                    <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectedFeed?.title || '文章列表'}</h3>
                     <Buttons />
                 </div>
                 <AnimatePresence mode="wait">
                     <motion.div
                         className="w-full flex-1 overflow-y-hidden"
-                        key={[onlyUnread, selectedFeedId, selectedFolderId].join('-')}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
+                        key={[onlyUnread, selectedFeed?.id, selectedFolderId].join('-')}
+                        {...enterVariants}
                         transition={{ duration: 0.1, ease: 'easeIn' }}
                     >
                         <ScrollArea className="flex h-full" viewportRef={parentRef}>

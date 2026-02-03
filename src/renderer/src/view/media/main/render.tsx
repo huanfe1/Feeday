@@ -1,5 +1,5 @@
 import type { PostType } from '@/store';
-import { useFeedStore } from '@/store';
+import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import type { Root } from 'hast';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
@@ -10,13 +10,14 @@ import { unified } from 'unified';
 import { EXIT, visit } from 'unist-util-visit';
 
 import Avatar from '@/components/avatar';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 
 const Image = memo(function Image(props: React.ImgHTMLAttributes<HTMLImageElement>) {
     const ErrorHandle = (e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.style.display = 'none';
     };
-    return <img className={cn('w-full', props.className)} src={props.src} alt={props.alt} loading="lazy" onError={ErrorHandle} />;
+    return <img className={cn('w-full', props.className)} src={props.src} alt={props.alt} onError={ErrorHandle} />;
 });
 
 const VideoPreview = memo(function VideoPreview({ ...props }: React.VideoHTMLAttributes<HTMLVideoElement>) {
@@ -65,21 +66,38 @@ const Display = memo(function Display({ media }: { media: PostType }) {
 
 function Render({ media }: { media: PostType }) {
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media.feed_id));
+    const updatePostReadById = usePostStore(state => state.setPostReadById);
 
     if (!feed) return null;
     return (
-        <div className="relative rounded p-2 select-none hover:bg-gray-200" key={media.id} onDoubleClick={() => window.open(media.link, '_blank')}>
-            <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
-                <Display media={media} />
-            </div>
-            <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title}</div>
-            <div className="mt-1 flex text-xs text-gray-600">
-                <Avatar title={feed.title} src={feed.icon} />
-                <span className="ml-1 truncate">{feed.title}</span>
-                <span className="ml-3 flex-none text-gray-400">{dayjs(media.pub_date).format('YYYY-MM-DD')}</span>
-            </div>
-            <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.is_read })}></span>
-        </div>
+        <ContextMenu>
+            <ContextMenuTrigger asChild>
+                <div
+                    className="relative rounded p-2 select-none hover:bg-gray-200"
+                    onClick={() => updatePostReadById(media.id, true)}
+                    key={media.id}
+                    onDoubleClick={() => window.open(media.link, '_blank')}
+                >
+                    <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
+                        <Display media={media} />
+                    </div>
+                    <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title}</div>
+                    <div className="mt-1 flex text-xs text-gray-600">
+                        <Avatar title={feed.title} src={feed.icon} />
+                        <span className="ml-1 truncate">{feed.title}</span>
+                        <span className="ml-3 flex-none text-gray-400">{dayjs(media.pub_date).format('YYYY-MM-DD')}</span>
+                    </div>
+                    <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.is_read })}></span>
+                </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+                <ContextMenuItem onSelect={() => updatePostReadById(media.id, !media.is_read)}>{media.is_read ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+                {/* <ContextMenuItem onSelect={() => setSelectFeed(post.feed_id)}>跳转至该订阅源</ContextMenuItem> */}
+                <ContextMenuSeparator />
+                <ContextMenuItem onSelect={() => window.open(media.link, '_blank')}>在浏览器中打开</ContextMenuItem>
+                {/* <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link)}>复制文章链接</ContextMenuItem> */}
+            </ContextMenuContent>
+        </ContextMenu>
     );
 }
 

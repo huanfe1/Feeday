@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useResizable } from 'react-resizable-layout';
 import type { UseResizableProps } from 'react-resizable-layout';
 

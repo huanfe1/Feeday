@@ -8,11 +8,12 @@ import { cn, formatTime } from '@/lib/utils';
 
 import { VolumeBar } from './volume';
 
-type PostAudioProps = AudioTrack & {
+type PostAudioProps = {
     className?: string;
+    audio: AudioTrack;
 };
 
-export function PostAudio({ className, postId, feedId, podcast }: PostAudioProps) {
+export function PostAudio({ className, audio }: PostAudioProps) {
     const SEEK_STEP = 5;
 
     const src = useAudioStore(state => state?.podcast?.url);
@@ -24,7 +25,7 @@ export function PostAudio({ className, postId, feedId, podcast }: PostAudioProps
     const play = useAudioStore(state => state.play);
     const seekBy = useAudioStore(state => state.seekBy);
 
-    const isActive = src === podcast.url && playingFeedId === feedId && playingPostId === postId;
+    const isActive = src === audio?.podcast?.url && playingFeedId === audio?.feedId && playingPostId === audio?.postId;
 
     const seekBackward = () => {
         if (!isActive) return;
@@ -38,7 +39,7 @@ export function PostAudio({ className, postId, feedId, podcast }: PostAudioProps
 
     const playButtonHandler = () => {
         if (!isActive) {
-            setTrack({ feedId, postId, podcast });
+            setTrack(audio);
             play();
         } else {
             togglePlayPause();
@@ -47,9 +48,9 @@ export function PostAudio({ className, postId, feedId, podcast }: PostAudioProps
 
     return (
         <div className={cn('bg-card rounded-lg border p-4', className)}>
-            {podcast.title && (
+            {audio.podcast.title && (
                 <div className="mb-3">
-                    <h3 className="text-foreground line-clamp-1 text-sm font-medium">{podcast.title}</h3>
+                    <h3 className="text-foreground line-clamp-1 text-sm font-medium">{audio.podcast.title}</h3>
                 </div>
             )}
 
@@ -82,14 +83,14 @@ export function PostAudio({ className, postId, feedId, podcast }: PostAudioProps
                         <TooltipContent>前进 {SEEK_STEP} 秒</TooltipContent>
                     </Tooltip>
                 </div>
-                <ProgressBar isActive={isActive} duration={podcast.duration ?? 0} />
+                <ProgressBar isActive={isActive} duration={audio.podcast.duration} />
                 <VolumeBar />
             </div>
         </div>
     );
 }
 
-const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDuration }: { isActive: boolean; duration: number }) {
+const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDuration }: { isActive: boolean; duration?: number }) {
     const currentTime = useAudioStore(state => Math.trunc(state.currentTime));
     const duration = useAudioStore(state => state.duration);
     const setCurrentTime = useAudioStore(state => state.setCurrentTime);
@@ -112,7 +113,7 @@ const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDurat
     return (
         <div className="flex flex-1 items-center gap-3">
             <span className="text-muted-foreground min-w-[70px] shrink-0 text-right text-xs font-medium tabular-nums select-none">
-                {formatTime(displayTime)} / {formatTime(displayDuration)}
+                {formatTime(displayTime)} / {formatTime(displayDuration ?? 0)}
             </span>
             <Slider
                 className="w-full"

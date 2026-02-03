@@ -14,8 +14,6 @@ export function GlobalAudio() {
     const isPlaying = useAudioStore(state => state.isPlaying);
 
     const togglePlayPause = useAudioStore(state => state.togglePlayPause);
-    const setSelectedFeedId = useFeedStore(state => state.setSelectedFeedId);
-    const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
     const podcast = useAudioStore(state => state.podcast);
     const clearTrack = useAudioStore(state => state.clearTrack);
@@ -24,11 +22,7 @@ export function GlobalAudio() {
     if (!podcast.url) return null;
 
     const handleJumpToPost = () => {
-        if (feedId && postId) {
-            setSelectedFeedId(feedId);
-            setSelectedPost(postId);
-            usePostStore.getState().refreshPosts();
-        }
+        document.dispatchEvent(new CustomEvent('jump-to-feed', { detail: feedId }));
     };
 
     const handleClose = () => clearTrack();
