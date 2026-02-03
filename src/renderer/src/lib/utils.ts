@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
-import type { Transition, Variants } from 'motion/react';
+import type { Variants } from 'motion/react';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]): string {
