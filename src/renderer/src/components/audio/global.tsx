@@ -4,12 +4,12 @@ import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 import { cn, formatTime } from '@/lib/utils';
 
 import { VolumeBar } from './volume';
 
 export function GlobalAudio() {
-    const feedId = useAudioStore(state => state.feedId);
     const isPlaying = useAudioStore(state => state.isPlaying);
 
     const togglePlayPause = useAudioStore(state => state.togglePlayPause);
@@ -20,7 +20,10 @@ export function GlobalAudio() {
     if (!podcast.url) return null;
 
     const handleJumpToPost = () => {
-        document.dispatchEvent(new CustomEvent('jump-to-feed', { detail: feedId }));
+        const feedId = useAudioStore.getState().feedId;
+        const postId = useAudioStore.getState().postId;
+        if (!feedId || !postId) return;
+        eventBus.emit('jump-to-feed', { feedId, postId });
     };
 
     const handleClose = () => clearTrack();

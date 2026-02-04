@@ -83,7 +83,7 @@ function Main() {
             <ScrollArea className="h-full min-h-0" viewportRef={viewportRef}>
                 <AnimatePresence mode="wait">
                     <motion.div className="h-full" key={[onlyUnread, selectedFeedId, selectedFolderId].join('-')} {...enterVariants}>
-                        <div className="relative mb-14 w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+                        <div className="relative mb-3 w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
                             {virtualizer.getVirtualItems().map(virtualRow => {
                                 const rowItems = rows[virtualRow.index];
                                 return (

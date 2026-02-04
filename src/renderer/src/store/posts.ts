@@ -39,7 +39,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         const post = get().posts.find(p => p.id === post_id)!;
         set({ selectedPostId: post_id });
 
-        if (!post.is_read) {
+        if (!post?.is_read) {
             updatePostReadById(post_id, true);
         }
     };

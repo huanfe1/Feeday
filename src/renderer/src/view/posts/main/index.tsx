@@ -10,6 +10,7 @@ import { Logo } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 import { cn, enterVariants } from '@/lib/utils';
 
 import Render from './render';
@@ -45,8 +46,8 @@ function Main() {
         return () => setIsScrolled(false);
     }, [currentPost?.id]);
 
-    const handleClickFeed = (id: number) => {
-        document.dispatchEvent(new CustomEvent('jump-to-feed', { detail: id }));
+    const clickFeedHandle = (feedId: number, postId: number) => {
+        eventBus.emit('jump-to-feed', { feedId, postId });
     };
 
     if (!currentPost)
@@ -110,7 +111,7 @@ function Main() {
                                         </a>
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
-                                        <div className="flex cursor-pointer items-center gap-x-1" onClick={() => handleClickFeed(currentPost.feed_id)}>
+                                        <div className="flex cursor-pointer items-center gap-x-1" onClick={() => clickFeedHandle(currentFeed.id, currentPost.id)}>
                                             <Avatar src={currentFeed.icon} title={currentPost.title} />
                                             <span className="font-medium">{currentFeed.title}</span>
                                         </div>

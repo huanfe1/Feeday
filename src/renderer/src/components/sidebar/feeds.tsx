@@ -1,11 +1,12 @@
 import { useFeedStore, useFolderStore, usePostStore, useView } from '@/store';
 import type { FeedType } from '@/store';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { type EventMap, eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 import Feed from './feed';
@@ -48,7 +49,7 @@ function Feeds({ className }: { className?: string }) {
                     </TabsList>
                 </Tabs>
             </div>
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="popLayout" initial={false}>
                 <motion.div
                     key={view.toString()}
                     initial={{ x: direction === 'right' ? width : -width }}
@@ -79,23 +80,11 @@ function Feeds({ className }: { className?: string }) {
 const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }: { name?: string; id: number | null; feeds: FeedType[]; isOpen?: boolean }) {
     const DURATION = 0.2;
 
+    const needJumpFeedId = useRef<number | null>(null);
+    const needJumpPostId = useRef<number | null>(null);
+
     const isSelected = useFolderStore(state => state.selectedFolderId === id);
     const setFolderOpen = useFolderStore(state => state.setFolderOpen);
-
-    useEffect(() => {
-        const handleJumpToFeed = ({ detail: feedId }: CustomEvent<number>) => {
-            if (feeds.some(feed => feed.id === feedId) && feedId !== null && id !== null) {
-                setFolderOpen(id, true);
-                useFolderStore.getState().setSelectedFolderId(null);
-                requestAnimationFrame(() => {
-                    useFeedStore.getState().setSelectedFeedId(feedId);
-                    usePostStore.getState().refreshPosts();
-                });
-            }
-        };
-        document.addEventListener('jump-to-feed', handleJumpToFeed as EventListener);
-        return () => document.removeEventListener('jump-to-feed', handleJumpToFeed as EventListener);
-    }, [feeds, setFolderOpen, id]);
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -108,6 +97,37 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         e.stopPropagation();
         if (id !== null) setFolderOpen(id, !isOpen);
     };
+
+    const scrollToFeed = () => {
+        // TODO: Feeds 存在滚动条，且目标文件夹未打开时，点击跳转等待文件夹打开时滚动条会出现抽搐
+        // 似乎是因为文件夹打开导致的滚动条位置变化
+        if (!needJumpFeedId.current || !needJumpPostId.current) return;
+        const feedElement = document.getElementById(`feed-${needJumpFeedId.current}`);
+        if (feedElement) {
+            useFolderStore.getState().setSelectedFolderId(null);
+            useFeedStore.getState().setSelectedFeedId(needJumpFeedId.current);
+            usePostStore.getState().refreshPosts();
+            feedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            usePostStore.getState().setSelectedPost(needJumpPostId.current);
+            needJumpFeedId.current = null;
+            needJumpPostId.current = null;
+        }
+    };
+
+    useEffect(() => {
+        const handleJumpToFeed = ({ feedId, postId }: EventMap['jump-to-feed']) => {
+            if (!feeds.some(feed => feed.id === feedId)) return;
+            needJumpFeedId.current = feedId;
+            needJumpPostId.current = postId;
+            if (id === null || isOpen) {
+                scrollToFeed();
+            } else {
+                setFolderOpen(id, true);
+            }
+        };
+        const removeListener = eventBus.on('jump-to-feed', handleJumpToFeed);
+        return () => removeListener();
+    }, [feeds, setFolderOpen, id, isOpen]);
 
     if (feeds.length === 0) return null;
     if (id === 0) return feeds.map(item => <Feed className="pl-5" key={item.id} feed={item} />);
@@ -126,6 +146,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                         exit={{ height: 0 }}
                         transition={{ duration: DURATION, ease: 'easeInOut' }}
                         style={{ overflow: 'hidden' }}
+                        onAnimationComplete={() => scrollToFeed()}
                     >
                         {feeds.map(item => (
                             <Feed className="pl-5" key={item.id} feed={item} />
