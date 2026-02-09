@@ -2,8 +2,6 @@ import dayjs from 'dayjs';
 import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
 
-import type { FeedType, PostType } from '@/database/types';
-
 export async function fetchFeed(url: string, timeout: number = 20000) {
     const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`获取订阅源超时: ${url}`)), timeout);
@@ -12,12 +10,12 @@ export async function fetchFeed(url: string, timeout: number = 20000) {
     const fetchPromise = net
         .fetch(url)
         .then(res => res.text())
-        .then(data => rssParser(data));
+        .then(rssParser);
 
     return Promise.race([fetchPromise, timeoutPromise]);
 }
 
-function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType>[] } {
+function rssParser(data: string) {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
         return {
@@ -26,13 +24,13 @@ function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType
             url: feed.atom?.links?.find(_ => _.rel === 'self')?.href,
             description: feed.description,
             icon: feed.image?.url ?? feed.itunes?.image,
-            last_updated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
+            lastUpdated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
             items: feed?.items?.map(item => ({
                 title: item.title,
                 link: getLink(item.guid?.value, item.link),
-                image_url: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
+                imageUrl: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
                 author: item.dc?.creators?.join('、') || item.authors?.join(''),
-                pub_date: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
+                pubDate: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.description,
                 content: item.content?.encoded,
                 podcast: {
@@ -49,13 +47,13 @@ function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType
             url: feed?.links?.find(_ => _.rel === 'self')?.href,
             description: feed.subtitle,
             icon: feed.icon ?? feed.itunes?.image,
-            last_updated: dayjs(feed.updated).format('YYYY-MM-DD HH:mm:ss'),
+            lastUpdated: dayjs(feed.updated).format('YYYY-MM-DD HH:mm:ss'),
             items: feed?.entries?.map(item => ({
                 title: item.title,
                 link: getLink(item?.links?.find(_ => _.rel === 'alternate')?.href, item.id),
-                image_url: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
+                imageUrl: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
                 author: item.authors?.map(_ => _.name).join('、'),
-                pub_date: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
+                pubDate: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
                 summary: item.summary,
                 content: item.content,
                 podcast: {
@@ -65,9 +63,10 @@ function rssParser(data: string): Partial<FeedType> & { items?: Partial<PostType
                 },
             })),
         };
+    } else {
+        console.error(`Invalid feed format: ${format}`);
+        throw new Error('Invalid feed format');
     }
-    console.error(`Invalid feed format: ${format}`);
-    throw new Error('Invalid feed format');
 }
 
 function getLink(...props: unknown[]): string {

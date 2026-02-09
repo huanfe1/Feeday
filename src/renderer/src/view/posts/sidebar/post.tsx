@@ -13,7 +13,7 @@ function Post({ post, className }: { post: PostType; className?: string }) {
     const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
-    const feed = useFeedStore(state => state.feeds.find(f => f.id === post.feed_id));
+    const feed = useFeedStore(state => state.feeds.find(f => f.id === post.feedId));
 
     const openLink = () => window.open(post.link, '_blank');
 
@@ -26,7 +26,7 @@ function Post({ post, className }: { post: PostType; className?: string }) {
                         <span className="truncate" title={post.title}>
                             {post.title}
                         </span>
-                        <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.is_read })}></span>
+                        <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.isRead })}></span>
                     </h3>
                     <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
@@ -35,13 +35,13 @@ function Post({ post, className }: { post: PostType; className?: string }) {
                             <span>{feed.title}</span>
                         </div>
                         <span className="mx-2">·</span>
-                        <span>{dayjs(post.pub_date).format('YYYY-MM-DD')}</span>
+                        <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
                     </div>
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-                <ContextMenuItem onSelect={() => updatePostReadById(post.id, !post.is_read)}>{post.is_read ? '标记为未读' : '标记为已读'}</ContextMenuItem>
-                <ContextMenuItem onSelect={() => setSelectFeed(post.feed_id)}>跳转至该订阅源</ContextMenuItem>
+                <ContextMenuItem onSelect={() => updatePostReadById(post.id, !post.isRead)}>{post.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+                <ContextMenuItem onSelect={() => setSelectFeed(post.feedId)}>跳转至该订阅源</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onSelect={openLink}>在浏览器中打开文章</ContextMenuItem>
                 <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link)}>复制文章链接</ContextMenuItem>

@@ -66,9 +66,9 @@ function Feeds({ className }: { className?: string }) {
                     ) : (
                         <div onClick={e => e.stopPropagation()}>
                             {folders.map(folder => (
-                                <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folder_id === folder.id)} isOpen={folder.isOpen} />
+                                <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folderId === folder.id)} isOpen={folder.isOpen} />
                             ))}
-                            <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folder_id === null)} />
+                            <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folderId === null)} />
                         </div>
                     )}
                 </motion.div>

@@ -19,7 +19,7 @@ function Main() {
     const [content, setContent] = useState('');
 
     const currentPost = usePostStore(state => state.getSelectedPost());
-    const currentFeed = useFeedStore(state => state.feeds.find(f => f.id === currentPost?.feed_id))!;
+    const currentFeed = useFeedStore(state => state.feeds.find(f => f.id === currentPost?.feedId))!;
 
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
@@ -32,10 +32,10 @@ function Main() {
         if (!currentPost?.podcast) return null;
         const parsed = JSON.parse(currentPost.podcast);
 
-        parsed.image ??= currentPost.image_url;
+        parsed.image ??= currentPost.imageUrl;
         parsed.title ??= currentPost.title;
 
-        return { postId: currentPost.id, feedId: currentPost.feed_id, podcast: parsed };
+        return { postId: currentPost.id, feedId: currentPost.feedId, podcast: parsed };
     }, [currentPost]);
 
     useEffect(() => {
@@ -74,12 +74,12 @@ function Main() {
                 <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => updatePostReadById(currentPost.id, !currentPost.is_read)}>
-                                <i className={cn('text-xl opacity-75', !currentPost.is_read ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
+                            <Button variant="ghost" size="icon" onClick={() => updatePostReadById(currentPost.id, !currentPost.isRead)}>
+                                <i className={cn('text-xl opacity-75', !currentPost.isRead ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>{currentPost.is_read ? '标记为未读' : '标记为已读'}</p>
+                            <p>{currentPost.isRead ? '标记为未读' : '标记为已读'}</p>
                         </TooltipContent>
                     </Tooltip>
                     <Tooltip>
@@ -121,10 +121,10 @@ function Main() {
                                                 <span className="font-medium">{currentPost.author}</span>
                                             </div>
                                         )}
-                                        {currentPost.pub_date && (
+                                        {currentPost.pubDate && (
                                             <div className="flex items-center gap-2">
                                                 <i className="i-mingcute-calendar-time-add-line size-4" />
-                                                <time dateTime={currentPost.pub_date}>{dayjs(currentPost.pub_date).format('YYYY年MM月DD日')}</time>
+                                                <time dateTime={currentPost.pubDate}>{dayjs(currentPost.pubDate).format('YYYY年MM月DD日')}</time>
                                             </div>
                                         )}
                                     </div>

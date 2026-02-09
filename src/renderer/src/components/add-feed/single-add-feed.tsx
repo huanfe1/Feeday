@@ -19,7 +19,7 @@ type FeedInfo = {
     description?: string;
     link: string;
     url?: string;
-    last_updated?: string;
+    lastUpdated?: string;
     icon?: string;
     items?: unknown[];
 };
@@ -31,7 +31,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
 
     const formSchema = z.object({
         url: z.url('请输入正确的订阅源地址').min(1, { message: '请输入订阅源地址' }),
-        folder_id: z.string().nullable(),
+        folderId: z.string().nullable(),
         view: z.string(),
         title: z.string().min(1, { message: '请输入订阅源标题' }).max(30, { message: '订阅源标题不能超过 30 个字符' }),
     });
@@ -40,7 +40,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         resolver: zodResolver(formSchema),
         defaultValues: {
             url: '',
-            folder_id: null,
+            folderId: null,
             view: '1',
             title: '',
         },
@@ -74,14 +74,18 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
             description: feedRef.current?.description || null,
             link: feedRef.current?.link,
             url: feedRef.current?.url ?? values.url,
-            last_updated: feedRef.current?.last_updated,
+            lastUpdated: feedRef.current?.lastUpdated,
             icon: feedRef.current?.icon || null,
-            folder_id: values.folder_id ? Number(values.folder_id) : null,
+            folderId: values.folderId ? Number(values.folderId) : null,
             view: Number(values.view),
         };
 
         try {
             const feedId = await window.electron.ipcRenderer.invoke('db-insert-feed', params);
+            if (!feedId) {
+                toast.error('该订阅源地址已存在', { position: 'top-center', richColors: true });
+                return;
+            }
             const tasks = (feedRef.current?.items || []).map((post: unknown) => window.electron.ipcRenderer.invoke('db-insert-post', feedId, post));
             await Promise.all(tasks);
 
@@ -92,10 +96,6 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
             toast.success(`「${values.title}」添加订阅源成功`);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message.endsWith('Error: UNIQUE constraint failed: feeds.url')) {
-                    toast.error('该订阅源地址已存在', { position: 'top-center', richColors: true });
-                    return;
-                }
                 toast.error('添加订阅源失败：' + error.message, { position: 'top-center', richColors: true });
             }
         }
@@ -151,7 +151,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                         />
                         <Controller
                             control={form.control}
-                            name="folder_id"
+                            name="folderId"
                             render={({ field, fieldState }) => (
                                 <Field className="col-span-6 col-start-auto flex flex-col items-start gap-2 space-y-0 self-end @3xl:col-span-6" data-invalid={fieldState.invalid}>
                                     <FieldLabel className="flex w-auto!">文件夹</FieldLabel>

@@ -1,23 +1,20 @@
+import { dbMethods } from '@/database';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import dayjs from 'dayjs';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
 import schedule from 'node-schedule';
 import { join } from 'path';
 
+import { settings } from '@/lib/settings';
+
 import icon from '../../resources/icon.png?asset';
-import { db, refreshFeed } from './database';
 
 // app.commandLine.appendSwitch('use-gl', 'egl');
 
-function createWindow() {
-    const settingList = db.prepare(`SELECT key, value FROM settings WHERE key IN ('window_width', 'window_height', 'is_maximized');`).all();
-    const settings = settingList.reduce((obj, item) => {
-        obj[item.key as keyof typeof obj] = item.value;
-        return obj;
-    }, {});
+async function createWindow() {
     const mainWindow = new BrowserWindow({
-        width: Number(settings.window_width),
-        height: Number(settings.window_height),
+        width: settings.get('windowWidth'),
+        height: settings.get('windowHeight'),
         minWidth: 1000,
         minHeight: 600,
         show: false,
@@ -31,8 +28,7 @@ function createWindow() {
             sandbox: false,
         },
     });
-
-    settings.is_maximized === '1' && mainWindow.maximize();
+    settings.get('isMaximized') && mainWindow.maximize();
     mainWindow.on('ready-to-show', () => {
         mainWindow.show();
     });
@@ -55,8 +51,8 @@ function createWindow() {
     ipcMain.handle('get-window-state', () => mainWindow.isMaximized());
 
     const refreshFeedHandle = (timeLimit?: boolean) => {
-        console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refresh-feeds');
-        refreshFeed(timeLimit);
+        console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'refresh feeds start');
+        dbMethods.refreshFeed(timeLimit).then(() => mainWindow.webContents.send('refresh-feeds'));
     };
     refreshFeedHandle();
 
@@ -64,17 +60,13 @@ function createWindow() {
     app.on('before-quit', () => every10minTask.cancel());
 
     mainWindow.on('resized', () => {
-        const size = mainWindow.getSize();
-        const sql = `UPDATE settings SET value = CASE key WHEN 'window_width' THEN ? WHEN 'window_height' THEN ? ELSE value END WHERE key IN ('window_width', 'window_height');`;
-        db.prepare(sql).run(...size);
+        const [width, height] = mainWindow.getSize();
+        settings.set('windowWidth', width);
+        settings.set('windowHeight', height);
     });
 
-    mainWindow.on('maximize', () => {
-        db.prepare("UPDATE settings SET value = true WHERE key = 'is_maximized'").run();
-    });
-    mainWindow.on('unmaximize', () => {
-        db.prepare("UPDATE settings SET value = false WHERE key = 'is_maximized'").run();
-    });
+    mainWindow.on('maximize', () => settings.set('isMaximized', true));
+    mainWindow.on('unmaximize', () => settings.set('isMaximized', false));
 
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.

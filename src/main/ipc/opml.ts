@@ -1,10 +1,8 @@
-import { db, insertPost } from '@/database';
+import { db, dbMethods } from '@/database';
 import { dialog, ipcMain } from 'electron';
 
-import type { PostType } from '@/database/types';
 import { type FeedItem, parseOpmlContent } from '@/lib/opml';
 import { fetchFeed } from '@/lib/rss';
-import { undefined2null } from '@/lib/utils';
 
 ipcMain.handle('opml-select-file-dialog', async () => {
     const result = await dialog.showOpenDialog({
@@ -29,54 +27,46 @@ ipcMain.handle('opml-parse-content', async (_event, content: string) => {
 async function insertFeedToDatabase(result: Awaited<ReturnType<typeof fetchFeed>> & { folder?: string }): Promise<boolean> {
     const { items, ...feed } = result;
 
-    db.exec('BEGIN TRANSACTION');
-    try {
-        let folderId: number | null = null;
-        if (feed.folder) {
-            const getFolderByName = db.prepare(`SELECT id FROM folders WHERE name = '${feed.folder}'`);
-            folderId = getFolderByName.get()?.id as number | null;
-            if (!folderId) {
-                const insert = db.prepare('INSERT INTO folders (name) VALUES (?)');
-                const { lastInsertRowid } = insert.run(feed.folder);
-                folderId = lastInsertRowid as number;
-            }
-        }
-
-        const insert = db.prepare(
-            'INSERT INTO feeds (title, description, link, url, last_updated, icon, folder_id, last_fetch_error) VALUES ($title, $description, $link, $url, $last_updated, $icon, $folder_id, $last_fetch_error)',
-        );
-        const { lastInsertRowid } = insert.run(
-            undefined2null({
-                title: feed.title,
-                description: feed.description,
-                link: feed.link,
-                url: feed.url,
-                last_updated: feed.last_updated,
-                icon: feed.icon,
-                folder_id: folderId,
-                last_fetch_error: feed.last_fetch_error,
-            }),
-        );
-
-        db.exec('COMMIT');
-
-        if (items) {
-            try {
-                await Promise.all(items.map(item => insertPost(lastInsertRowid as number, undefined2null(item) as PostType)));
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.log(`Failed to insert posts for feed ${feed.title}:`, error.message);
+    return new Promise<boolean>(resolve => {
+        db.transaction()
+            .execute(async trx => {
+                let folderId: number | undefined = undefined;
+                folderId = await trx
+                    .selectFrom('folders')
+                    .select(['id'])
+                    .where('name', '=', feed.folder as string)
+                    .executeTakeFirst()
+                    .then(row => row?.id);
+                if (!folderId) {
+                    folderId = await trx
+                        .insertInto('folders')
+                        .values({ name: feed.folder as string })
+                        .returning('id')
+                        .executeTakeFirst()
+                        .then(row => row?.id);
                 }
-            }
-        }
-        return true;
-    } catch (error: unknown) {
-        db.exec('ROLLBACK');
-        if (error instanceof Error) {
-            console.log(feed.title, error.message);
-        }
-        return false;
-    }
+                if (!feed.title || !feed.link || !feed.url) return false;
+                const { id: feedId } = await trx
+                    .insertInto('feeds')
+                    .values({
+                        title: feed.title,
+                        description: feed.description,
+                        link: feed.link,
+                        url: feed.url,
+                        lastUpdated: feed.lastUpdated,
+                        icon: feed.icon,
+                        folderId: folderId,
+                    })
+                    .returning('id')
+                    .executeTakeFirstOrThrow();
+
+                await Promise.all(items?.map(item => dbMethods.insertPost(feedId as number, item)) ?? []);
+                resolve(true);
+            })
+            .catch(() => {
+                resolve(false);
+            });
+    });
 }
 
 ipcMain.handle('import-opml-feeds', async (event, feeds: FeedItem[]) => {
@@ -84,7 +74,7 @@ ipcMain.handle('import-opml-feeds', async (event, feeds: FeedItem[]) => {
     let index = 0;
     const insertPromises: Promise<boolean>[] = [];
 
-    const findFeedSql = db.prepare('SELECT id FROM feeds WHERE url = ?');
+    const findFeed = db.selectFrom('feeds').select(['id']);
 
     async function fetchNext(): Promise<void> {
         if (index >= feeds.length) {
@@ -94,7 +84,7 @@ ipcMain.handle('import-opml-feeds', async (event, feeds: FeedItem[]) => {
         const feed = feeds[index];
         index += 1;
 
-        if (!feed.url || findFeedSql.get(feed.url)) {
+        if (!feed.url || (await findFeed.where('url', '=', feed.url).executeTakeFirst())) {
             return fetchNext();
         }
 

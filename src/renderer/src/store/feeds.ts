@@ -9,27 +9,28 @@ export type FeedType = {
     link: string;
     url: string;
     icon: string;
-    has_unread: boolean;
-    fetch_frequency: number;
-    folder_id: number | null;
+    hasUnread: boolean;
+    fetchFrequency: number;
+    folderId: number | null;
     view: number;
-    last_fetch_error: string | null;
+    lastFetchError: string | null;
 };
 
 interface UseFeedStore {
     feeds: FeedType[];
     selectedFeedId: number | null;
-    setSelectedFeedId: (feed_id: number | null) => void;
+    setSelectedFeedId: (feedId: number | null) => void;
     getSelectedFeed: () => FeedType | null;
     refreshFeeds: () => void;
-    deleteFeed: (feed_id: number) => void;
-    updateFeed: (data: { id: number } & Partial<FeedType>) => Promise<void>;
-    updateFeedHasUnread: (feed_id: number, has_unread: boolean) => void;
+    deleteFeed: (feedId: number) => void;
+    updateFeed: (feedId: number, data: Partial<FeedType>) => Promise<void>;
+    updateFeedHasUnread: (feedId: number, hasUnread: boolean) => void;
 }
 
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
         window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => {
+            console.log(feeds);
             set({ feeds: feeds || [] });
             useFolderStore.getState().refreshFolders();
         });
@@ -44,37 +45,37 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
     return {
         feeds: [],
         selectedFeedId: null,
-        setSelectedFeedId: feed_id => set({ selectedFeedId: feed_id }),
+        setSelectedFeedId: feedId => set({ selectedFeedId: feedId }),
         getSelectedFeed: getSelectFeed,
         refreshFeeds,
-        deleteFeed: feed_id => {
+        deleteFeed: feedId => {
             usePostStore.getState().setSelectedPost(null);
             get().setSelectedFeedId(null);
-            window.electron.ipcRenderer.invoke('db-delete-feed', feed_id).then(() => {
+            window.electron.ipcRenderer.invoke('db-delete-feed', feedId).then(() => {
                 set(state => ({
                     ...state,
-                    feeds: state.feeds.filter(feed => feed.id !== feed_id),
+                    feeds: state.feeds.filter(feed => feed.id !== feedId),
                 }));
             });
         },
-        updateFeed: async data => {
-            return window.electron.ipcRenderer.invoke('db-update-feed', data).then(() => {
+        updateFeed: async (feedId, data) => {
+            return window.electron.ipcRenderer.invoke('db-update-feed', feedId, data).then(() => {
                 set(state => ({
-                    feeds: state.feeds.map(feed => (feed.id === data.id ? { ...feed, ...data } : feed)),
+                    feeds: state.feeds.map(feed => (feed.id === feedId ? { ...feed, ...data } : feed)),
                 }));
             });
         },
-        updateFeedHasUnread: (feed_id, has_unread) => {
+        updateFeedHasUnread: (feedId, hasUnread) => {
             set(state => {
-                const feed = state.feeds.find(f => f.id === feed_id);
-                // 如果 feed 不存在或 has_unread 值没有变化，则不更新
-                if (!feed || feed.has_unread === has_unread) {
+                const feed = state.feeds.find(f => f.id === feedId);
+                // 如果 feed 不存在或 hasUnread 值没有变化，则不更新
+                if (!feed || feed.hasUnread === hasUnread) {
                     return state;
                 }
                 // 只有当值实际变化时才创建新的数组和对象
                 return {
                     ...state,
-                    feeds: state.feeds.map(f => (f.id === feed_id ? { ...f, has_unread } : f)),
+                    feeds: state.feeds.map(f => (f.id === feedId ? { ...f, hasUnread: hasUnread } : f)),
                 };
             });
         },

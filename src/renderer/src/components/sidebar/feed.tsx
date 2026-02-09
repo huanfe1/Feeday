@@ -50,17 +50,17 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                     >
                         <Avatar src={feed.icon} title={feed.title} />
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>
-                        {feed.last_fetch_error && (
+                        {feed.lastFetchError && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <span className="i-mingcute-close-circle-fill text-red-500"></span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>{feed.last_fetch_error}</p>
+                                    <p>{feed.lastFetchError}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.has_unread })}></span>
+                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
@@ -100,8 +100,8 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
 const editFeedSchema = z.object({
     title: z.string().min(1, '请输入订阅源标题'),
     link: z.url('请输入正确的网站地址'),
-    fetch_frequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
-    folder_id: z.number().nullable().optional(),
+    fetchFrequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
+    folderId: z.number().nullable().optional(),
     view: z.number().int().min(1).max(2),
 });
 
@@ -114,8 +114,8 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         defaultValues: {
             title: feed.title,
             link: feed.link,
-            fetch_frequency: feed.fetch_frequency,
-            folder_id: feed.folder_id ?? null,
+            fetchFrequency: feed.fetchFrequency,
+            folderId: feed.folderId ?? null,
             view: feed.view,
         },
     });
@@ -125,8 +125,8 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         form.reset({
             title: feed.title,
             link: feed.link,
-            fetch_frequency: feed.fetch_frequency,
-            folder_id: feed.folder_id ?? null,
+            fetchFrequency: feed.fetchFrequency,
+            folderId: feed.folderId ?? null,
             view: feed.view,
         });
     }, [open, form, feed]);
@@ -135,12 +135,11 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
 
     const onSubmit = (data: EditFeedFormValues) => {
-        updateFeed({
-            id: feed.id,
+        updateFeed(feed.id, {
             title: data.title,
             link: data.link,
-            fetch_frequency: data.fetch_frequency,
-            folder_id: data.folder_id ?? null,
+            fetchFrequency: data.fetchFrequency,
+            folderId: data.folderId ?? null,
             view: data.view,
         })
             .then(() => {
@@ -190,7 +189,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                         />
                         <FormField
                             control={form.control}
-                            name="fetch_frequency"
+                            name="fetchFrequency"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>更新频率（分钟）</FormLabel>
@@ -210,7 +209,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                         />
                         <FormField
                             control={form.control}
-                            name="folder_id"
+                            name="folderId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>文件夹</FormLabel>

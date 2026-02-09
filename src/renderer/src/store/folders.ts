@@ -10,7 +10,7 @@ interface UseFolderStore {
     folders: FolderType[];
     selectedFolderId: number | null;
 
-    setSelectedFolderId: (folder_id: number | null) => void;
+    setSelectedFolderId: (folderId: number | null) => void;
     getSelectedFolder: () => FolderType | null;
     refreshFolders: () => void;
     createFolder: (name: string) => Promise<number>;
@@ -28,7 +28,7 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
     return {
         folders: [],
         selectedFolderId: null,
-        setSelectedFolderId: folder_id => set({ selectedFolderId: folder_id }),
+        setSelectedFolderId: folderId => set({ selectedFolderId: folderId }),
         getSelectedFolder: () => get().folders.find(folder => folder.id === get().selectedFolderId) || null,
         refreshFolders,
         createFolder: async (name: string) => {

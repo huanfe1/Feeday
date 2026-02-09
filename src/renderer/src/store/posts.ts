@@ -9,38 +9,38 @@ export type PostType = {
     title: string;
     link: string;
     author: string;
-    image_url: string;
+    imageUrl: string;
     summary: string;
     podcast: string;
-    is_read: boolean;
-    pub_date: string;
-    feed_id: number;
+    isRead: boolean;
+    pubDate: string;
+    feedId: number;
 };
 
 interface UsePostStore {
     posts: PostType[];
     selectedPostId: number | null;
 
-    setSelectedPost: (post_id: number | null) => void;
+    setSelectedPost: (postId: number | null) => void;
     getSelectedPost: () => PostType | null;
 
     refreshPosts: () => void;
-    readAllPosts: (feed_id?: number, folder_id?: number) => void;
-    updatePostReadById: (post_id: number, is_read: boolean) => void;
+    readAllPosts: (feedId?: number, folderId?: number) => void;
+    updatePostReadById: (postId: number, isRead: boolean) => void;
 
     onlyUnread: boolean;
-    setOnlyUnread: (only_unread: boolean) => void;
+    setOnlyUnread: (onlyUnread: boolean) => void;
 }
 
 export const usePostStore = create<UsePostStore>((set, get) => {
-    const setSelectedPost = (post_id: number | null) => {
-        if (!post_id) return set({ selectedPostId: null });
+    const setSelectedPost = (postId: number | null) => {
+        if (!postId) return set({ selectedPostId: null });
 
-        const post = get().posts.find(p => p.id === post_id)!;
-        set({ selectedPostId: post_id });
+        const post = get().posts.find(p => p.id === postId)!;
+        set({ selectedPostId: postId });
 
-        if (!post?.is_read) {
-            updatePostReadById(post_id, true);
+        if (!post?.isRead) {
+            updatePostReadById(postId, true);
         }
     };
 
@@ -49,24 +49,24 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         return get().posts.find(post => post.id === get().selectedPostId) || null;
     };
 
-    const updatePostReadById = (post_id: number, is_read: boolean = true) => {
-        window.electron.ipcRenderer.invoke('db-update-post-read-by-id', post_id, is_read).then(() => {
-            const posts = get().posts.map(p => (p.id === post_id ? { ...p, is_read } : p));
+    const updatePostReadById = (postId: number, isRead: boolean = true) => {
+        window.electron.ipcRenderer.invoke('db-update-post-read-by-id', postId, isRead).then(() => {
+            const posts = get().posts.map(p => (p.id === postId ? { ...p, isRead } : p));
             set({ posts });
 
-            const updatedPost = posts.find(p => p.id === post_id);
+            const updatedPost = posts.find(p => p.id === postId);
             if (!updatedPost) return;
 
-            const feedId = updatedPost.feed_id;
+            const feedId = updatedPost.feedId;
             const feedStore = useFeedStore.getState();
             const feed = feedStore.feeds.find(f => f.id === feedId);
             if (!feed) return;
 
-            const currentHasUnread = feed.has_unread;
+            const currentHasUnread = feed.hasUnread;
 
-            if (is_read) {
+            if (isRead) {
                 if (currentHasUnread) {
-                    const hasUnreadPosts = posts.some(p => p.feed_id === feedId && !p.is_read);
+                    const hasUnreadPosts = posts.some(p => p.feedId === feedId && !p.isRead);
                     if (!hasUnreadPosts) {
                         feedStore.updateFeedHasUnread(feedId, false);
                     }
@@ -79,25 +79,25 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         });
     };
 
-    const readAllPosts = (feed_id?: number, folder_id?: number) => {
-        if (feed_id && folder_id) throw new Error('feed_id and folder_id cannot be provided at the same time');
+    const readAllPosts = (feedId?: number, folderId?: number) => {
+        if (feedId && folderId) throw new Error('feedId and folderId cannot be provided at the same time');
 
-        window.electron.ipcRenderer.invoke('db-read-all-posts', feed_id, folder_id).then(() => {
-            const posts = get().posts.map(p => ({ ...p, is_read: true }));
+        window.electron.ipcRenderer.invoke('db-read-all-posts', feedId, folderId).then(() => {
+            const posts = get().posts.map(p => ({ ...p, isRead: true }));
             set({ posts });
 
-            if (feed_id) {
-                useFeedStore.getState().updateFeedHasUnread(feed_id, false);
+            if (feedId) {
+                useFeedStore.getState().updateFeedHasUnread(feedId, false);
                 return;
             }
 
-            if (folder_id) {
+            if (folderId) {
                 const feedStore = useFeedStore.getState();
-                feedStore.feeds.filter(feed => feed.folder_id === folder_id).forEach(feed => feedStore.updateFeedHasUnread(feed.id, false));
+                feedStore.feeds.filter(feed => feed.folderId === folderId).forEach(feed => feedStore.updateFeedHasUnread(feed.id, false));
                 return;
             }
 
-            posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feed_id, false));
+            posts.forEach(p => useFeedStore.getState().updateFeedHasUnread(p.feedId, false));
         });
     };
 
@@ -120,6 +120,6 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         updatePostReadById,
 
         onlyUnread: false,
-        setOnlyUnread: has_unread => set({ onlyUnread: has_unread }),
+        setOnlyUnread: hasUnread => set({ onlyUnread: hasUnread }),
     };
 });
