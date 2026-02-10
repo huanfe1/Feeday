@@ -56,9 +56,9 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         setLoading(true);
 
         try {
-            const res = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
-            form.setValue('title', res.title);
-            feedRef.current = res;
+            const { feed: fetchFeed } = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
+            form.setValue('title', fetchFeed.title);
+            feedRef.current = fetchFeed;
         } catch (error: unknown) {
             if (error instanceof Error) {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });

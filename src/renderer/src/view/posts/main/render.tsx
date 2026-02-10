@@ -25,7 +25,7 @@ function PodcastTime({ audio, ...props }: React.ComponentProps<'span'> & { audio
     const children = props.children as string;
     if (typeof children === 'string' && /^\d{1,2}:\d{2}(?::\d{2})?$/.test(children)) {
         return (
-            <span className="cursor-pointer font-semibold text-blue-500 hover:underline" onClick={() => handleClickTime(children)}>
+            <span className="cursor-pointer font-semibold text-blue-500 hover:underline" data-role="podcast-time" onClick={() => handleClickTime(children)}>
                 {children}
             </span>
         );

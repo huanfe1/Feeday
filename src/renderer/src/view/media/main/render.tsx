@@ -8,6 +8,7 @@ import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 import rehypeParse from 'rehype-parse';
 import { unified } from 'unified';
 import { EXIT, visit } from 'unist-util-visit';
+import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -66,11 +67,12 @@ const Display = memo(function Display({ media }: { media: PostType }) {
     return toJsxRuntime(newTree, { Fragment, jsxs, jsx, components });
 });
 
-function Render({ media }: { media: PostType }) {
-    const feed = useFeedStore(state => state.feeds.find(f => f.id === media.feedId));
+function Render({ id }: { id: number }) {
+    const media = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
+    const feed = useFeedStore(state => state.feeds.find(f => f.id === media?.feedId));
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
-    if (!feed) return null;
+    if (!feed || !media) return null;
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>

@@ -1,23 +1,24 @@
-import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import { memo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 
-function Post({ post, className }: { post: PostType; className?: string }) {
-    const isSelected = usePostStore(state => state.selectedPostId === post.id);
+function Post({ id, className }: { id: number; className?: string }) {
+    const post = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
+    const isSelected = usePostStore(state => state.selectedPostId === post?.id);
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
     const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
     const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
-    const feed = useFeedStore(state => state.feeds.find(f => f.id === post.feedId));
+    const feed = useFeedStore(state => state.feeds.find(f => f.id === post?.feedId));
 
-    const openLink = () => window.open(post.link, '_blank');
+    const openLink = () => window.open(post?.link, '_blank');
 
-    if (!feed) return null;
+    if (!feed || !post) return null;
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>

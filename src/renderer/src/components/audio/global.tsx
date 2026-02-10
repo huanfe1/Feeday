@@ -133,10 +133,10 @@ const RateButton = memo(function RateButton() {
                 </Button>
             </TooltipTrigger>
             <TooltipContent className="p-1" theme="light">
-                <div className="flex flex-col gap-y-1">
+                <div className="flex flex-col gap-y-1 select-none">
                     {[0.5, 0.75, 1, 1.25, 1.5, 2.0].map(r => (
                         <div
-                            className={cn('flex h-8 w-14 cursor-default items-center justify-center rounded duration-200', r === rate ? 'bg-primary text-primary-foreground' : '')}
+                            className={cn('flex h-8 w-14 cursor-default items-center justify-center rounded', r === rate ? 'bg-primary text-primary-foreground' : '')}
                             key={r}
                             onClick={() => setRate(r)}
                         >

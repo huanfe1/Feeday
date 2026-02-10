@@ -2,6 +2,7 @@ import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,7 +12,7 @@ import { cn, enterVariants } from '@/lib/utils';
 import Render from './render';
 
 function Main() {
-    const mediaList = usePostStore(state => state.posts);
+    const mediaIds = usePostStore(useShallow(state => state.posts.map(p => p.id)));
     const onlyUnread = usePostStore(state => state.onlyUnread);
 
     const selectedFeedId = useFeedStore(state => state.selectedFeedId);
@@ -42,12 +43,12 @@ function Main() {
     }, []);
 
     const rows = useMemo(() => {
-        const result: (typeof mediaList)[] = [];
-        for (let i = 0; i < mediaList.length; i += columnsPerRow) {
-            result.push(mediaList.slice(i, i + columnsPerRow));
+        const result: (typeof mediaIds)[] = [];
+        for (let i = 0; i < mediaIds.length; i += columnsPerRow) {
+            result.push(mediaIds.slice(i, i + columnsPerRow));
         }
         return result;
-    }, [mediaList, columnsPerRow]);
+    }, [mediaIds, columnsPerRow]);
 
     const estimateRowHeight = useCallback(() => {
         const targetElement = viewportRef.current;
@@ -70,10 +71,9 @@ function Main() {
         overscan: 2,
     });
 
-    useEffect(() => virtualizer.scrollToIndex(0), [mediaList, virtualizer]);
+    useEffect(() => virtualizer.scrollToIndex(0), [mediaIds, virtualizer]);
 
-    if (mediaList.length === 0) return null;
-
+    if (mediaIds.length === 0) return null;
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
             <div className="flex h-15 items-center justify-between gap-4 px-4">
@@ -95,14 +95,15 @@ function Main() {
                                         style={{ transform: `translateY(${virtualRow.start}px)` }}
                                     >
                                         <div className="grid gap-2 px-4 pt-2" style={{ gridTemplateColumns: `repeat(${columnsPerRow}, minmax(0, 1fr))` }}>
-                                            {rowItems.map(media => (
-                                                <Render key={media.id} media={media} />
+                                            {rowItems.map(id => (
+                                                <Render id={id} key={id} />
                                             ))}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
+                        <div></div>
                     </motion.div>
                 </AnimatePresence>
             </ScrollArea>

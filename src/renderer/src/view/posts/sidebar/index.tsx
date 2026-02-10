@@ -2,6 +2,7 @@ import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import Resizable from '@/components/resizable';
 import { Button } from '@/components/ui/button';
@@ -16,19 +17,19 @@ export default function Sidebar() {
     const selectedFolderId = useFolderStore(state => state.selectedFolderId);
     const selectedFolder = useFolderStore(state => state.getSelectedFolder());
 
-    const posts = usePostStore(state => state.posts);
+    const postIds = usePostStore(useShallow(state => state.posts.map(p => p.id)));
     const onlyUnread = usePostStore(state => state.onlyUnread);
 
     const parentRef = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line react-hooks/incompatible-library
     const virtualizer = useVirtualizer({
-        count: posts.length,
+        count: postIds.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => 125,
         overscan: 3,
     });
 
-    useEffect(() => virtualizer.scrollToIndex(0), [posts, virtualizer]);
+    useEffect(() => virtualizer.scrollToIndex(0), [postIds, virtualizer]);
 
     return (
         <Resizable id="posts-sidebar" options={{ axis: 'x', min: 300, max: 400, initial: 300 }}>
@@ -45,7 +46,7 @@ export default function Sidebar() {
                         transition={{ duration: 0.1, ease: 'easeIn' }}
                     >
                         <ScrollArea className="flex h-full" viewportRef={parentRef}>
-                            {posts.length === 0 ? (
+                            {postIds.length === 0 ? (
                                 <div className="flex h-[calc(100vh-60px)] items-center justify-center text-gray-400 select-none">
                                     <div className="flex flex-col items-center gap-y-3">
                                         <i className="i-mingcute-celebrate-line text-3xl"></i>
@@ -61,11 +62,11 @@ export default function Sidebar() {
                                     }}
                                 >
                                     {virtualizer.getVirtualItems().map(virtualItem => {
-                                        const post = posts[virtualItem.index];
+                                        const postId = postIds[virtualItem.index];
                                         return (
                                             <div
                                                 data-index={virtualItem.index}
-                                                key={post.id}
+                                                key={postId}
                                                 ref={virtualizer.measureElement}
                                                 style={{
                                                     position: 'absolute',
@@ -76,7 +77,7 @@ export default function Sidebar() {
                                                     willChange: 'transform',
                                                 }}
                                             >
-                                                <Post post={post} />
+                                                <Post id={postId} key={postId} />
                                             </div>
                                         );
                                     })}
