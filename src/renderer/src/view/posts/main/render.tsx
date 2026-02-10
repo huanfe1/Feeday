@@ -8,7 +8,7 @@ import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 
 import parseHtml from '@/lib/parse-html';
 
-function PodcastTime({ audio, ...props }: React.HTMLAttributes<HTMLSpanElement> & { audio: AudioTrack | null }) {
+function PodcastTime({ audio, ...props }: React.ComponentProps<'span'> & { audio: AudioTrack | null }) {
     const handleClickTime = (time: string) => {
         const postId = useAudioStore.getState().postId;
         const duration = useAudioStore.getState().duration;
@@ -35,14 +35,14 @@ function PodcastTime({ audio, ...props }: React.HTMLAttributes<HTMLSpanElement> 
 
 function Render({ content, audio }: { content: string; audio: AudioTrack | null }) {
     const components = {
-        a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-            <a href={props.href} target="_blank" rel="noopener noreferrer">
+        a: (props: React.ComponentProps<'a'>) => (
+            <a href={props.href} rel="noopener noreferrer" target="_blank">
                 {props.children}
             </a>
         ),
-        h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => <h2 {...props} />,
-        img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} loading="lazy" />,
-        'podcast-time': (props: React.HTMLAttributes<HTMLSpanElement>) => <PodcastTime {...props} audio={audio} />,
+        h1: (props: React.ComponentProps<'h2'>) => <h2 {...props} />,
+        img: (props: React.ComponentProps<'img'>) => <img {...props} loading="lazy" />,
+        'podcast-time': (props: React.ComponentProps<'span'>) => <PodcastTime {...props} audio={audio} />,
     };
 
     const tree = useMemo(() => {

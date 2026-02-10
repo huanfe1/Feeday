@@ -22,7 +22,7 @@ function Resizable({ children, options, id }: { children: React.ReactNode; optio
 
     return (
         <>
-            <div className="h-full" style={{ width: position }} ref={containerRef}>
+            <div className="h-full" ref={containerRef} style={{ width: position }}>
                 {children}
             </div>
             <div

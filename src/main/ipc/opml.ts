@@ -1,7 +1,9 @@
 import { db, dbMethods } from '@/database';
 import { dialog, ipcMain } from 'electron';
+import { readFileSync } from 'node:fs';
+import pLimit from 'p-limit';
 
-import { type FeedItem, parseOpmlContent } from '@/lib/opml';
+import { parseOpmlContent } from '@/lib/opml';
 import { fetchFeed } from '@/lib/rss';
 
 ipcMain.handle('opml-select-file-dialog', async () => {
@@ -12,105 +14,55 @@ ipcMain.handle('opml-select-file-dialog', async () => {
     if (result.canceled) {
         return null;
     }
-    return result.filePaths[0];
+    return readFileSync(result.filePaths[0], { encoding: 'utf-8' });
 });
 
-ipcMain.handle('opml-parse-content', async (_event, content: string) => {
-    try {
-        const feeds = parseOpmlContent(content);
-        return { success: true, feeds };
-    } catch (error) {
-        return { success: false, error: (error as Error).message, feeds: [] };
-    }
-});
+const fetchLimit = pLimit(5);
+const writeLimit = pLimit(1);
+ipcMain.handle('opml-import-from-content', async (_event, content: string) => {
+    const opmlFeeds = parseOpmlContent(content);
+    const tasks = opmlFeeds.map(opmlFeed => {
+        return fetchLimit(async () => {
+            try {
+                const { feed: fetchFeedData, posts: fetchPostsData } = await fetchFeed(opmlFeed.url);
+                const { folderName, ...opmlFeedWithoutFolderName } = opmlFeed;
+                const folderId = await getFolderId(folderName);
 
-async function insertFeedToDatabase(result: Awaited<ReturnType<typeof fetchFeed>> & { folder?: string }): Promise<boolean> {
-    const { items, ...feed } = result;
-
-    return new Promise<boolean>(resolve => {
-        db.transaction()
-            .execute(async trx => {
-                let folderId: number | undefined = undefined;
-                folderId = await trx
-                    .selectFrom('folders')
-                    .select(['id'])
-                    .where('name', '=', feed.folder as string)
-                    .executeTakeFirst()
-                    .then(row => row?.id);
-                if (!folderId) {
-                    folderId = await trx
-                        .insertInto('folders')
-                        .values({ name: feed.folder as string })
-                        .returning('id')
-                        .executeTakeFirst()
-                        .then(row => row?.id);
+                const feed = { ...fetchFeedData, ...opmlFeedWithoutFolderName, folderId };
+                if (!feed?.title || !feed?.link || !feed?.url) {
+                    throw new Error('Feed 缺少必要字段 (title/link/url)');
                 }
-                if (!feed.title || !feed.link || !feed.url) return false;
-                const { id: feedId } = await trx
-                    .insertInto('feeds')
-                    .values({
-                        title: feed.title,
-                        description: feed.description,
-                        link: feed.link,
-                        url: feed.url,
-                        lastUpdated: feed.lastUpdated,
-                        icon: feed.icon,
-                        folderId: folderId,
-                    })
-                    .returning('id')
-                    .executeTakeFirstOrThrow();
 
-                await Promise.all(items?.map(item => dbMethods.insertPost(feedId as number, item)) ?? []);
-                resolve(true);
-            })
-            .catch(() => {
-                resolve(false);
-            });
-    });
-}
+                const feedId = await dbMethods.insertFeed(feed);
+                if (!feedId || !fetchPostsData || fetchPostsData.length === 0) {
+                    throw new Error('无法插入 Feed 或 Feed 已存在');
+                }
 
-ipcMain.handle('import-opml-feeds', async (event, feeds: FeedItem[]) => {
-    const maxParallel = 5;
-    let index = 0;
-    const insertPromises: Promise<boolean>[] = [];
-
-    const findFeed = db.selectFrom('feeds').select(['id']);
-
-    async function fetchNext(): Promise<void> {
-        if (index >= feeds.length) {
-            return;
-        }
-
-        const feed = feeds[index];
-        index += 1;
-
-        if (!feed.url || (await findFeed.where('url', '=', feed.url).executeTakeFirst())) {
-            return fetchNext();
-        }
-
-        try {
-            const result = await fetchFeed(feed.url, 10000);
-            insertPromises.push(insertFeedToDatabase({ ...feed, ...result }));
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                insertPromises.push(insertFeedToDatabase({ ...feed, last_fetch_error: error.message }));
+                await Promise.allSettled(
+                    fetchPostsData.map(post => {
+                        return writeLimit(async () => {
+                            const { title, link, ...postData } = post;
+                            if (!title || !link) return;
+                            await dbMethods.insertPost(feedId, { ...postData, title, link });
+                        });
+                    }),
+                );
+                return { success: true, feedId, title: feed.title, url: opmlFeed.url };
+            } catch (error: unknown) {
+                return { success: false, message: (error as Error)?.message ?? String(error) };
             }
-        }
+        });
+    });
 
-        return fetchNext();
-    }
-
-    const fetchPromises: Promise<void>[] = [];
-    for (let i = 0; i < maxParallel; i += 1) {
-        fetchPromises.push(fetchNext());
-    }
-
-    await Promise.all(fetchPromises);
-
-    const insertResults = await Promise.all(insertPromises);
-    const successCount = insertResults.filter(result => result === true).length;
-
-    console.log(`OPML 导入完成，成功插入 ${successCount} 个订阅源`);
-
-    event.sender.send('opml-import-complete', { insertedFeeds: successCount });
+    const settled = await Promise.allSettled(tasks);
+    const results = settled.map(r => (r.status === 'fulfilled' ? r.value : { feedId: null, url: 'unknown', error: (r.reason as Error)?.message ?? String(r.reason) }));
+    return { success: true, results };
 });
+
+async function getFolderId(folderName?: string): Promise<number | undefined> {
+    if (!folderName) return;
+    const folder = await db.selectFrom('folders').select(['id']).where('name', '=', folderName).executeTakeFirst();
+    if (folder?.id) return folder.id;
+    const newFolder = await db.insertInto('folders').values({ name: folderName }).returning('id').executeTakeFirst();
+    return newFolder!.id!;
+}

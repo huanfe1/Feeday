@@ -58,7 +58,7 @@ export function PostAudio({ className, audio }: PostAudioProps) {
                 <div className="flex items-center gap-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-9 w-9" variant="ghost" size="icon" onClick={seekBackward}>
+                            <Button className="h-9 w-9" onClick={seekBackward} size="icon" variant="ghost">
                                 <i className="i-mingcute-rewind-backward-5-line text-lg" />
                             </Button>
                         </TooltipTrigger>
@@ -67,7 +67,7 @@ export function PostAudio({ className, audio }: PostAudioProps) {
 
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-10 w-10 rounded-full" variant="default" size="icon" onClick={playButtonHandler}>
+                            <Button className="h-10 w-10 rounded-full" onClick={playButtonHandler} size="icon" variant="default">
                                 <i className={cn('text-xl', isActive && isPlaying ? 'i-mingcute-pause-fill' : 'i-mingcute-play-fill')} />
                             </Button>
                         </TooltipTrigger>
@@ -76,14 +76,14 @@ export function PostAudio({ className, audio }: PostAudioProps) {
 
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-9 w-9" variant="ghost" size="icon" onClick={seekForward}>
+                            <Button className="h-9 w-9" onClick={seekForward} size="icon" variant="ghost">
                                 <i className="i-mingcute-rewind-forward-5-line text-lg" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>前进 {SEEK_STEP} 秒</TooltipContent>
                     </Tooltip>
                 </div>
-                <ProgressBar isActive={isActive} duration={audio.podcast.duration} />
+                <ProgressBar duration={audio.podcast.duration} isActive={isActive} />
                 <VolumeBar />
             </div>
         </div>
@@ -117,12 +117,12 @@ const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDurat
             </span>
             <Slider
                 className="w-full"
-                value={[displayTime]}
-                onValueCommit={currentTimeCommitHandler}
-                onValueChange={currentTimeChangeHandler}
-                min={0}
                 max={displayDuration}
+                min={0}
+                onValueChange={currentTimeChangeHandler}
+                onValueCommit={currentTimeCommitHandler}
                 step={1}
+                value={[displayTime]}
             />
         </div>
     );

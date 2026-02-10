@@ -38,7 +38,7 @@ export function GlobalAudio() {
                 <div className="flex items-center gap-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-7 w-7" variant="ghost" size="icon" onClick={handleClose}>
+                            <Button className="h-7 w-7" onClick={handleClose} size="icon" variant="ghost">
                                 <i className="i-mingcute-close-line text-sm" />
                             </Button>
                         </TooltipTrigger>
@@ -46,7 +46,7 @@ export function GlobalAudio() {
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-7 w-7" variant="ghost" size="icon" onClick={handleJumpToPost}>
+                            <Button className="h-7 w-7" onClick={handleJumpToPost} size="icon" variant="ghost">
                                 <i className="i-mingcute-external-link-line text-sm" />
                             </Button>
                         </TooltipTrigger>
@@ -54,7 +54,7 @@ export function GlobalAudio() {
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button className="h-7 w-7" variant="ghost" size="icon" onClick={handleDownload}>
+                            <Button className="h-7 w-7" onClick={handleDownload} size="icon" variant="ghost">
                                 <i className="i-mingcute-download-line text-sm" />
                             </Button>
                         </TooltipTrigger>
@@ -72,10 +72,10 @@ export function GlobalAudio() {
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
                     <div
                         className="bg-border flex h-full w-full items-center justify-center bg-cover bg-center bg-no-repeat"
+                        onClick={togglePlayPause}
                         style={{
                             backgroundImage: `url(${podcast.image})`,
                         }}
-                        onClick={togglePlayPause}
                     >
                         <span className="flex items-center rounded-full bg-white p-2 opacity-0 transition-opacity group-hover:opacity-100">
                             <i className={cn('text-2xl', isPlaying ? 'i-mingcute-pause-fill' : 'i-mingcute-play-fill')} />
@@ -116,7 +116,7 @@ const ProgressBar = memo(function ProgressBar() {
                     {formatTime(displayTime)} / {formatTime(duration)}
                 </span>
             </div>
-            <Slider className="w-full" value={[displayTime]} onValueCommit={currentTimeCommitHandler} onValueChange={currentTimeChangeHandler} min={0} max={duration} step={0.1} />
+            <Slider className="w-full" max={duration} min={0} onValueChange={currentTimeChangeHandler} onValueCommit={currentTimeCommitHandler} step={0.1} value={[displayTime]} />
         </div>
     );
 });

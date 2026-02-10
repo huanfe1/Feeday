@@ -60,22 +60,22 @@ export default function Settings() {
 
     const renderFields = fields.map(field => {
         if (field.type === 'input') {
-            return <SettingInput key={field.id} field={field} />;
+            return <SettingInput field={field} key={field.id} />;
         }
         if (field.type === 'switch') {
-            return <SettingSwitch key={field.id} field={field} />;
+            return <SettingSwitch field={field} key={field.id} />;
         }
         if (field.type === 'select') {
-            return <SettingSelect key={field.id} field={field} />;
+            return <SettingSelect field={field} key={field.id} />;
         }
         return null;
     });
 
     return (
-        <Dialog open={modalVisible} onOpenChange={setModalVisible}>
+        <Dialog onOpenChange={setModalVisible} open={modalVisible}>
             <Tooltip>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button size="icon" variant="ghost">
                         <TooltipTrigger asChild>
                             <i className="i-mingcute-settings-3-fill text-lg opacity-75"></i>
                         </TooltipTrigger>
@@ -107,7 +107,7 @@ function SettingInput({ field }: { field: InputField }) {
                 <FieldLabel htmlFor="avatarProxy">{field.title}</FieldLabel>
                 <FieldDescription>{field.description}</FieldDescription>
             </FieldContent>
-            <Input className="w-80" id={field.id} type="text" placeholder={field.placeholder} />
+            <Input className="w-80" id={field.id} placeholder={field.placeholder} type="text" />
         </Field>
     );
 }
@@ -137,7 +137,7 @@ function SettingSelect({ field }: { field: SelectField }) {
                 <FieldLabel htmlFor={field.id}>{field.title}</FieldLabel>
                 <FieldDescription>{field.description}</FieldDescription>
             </FieldContent>
-            <Select value={value} onValueChange={handleValueChange}>
+            <Select onValueChange={handleValueChange} value={value}>
                 <SelectTrigger className="w-full max-w-48">
                     <SelectValue placeholder={field.placeholder} />
                 </SelectTrigger>

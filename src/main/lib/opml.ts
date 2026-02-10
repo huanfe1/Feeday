@@ -1,23 +1,23 @@
 import { parseOpml } from 'feedsmith';
 import type { Opml } from 'feedsmith/types';
 
-export type FeedItem = Partial<{
+export type FeedItem = {
     title: string;
     url: string;
     link: string;
-    folder: string;
-}>;
+    folderName?: string;
+};
 
 function traverseOutlines(outlines: Opml.Outline<Date>[], feeds: FeedItem[] = [], parentFolder?: string): FeedItem[] {
     outlines.forEach(outline => {
         if (Array.isArray(outline.outlines) && outline.outlines.length > 0) {
             traverseOutlines(outline.outlines, feeds, outline.text || parentFolder);
-        } else if (outline.type === 'rss') {
+        } else if (outline.type === 'rss' && outline.xmlUrl && outline.htmlUrl) {
             feeds.push({
                 title: outline.text,
                 url: outline.xmlUrl,
                 link: outline.htmlUrl,
-                folder: parentFolder,
+                folderName: parentFolder,
             });
         }
     });

@@ -38,7 +38,7 @@ function Feeds({ className }: { className?: string }) {
         <ScrollArea className={cn('min-h-0 flex-1 overflow-hidden px-3', className)} onClick={cancelSelectFeed}>
             <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
                 <span>订阅源</span>
-                <Tabs value={view.toString()} onValueChange={value => toggleView(Number(value))}>
+                <Tabs onValueChange={value => toggleView(Number(value))} value={view.toString()}>
                     <TabsList className="h-8 bg-gray-200/75 px-1">
                         <TabsTrigger className="h-full px-3" value="1">
                             文章
@@ -49,12 +49,12 @@ function Feeds({ className }: { className?: string }) {
                     </TabsList>
                 </Tabs>
             </div>
-            <AnimatePresence mode="popLayout" initial={false}>
+            <AnimatePresence initial={false} mode="popLayout">
                 <motion.div
-                    key={view.toString()}
-                    initial={{ x: direction === 'right' ? width : -width }}
                     animate={{ x: 0 }}
                     exit={{ x: direction === 'right' ? width : -width }}
+                    initial={{ x: direction === 'right' ? width : -width }}
+                    key={view.toString()}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
                     {feeds.length === 0 ? (
@@ -66,9 +66,9 @@ function Feeds({ className }: { className?: string }) {
                     ) : (
                         <div onClick={e => e.stopPropagation()}>
                             {folders.map(folder => (
-                                <FolderItem id={folder.id} key={folder.id} name={folder.name} feeds={feeds.filter(feed => feed.folderId === folder.id)} isOpen={folder.isOpen} />
+                                <FolderItem id={folder.id} feeds={feeds.filter(feed => feed.folderId === folder.id)} isOpen={folder.isOpen} key={folder.id} name={folder.name} />
                             ))}
-                            <FolderItem id={0} key={0} feeds={feeds.filter(feed => feed.folderId === null)} />
+                            <FolderItem id={0} feeds={feeds.filter(feed => feed.folderId === null)} key={0} />
                         </div>
                     )}
                 </motion.div>
@@ -130,26 +130,26 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
     }, [feeds, setFolderOpen, id, isOpen]);
 
     if (feeds.length === 0) return null;
-    if (id === 0) return feeds.map(item => <Feed className="pl-5" key={item.id} feed={item} />);
+    if (id === 0) return feeds.map(item => <Feed className="pl-5" feed={item} key={item.id} />);
     return (
         <div>
             <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-gray-300/70')} onClick={clickFolder}>
-                <motion.span className="i-mingcute-right-line" initial={false} onClick={clickHandle} animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: DURATION }} />
+                <motion.span className="i-mingcute-right-line" animate={{ rotate: isOpen ? 90 : 0 }} initial={false} onClick={clickHandle} transition={{ duration: DURATION }} />
                 <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>
             </div>
             <AnimatePresence initial={false}>
                 {isOpen && (
                     <motion.div
-                        key="folder-content"
-                        initial={{ height: 0 }}
                         animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
-                        transition={{ duration: DURATION, ease: 'easeInOut' }}
-                        style={{ overflow: 'hidden' }}
+                        initial={{ height: 0 }}
+                        key="folder-content"
                         onAnimationComplete={() => scrollToFeed()}
+                        style={{ overflow: 'hidden' }}
+                        transition={{ duration: DURATION, ease: 'easeInOut' }}
                     >
                         {feeds.map(item => (
-                            <Feed className="pl-5" key={item.id} feed={item} />
+                            <Feed className="pl-5" feed={item} key={item.id} />
                         ))}
                     </motion.div>
                 )}

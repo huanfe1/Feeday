@@ -73,8 +73,8 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                     <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.url)}>复制订阅源地址</ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
-            {active === 'delete' && <DeleteModal open={active === 'delete'} onOpenChange={() => setActive(null)} feed={feed} />}
-            {active === 'edit' && <EditModal open={active === 'edit'} onOpenChange={() => setActive(null)} feed={feed} />}
+            {active === 'delete' && <DeleteModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'delete'} />}
+            {active === 'edit' && <EditModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'edit'} />}
         </>
     );
 }
@@ -82,7 +82,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
 function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: (open: boolean) => void; feed: FeedType }) {
     const deleteFeed = useFeedStore(state => state.deleteFeed);
     return (
-        <AlertDialog open={open} onOpenChange={onOpenChange}>
+        <AlertDialog onOpenChange={onOpenChange} open={open}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>确定删除吗？</AlertDialogTitle>
@@ -153,7 +153,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog onOpenChange={onOpenChange} open={open}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>编辑订阅源</DialogTitle>
@@ -195,9 +195,9 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                     <FormLabel>更新频率（分钟）</FormLabel>
                                     <FormControl>
                                         <Input
-                                            type="number"
-                                            placeholder="请输入更新频率"
                                             min="1"
+                                            placeholder="请输入更新频率"
+                                            type="number"
                                             {...field}
                                             onChange={e => field.onChange(parseInt(e.target.value))}
                                             value={field.value}
@@ -213,7 +213,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>文件夹</FormLabel>
-                                    <Select value={field.value?.toString() ?? 'none'} onValueChange={value => field.onChange(value === 'none' ? null : parseInt(value))}>
+                                    <Select onValueChange={value => field.onChange(value === 'none' ? null : parseInt(value))} value={field.value?.toString() ?? 'none'}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="未分类" />
@@ -238,7 +238,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>视图</FormLabel>
-                                    <Select value={field.value.toString()} onValueChange={value => field.onChange(parseInt(value))}>
+                                    <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value.toString()}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="选择视图" />

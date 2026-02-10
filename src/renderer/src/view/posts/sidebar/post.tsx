@@ -31,7 +31,7 @@ function Post({ post, className }: { post: PostType; className?: string }) {
                     <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
                         <div className="flex items-center gap-x-1">
-                            <Avatar title={feed.title} src={feed.icon} />
+                            <Avatar src={feed.icon} title={feed.title} />
                             <span>{feed.title}</span>
                         </div>
                         <span className="mx-2">·</span>

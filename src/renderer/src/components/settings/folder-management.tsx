@@ -73,7 +73,7 @@ function FolderInput({
 
     return (
         <div className={`flex items-center gap-2 ${className}`}>
-            <Input placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} onBlur={handleBlur} autoFocus />
+            <Input autoFocus onBlur={handleBlur} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} placeholder={placeholder} value={value} />
             {showButton && (
                 <Button onClick={onSubmit} size="default">
                     {buttonText}
@@ -115,14 +115,14 @@ export default function FolderManagement() {
                 <h3 className="text-lg font-semibold">文件夹管理</h3>
             </div>
             <div className="mx-auto w-[60%] space-y-2">
-                <FolderInput value={folderName} onChange={setFolderName} onSubmit={handleAddFolder} buttonText="创建" />
+                <FolderInput buttonText="创建" onChange={setFolderName} onSubmit={handleAddFolder} value={folderName} />
                 {folders.length === 0 ? (
                     <div className="text-muted-foreground py-8 text-center text-sm">
                         <i className="i-mingcute-folder-line mb-2 block text-3xl"></i>
                         <p>暂无文件夹</p>
                     </div>
                 ) : (
-                    folders.map(folder => <FolderItem key={folder.id} folder={folder} onUpdate={updateFolder} onDelete={deleteFolder} refreshFeeds={refreshFeeds} />)
+                    folders.map(folder => <FolderItem folder={folder} key={folder.id} onDelete={deleteFolder} onUpdate={updateFolder} refreshFeeds={refreshFeeds} />)
                 )}
             </div>
         </div>
@@ -181,7 +181,7 @@ function FolderItem({
     if (isEditing) {
         return (
             <div className="rounded-md border p-2">
-                <FolderInput value={editName} onChange={setEditName} onSubmit={handleUpdate} onCancel={handleCancel} buttonText="保存" />
+                <FolderInput buttonText="保存" onCancel={handleCancel} onChange={setEditName} onSubmit={handleUpdate} value={editName} />
             </div>
         );
     }
@@ -194,15 +194,15 @@ function FolderItem({
                     <span className="text-sm">{folder.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon-sm" onClick={() => setIsEditing(true)}>
+                    <Button onClick={() => setIsEditing(true)} size="icon-sm" variant="ghost">
                         <i className="i-mingcute-edit-line text-sm"></i>
                     </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => setShowDeleteDialog(true)}>
+                    <Button onClick={() => setShowDeleteDialog(true)} size="icon-sm" variant="ghost">
                         <i className="i-mingcute-delete-line text-sm"></i>
                     </Button>
                 </div>
             </div>
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>确定删除吗？</AlertDialogTitle>

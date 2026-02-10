@@ -14,9 +14,9 @@ function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }
             )}
             data-slot="slider"
             defaultValue={defaultValue}
-            value={value}
-            min={min}
             max={max}
+            min={min}
+            value={value}
             {...props}
         >
             <SliderPrimitive.Track

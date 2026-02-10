@@ -32,7 +32,7 @@ export class DatabaseMethods {
         return qb.execute();
     }
 
-    async insertPost(feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast: Podcast }) {
+    async insertPost(feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast?: Podcast }) {
         const { content, podcast, ...postData } = post;
 
         // 跳过无效的 post（缺少必需字段）
@@ -82,32 +82,32 @@ export class DatabaseMethods {
                 return eb.or([eb(lastFetchMinutes, '>', threshold), eb('lastFetch', 'is', null)]);
             })
             .execute()) as { id: number; url: string }[];
-        console.log('Need fetch feeds:', needFetchFeeds.length);
+        console.log('Need Refresh Feeds Count:', needFetchFeeds.length);
 
         if (needFetchFeeds.length === 0) return;
 
-        const tasks = needFetchFeeds.map(feed =>
-            this.fetchLimit(async () => {
+        const tasks = needFetchFeeds.map(({ id, url }) => {
+            return this.fetchLimit(async () => {
                 try {
-                    const result = await fetchFeed(feed.url);
-                    const { items = [], ...feedData } = result;
+                    const result = await fetchFeed(url as string);
+                    const { feed, posts } = result;
                     this.writeLimit(async () => {
-                        await this.updateFeed(feed.id, {
-                            ...feedData,
+                        await this.updateFeed(id, {
+                            ...feed,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         });
-                        await Promise.all(items.map(item => this.insertPost(feed.id as number, item as any)));
+                        await Promise.all(posts?.map(post => this.insertPost(id, post as any)) ?? []);
                     });
                 } catch (error: unknown) {
                     this.writeLimit(async () => {
-                        await this.updateFeed(feed.id as number, {
+                        await this.updateFeed(id as number, {
                             lastFetchError: error instanceof Error ? error.message : String(error),
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         });
                     });
                 }
-            }),
-        );
+            });
+        });
         return Promise.all(tasks).then(() => console.log('Refresh Feed Done'));
     }
 }

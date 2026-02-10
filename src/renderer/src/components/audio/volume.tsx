@@ -39,22 +39,22 @@ export const VolumeBar = memo(function VolumeBar() {
 
     return (
         <div className="flex shrink-0 items-center gap-2">
-            <Tooltip open={tooltipOpen} onOpenChange={handleOpenChange}>
+            <Tooltip onOpenChange={handleOpenChange} open={tooltipOpen}>
                 <TooltipTrigger asChild>
-                    <Button className="h-9 w-9" variant="ghost" size="icon" onClick={toggleMute}>
+                    <Button className="h-9 w-9" onClick={toggleMute} size="icon" variant="ghost">
                         <i className={cn('text-sm', volume === 0 || isMuted ? 'i-mingcute-volume-mute-line' : 'i-mingcute-volume-fill')} />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent theme="light" onPointerDown={() => handleDrag(true)} onPointerUp={() => handleDrag(false)}>
+                <TooltipContent onPointerDown={() => handleDrag(true)} onPointerUp={() => handleDrag(false)} theme="light">
                     <Slider
-                        orientation="vertical"
-                        onValueChange={volumeChangeHandler}
-                        value={[displayVolume]}
-                        min={0}
                         max={1}
-                        step={0.01}
+                        min={0}
                         onPointerDown={() => handleDrag(true)}
                         onPointerUp={() => handleDrag(false)}
+                        onValueChange={volumeChangeHandler}
+                        orientation="vertical"
+                        step={0.01}
+                        value={[displayVolume]}
                     />
                 </TooltipContent>
             </Tooltip>

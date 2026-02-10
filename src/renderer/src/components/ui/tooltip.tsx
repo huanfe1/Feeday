@@ -37,7 +37,7 @@ function Tooltip({ defaultOpen, open: controlledOpen, onOpenChange, ...props }: 
     return (
         <TooltipContext.Provider value={contextValue}>
             <TooltipProvider>
-                <TooltipPrimitive.Root data-slot="tooltip" open={open} onOpenChange={handleOpenChange} {...props} />
+                <TooltipPrimitive.Root data-slot="tooltip" onOpenChange={handleOpenChange} open={open} {...props} />
             </TooltipProvider>
         </TooltipContext.Provider>
     );
@@ -92,9 +92,9 @@ function TooltipContent({
                     className,
                 )}
                 data-slot="tooltip-content"
-                sideOffset={sideOffset}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                sideOffset={sideOffset}
                 {...props}
             >
                 {children}

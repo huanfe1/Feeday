@@ -25,10 +25,10 @@ export default function AddFeed() {
     };
 
     return (
-        <Dialog open={modalVisible} onOpenChange={handleOpenChange}>
+        <Dialog onOpenChange={handleOpenChange} open={modalVisible}>
             <Tooltip>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button size="icon" variant="ghost">
                         <TooltipTrigger asChild>
                             <i className="i-mingcute-add-fill text-base opacity-75"></i>
                         </TooltipTrigger>
@@ -40,12 +40,12 @@ export default function AddFeed() {
             </Tooltip>
             <DialogContent
                 onCloseAutoFocus={closeModal}
-                onInteractOutside={e => {
+                onEscapeKeyDown={e => {
                     if (isImporting) {
                         e.preventDefault();
                     }
                 }}
-                onEscapeKeyDown={e => {
+                onInteractOutside={e => {
                     if (isImporting) {
                         e.preventDefault();
                     }
@@ -58,10 +58,10 @@ export default function AddFeed() {
                 </DialogHeader>
                 <Tabs defaultValue="single">
                     <TabsList className="mb-2 w-full">
-                        <TabsTrigger value="single" disabled={isImporting}>
+                        <TabsTrigger disabled={isImporting} value="single">
                             单个添加
                         </TabsTrigger>
-                        <TabsTrigger value="multiple" disabled={isImporting}>
+                        <TabsTrigger disabled={isImporting} value="multiple">
                             批量导入
                         </TabsTrigger>
                     </TabsList>
@@ -69,7 +69,7 @@ export default function AddFeed() {
                         <SingleAddFeed onClose={closeModal} />
                     </TabsContent>
                     <TabsContent value="multiple">
-                        <BatchImportFeed onClose={closeModal} isImporting={isImporting} setIsImporting={setIsImporting} />
+                        <BatchImportFeed isImporting={isImporting} onClose={closeModal} setIsImporting={setIsImporting} />
                     </TabsContent>
                 </Tabs>
             </DialogContent>

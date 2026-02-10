@@ -89,8 +89,8 @@ function Main() {
                                 return (
                                     <div
                                         className="absolute top-0 left-0 w-full"
-                                        key={virtualRow.index}
                                         data-index={virtualRow.index}
+                                        key={virtualRow.index}
                                         ref={virtualizer.measureElement}
                                         style={{ transform: `translateY(${virtualRow.start}px)` }}
                                     >
@@ -132,7 +132,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
         <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button className="" variant="ghost" size="icon" onClick={refreshHandle}>
+                    <Button className="" onClick={refreshHandle} size="icon" variant="ghost">
                         <i className="i-mingcute-refresh-2-line text-xl opacity-75" />
                     </Button>
                 </TooltipTrigger>
@@ -142,7 +142,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={onlyUnreadHandle}>
+                    <Button onClick={onlyUnreadHandle} size="icon" variant="ghost">
                         <i className={cn('text-xl opacity-75', onlyUnread ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                     </Button>
                 </TooltipTrigger>
@@ -152,7 +152,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={readAllPostsHandle}>
+                    <Button onClick={readAllPostsHandle} size="icon" variant="ghost">
                         <i className="i-mingcute-check-circle-line text-xl opacity-75"></i>
                     </Button>
                 </TooltipTrigger>

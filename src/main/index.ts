@@ -10,6 +10,7 @@ import { settings } from '@/lib/settings';
 import icon from '../../resources/icon.png?asset';
 
 // app.commandLine.appendSwitch('use-gl', 'egl');
+// app.commandLine.appendSwitch('ignore-certificate-errors');
 
 async function createWindow() {
     const mainWindow = new BrowserWindow({

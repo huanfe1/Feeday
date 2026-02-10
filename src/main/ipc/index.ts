@@ -13,7 +13,3 @@ ipcMain.handle('fetch-feed-info', async (_event, url: string) => {
         throw new Error(`获取订阅源信息失败: ${(error as Error).message}`);
     }
 });
-
-ipcMain.handle('fs-read-file', async (_event, filePath: string, encoding: BufferEncoding = 'utf-8') => {
-    return readFileSync(filePath, { encoding: encoding });
-});

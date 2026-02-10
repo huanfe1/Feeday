@@ -9,7 +9,7 @@ interface ScrollAreaProps extends React.ComponentProps<typeof ScrollAreaPrimitiv
 
 const ScrollArea = ({ className, children, viewportRef, ...props }: ScrollAreaProps) => {
     return (
-        <ScrollAreaPrimitive.Root className={cn('relative [&_[data-slot=scroll-area-viewport]>div]:block!', className)} scrollHideDelay={0} data-slot="scroll-area" {...props}>
+        <ScrollAreaPrimitive.Root className={cn('relative [&_[data-slot=scroll-area-viewport]>div]:block!', className)} data-slot="scroll-area" scrollHideDelay={0} {...props}>
             <ScrollAreaPrimitive.Viewport
                 className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
                 data-slot="scroll-area-viewport"

@@ -42,8 +42,8 @@ function ContextMenuSubTrigger({
                 "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                 className,
             )}
-            data-slot="context-menu-sub-trigger"
             data-inset={inset}
+            data-slot="context-menu-sub-trigger"
             {...props}
         >
             {children}
@@ -95,8 +95,8 @@ function ContextMenuItem({
                 "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                 className,
             )}
-            data-slot="context-menu-item"
             data-inset={inset}
+            data-slot="context-menu-item"
             data-variant={variant}
             {...props}
         />
@@ -110,8 +110,8 @@ function ContextMenuCheckboxItem({ className, children, checked, ...props }: Rea
                 "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                 className,
             )}
-            data-slot="context-menu-checkbox-item"
             checked={checked}
+            data-slot="context-menu-checkbox-item"
             {...props}
         >
             <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
@@ -154,8 +154,8 @@ function ContextMenuLabel({
     return (
         <ContextMenuPrimitive.Label
             className={cn('text-foreground px-2 py-1.5 text-sm font-medium data-[inset]:pl-8', className)}
-            data-slot="context-menu-label"
             data-inset={inset}
+            data-slot="context-menu-label"
             {...props}
         />
     );

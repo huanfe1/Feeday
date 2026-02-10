@@ -55,9 +55,9 @@ function Main() {
             <div className="h-full overflow-hidden">
                 <motion.div
                     className="flex h-full items-center justify-center text-gray-400 select-none"
-                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
                     <div className="flex flex-col items-center gap-y-3">
@@ -74,7 +74,7 @@ function Main() {
                 <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => updatePostReadById(currentPost.id, !currentPost.isRead)}>
+                            <Button onClick={() => updatePostReadById(currentPost.id, !currentPost.isRead)} size="icon" variant="ghost">
                                 <i className={cn('text-xl opacity-75', !currentPost.isRead ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                             </Button>
                         </TooltipTrigger>
@@ -84,7 +84,7 @@ function Main() {
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => window.open(currentPost.link, '_blank')}>
+                            <Button onClick={() => window.open(currentPost.link, '_blank')} size="icon" variant="ghost">
                                 <i className="i-mingcute-world-2-line text-xl opacity-75"></i>
                             </Button>
                         </TooltipTrigger>
@@ -104,8 +104,8 @@ function Main() {
                                         <a
                                             className="text-foreground block text-2xl leading-tight font-bold tracking-tight lg:text-3xl"
                                             href={currentPost.link}
-                                            target="_blank"
                                             rel="noopener noreferrer"
+                                            target="_blank"
                                         >
                                             {currentPost.title}
                                         </a>
@@ -137,7 +137,7 @@ function Main() {
                                 )}
 
                                 <div className="prose prose-img:mx-auto max-w-none">
-                                    <Render content={content} audio={audio} />
+                                    <Render audio={audio} content={content} />
                                 </div>
                             </article>
                         </div>

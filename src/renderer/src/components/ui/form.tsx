@@ -68,7 +68,7 @@ function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
 function FormLabel({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
     const { error, formItemId } = useFormField();
 
-    return <Label className={cn('data-[error=true]:text-destructive', className)} data-slot="form-label" data-error={!!error} htmlFor={formItemId} {...props} />;
+    return <Label className={cn('data-[error=true]:text-destructive', className)} data-error={!!error} data-slot="form-label" htmlFor={formItemId} {...props} />;
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
@@ -77,9 +77,9 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
     return (
         <Slot
             id={formItemId}
-            data-slot="form-control"
             aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
             aria-invalid={!!error}
+            data-slot="form-control"
             {...props}
         />
     );

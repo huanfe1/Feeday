@@ -19,49 +19,53 @@ function rssParser(data: string) {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
         return {
-            title: feed.title,
-            link: feed.link,
-            url: feed.atom?.links?.find(_ => _.rel === 'self')?.href,
-            description: feed.description,
-            icon: feed.image?.url ?? feed.itunes?.image,
-            lastUpdated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
-            items: feed?.items?.map(item => ({
-                title: item.title,
-                link: getLink(item.guid?.value, item.link),
-                imageUrl: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
-                author: item.dc?.creators?.join('、') || item.authors?.join(''),
-                pubDate: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
-                summary: item.description,
-                content: item.content?.encoded,
-                podcast: {
-                    ...item.itunes,
-                    image: item.itunes?.image ?? feed.itunes?.image,
-                    url: item.enclosures?.find(_ => _.type?.startsWith('audio'))?.url,
-                },
-            })),
+            feed: {
+                title: feed.title,
+                link: feed.link,
+                url: feed.atom?.links?.find(_ => _.rel === 'self')?.href,
+                description: feed.description,
+                icon: feed.image?.url ?? feed.itunes?.image,
+                lastUpdated: dayjs(feed.pubDate || feed.lastBuildDate).format('YYYY-MM-DD HH:mm:ss'),
+            },
+            posts: feed?.items?.map(item => {
+                const podcastUrl = item.enclosures?.find(_ => _.type?.startsWith('audio'))?.url;
+                const podcastImage = item.itunes?.image ?? feed.itunes?.image;
+                return {
+                    title: item.title,
+                    link: getLink(item.guid?.value, item.link),
+                    imageUrl: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
+                    author: item.dc?.creators?.join('、') || item.authors?.join(''),
+                    pubDate: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
+                    summary: item.description,
+                    content: item.content?.encoded,
+                    podcast: podcastUrl ? { ...item.itunes, image: podcastImage, url: podcastUrl } : undefined,
+                };
+            }),
         };
     } else if (format === 'atom') {
         return {
-            title: feed.title,
-            link: getLink(feed?.links?.find(_ => _.rel === 'alternate')?.href, feed.id),
-            url: feed?.links?.find(_ => _.rel === 'self')?.href,
-            description: feed.subtitle,
-            icon: feed.icon ?? feed.itunes?.image,
-            lastUpdated: dayjs(feed.updated).format('YYYY-MM-DD HH:mm:ss'),
-            items: feed?.entries?.map(item => ({
-                title: item.title,
-                link: getLink(item?.links?.find(_ => _.rel === 'alternate')?.href, item.id),
-                imageUrl: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
-                author: item.authors?.map(_ => _.name).join('、'),
-                pubDate: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
-                summary: item.summary,
-                content: item.content,
-                podcast: {
-                    ...item.itunes,
-                    url: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('audio'))?.href,
-                    image: item.itunes?.image ?? feed.itunes?.image,
-                },
-            })),
+            feed: {
+                title: feed.title,
+                link: getLink(feed?.links?.find(_ => _.rel === 'alternate')?.href, feed.id),
+                url: feed?.links?.find(_ => _.rel === 'self')?.href,
+                description: feed.subtitle,
+                icon: feed.icon ?? feed.itunes?.image,
+                lastUpdated: dayjs(feed.updated).format('YYYY-MM-DD HH:mm:ss'),
+            },
+            posts: feed?.entries?.map(item => {
+                const podcastUrl = item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('audio'))?.href;
+                const podcastImage = item.itunes?.image ?? feed.itunes?.image;
+                return {
+                    title: item.title,
+                    link: getLink(item?.links?.find(_ => _.rel === 'alternate')?.href, item.id),
+                    imageUrl: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
+                    author: item.authors?.map(_ => _.name).join('、'),
+                    pubDate: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
+                    summary: item.summary,
+                    content: item.content,
+                    podcast: podcastUrl ? { ...item.itunes, url: podcastUrl, image: podcastImage } : undefined,
+                };
+            }),
         };
     } else {
         console.error(`Invalid feed format: ${format}`);

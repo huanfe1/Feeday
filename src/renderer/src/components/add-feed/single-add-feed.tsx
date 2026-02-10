@@ -108,7 +108,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     }
 
     return (
-        <form className="@container space-y-8" onSubmit={form.handleSubmit(onSubmit)} onReset={onReset}>
+        <form className="@container space-y-8" onReset={onReset} onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-12 gap-4">
                 <Controller
                     control={form.control}
@@ -123,13 +123,13 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                                             <i className="i-mingcute-close-line"></i>
                                         </InputGroupButton>
                                     </InputGroupAddon>
-                                    <InputGroupInput type="text" placeholder="请输入订阅源地址" autoFocus {...field} />
+                                    <InputGroupInput autoFocus placeholder="请输入订阅源地址" type="text" {...field} />
                                 </InputGroup>
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                             </Field>
                             <Field className={cn('col-span-3 flex flex-col items-start gap-2 space-y-0', fieldState.invalid ? 'self-center' : 'self-end')}>
                                 <FieldLabel className="hidden w-auto!">Button</FieldLabel>
-                                <Button className="w-full" disabled={isLoading} type="button" variant="outline" onClick={fetchFeed}>
+                                <Button className="w-full" disabled={isLoading} onClick={fetchFeed} type="button" variant="outline">
                                     {isLoading ? <Spinner /> : '获取'}
                                 </Button>
                             </Field>
@@ -156,7 +156,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                                 <Field className="col-span-6 col-start-auto flex flex-col items-start gap-2 space-y-0 self-end @3xl:col-span-6" data-invalid={fieldState.invalid}>
                                     <FieldLabel className="flex w-auto!">文件夹</FieldLabel>
 
-                                    <Select key="select-0" value={field.value?.toString() ?? 'none'} name={field.name} onValueChange={field.onChange}>
+                                    <Select key="select-0" name={field.name} onValueChange={field.onChange} value={field.value?.toString() ?? 'none'}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="" />
                                         </SelectTrigger>
@@ -183,7 +183,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                                 <Field className="col-span-6 col-start-auto flex flex-col items-start gap-2 space-y-0 self-end @3xl:col-span-6" data-invalid={fieldState.invalid}>
                                     <FieldLabel className="flex w-auto!">视图</FieldLabel>
 
-                                    <Select key="select-1" value={field.value?.toString()} name={field.name} onValueChange={field.onChange}>
+                                    <Select key="select-1" name={field.name} onValueChange={field.onChange} value={field.value?.toString()}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="" />
                                         </SelectTrigger>
@@ -211,7 +211,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                         取消
                     </Button>
                 </DialogClose>
-                <Button type="submit" disabled={!title}>
+                <Button disabled={!title} type="submit">
                     确定
                 </Button>
             </DialogFooter>

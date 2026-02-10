@@ -10,5 +10,6 @@
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true,
     "importOrder": ["<THIRD_PARTY_MODULES>", "^@internal/(.*)$", "^@/.*/(.*)$", "^[./].*(?<!\\.(c|le|sc)ss)$", "^[.]/[-a-zA-Z0-9_]+[.](module)[.](css|scss|less)$", "^[./]"],
-    "tailwindFunctions": ["clsx", "cn"]
+    "tailwindFunctions": ["clsx", "cn"],
+    "attributeSort": "ASC"
 }

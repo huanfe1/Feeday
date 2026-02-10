@@ -37,7 +37,7 @@ export default function Header() {
 
 function Button({ children, onClick, className }: { children: ReactNode; onClick: () => void; className?: string }) {
     return (
-        <button className={cn('pointer-events-auto flex h-full w-[50px] items-center justify-center duration-200 hover:bg-gray-300/70', className)} type="button" onClick={onClick}>
+        <button className={cn('pointer-events-auto flex h-full w-[50px] items-center justify-center duration-200 hover:bg-gray-300/70', className)} onClick={onClick} type="button">
             {children}
         </button>
     );

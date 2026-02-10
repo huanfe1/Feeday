@@ -55,15 +55,15 @@ function InputGroupAddon({ className, align = 'inline-start', ...props }: React.
     return (
         <div
             className={cn(inputGroupAddonVariants({ align }), className)}
-            role="group"
-            data-slot="input-group-addon"
             data-align={align}
+            data-slot="input-group-addon"
             onClick={e => {
                 if ((e.target as HTMLElement).closest('button')) {
                     return;
                 }
                 e.currentTarget.parentElement?.querySelector('input')?.focus();
             }}
+            role="group"
             {...props}
         />
     );
@@ -90,7 +90,7 @@ function InputGroupButton({
     size = 'xs',
     ...props
 }: Omit<React.ComponentProps<typeof Button>, 'size'> & VariantProps<typeof inputGroupButtonVariants>) {
-    return <Button className={cn(inputGroupButtonVariants({ size }), className)} type={type} data-size={size} variant={variant} {...props} />;
+    return <Button className={cn(inputGroupButtonVariants({ size }), className)} data-size={size} type={type} variant={variant} {...props} />;
 }
 
 function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {

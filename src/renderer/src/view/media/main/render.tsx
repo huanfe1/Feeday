@@ -13,14 +13,14 @@ import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 
-const Image = memo(function Image(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+const Image = memo(function Image(props: React.ComponentProps<'img'>) {
     const ErrorHandle = (e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.style.display = 'none';
     };
-    return <img className={cn('w-full', props.className)} src={props.src} alt={props.alt} onError={ErrorHandle} />;
+    return <img className={cn('w-full', props.className)} alt={props.alt} onError={ErrorHandle} src={props.src} />;
 });
 
-const VideoPreview = memo(function VideoPreview({ ...props }: React.VideoHTMLAttributes<HTMLVideoElement>) {
+const VideoPreview = memo(function VideoPreview({ ...props }: React.ComponentProps<'video'>) {
     const [isHover, setIsHover] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -35,8 +35,8 @@ const VideoPreview = memo(function VideoPreview({ ...props }: React.VideoHTMLAtt
 
     return (
         <div className="relative flex h-full w-full items-center justify-center" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            <video className="absolute w-full" {...props} controls={false} ref={videoRef} loop muted />
-            <Image className={cn('absolute min-h-full transition-opacity', { 'opacity-0': isHover })} src={props.poster} alt={props.title} loading="lazy" />
+            <video className="absolute w-full" {...props} controls={false} loop muted ref={videoRef} />
+            <Image className={cn('absolute min-h-full transition-opacity', { 'opacity-0': isHover })} alt={props.title} loading="lazy" src={props.poster} />
         </div>
     );
 });
@@ -51,7 +51,7 @@ const parser = unified().use(rehypeParse, { fragment: true });
 const Display = memo(function Display({ media }: { media: PostType }) {
     if (media.link.startsWith('https://www.youtube.com/watch?v=')) {
         const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
-        return <img className="w-full" src={imgUrl} alt={media.title} loading="lazy" />;
+        return <img className="w-full" alt={media.title} loading="lazy" src={imgUrl} />;
     }
     const tree = parser.parse(media.summary);
 
@@ -76,8 +76,8 @@ function Render({ media }: { media: PostType }) {
             <ContextMenuTrigger asChild>
                 <div
                     className="relative rounded p-2 select-none hover:bg-gray-200"
-                    onClick={() => updatePostReadById(media.id, true)}
                     key={media.id}
+                    onClick={() => updatePostReadById(media.id, true)}
                     onDoubleClick={() => window.open(media.link, '_blank')}
                 >
                     <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
@@ -85,7 +85,7 @@ function Render({ media }: { media: PostType }) {
                     </div>
                     <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title}</div>
                     <div className="mt-1 flex text-xs text-gray-600">
-                        <Avatar title={feed.title} src={feed.icon} />
+                        <Avatar src={feed.icon} title={feed.title} />
                         <span className="ml-1 truncate">{feed.title}</span>
                         <span className="ml-3 flex-none text-gray-400">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>

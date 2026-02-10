@@ -58,7 +58,7 @@ const fieldVariants = cva('group/field flex w-full gap-3 data-[invalid=true]:tex
 });
 
 function Field({ className, orientation = 'vertical', ...props }: React.ComponentProps<'div'> & VariantProps<typeof fieldVariants>) {
-    return <div className={cn(fieldVariants({ orientation }), className)} role="group" data-slot="field" data-orientation={orientation} {...props} />;
+    return <div className={cn(fieldVariants({ orientation }), className)} data-orientation={orientation} data-slot="field" role="group" {...props} />;
 }
 
 function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
@@ -116,8 +116,8 @@ function FieldSeparator({
     return (
         <div
             className={cn('relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2', className)}
-            data-slot="field-separator"
             data-content={!!children}
+            data-slot="field-separator"
             {...props}
         >
             <Separator className="absolute inset-0 top-1/2" />
@@ -161,7 +161,7 @@ function FieldError({
     }
 
     return (
-        <div className={cn('text-destructive text-sm font-normal', className)} role="alert" data-slot="field-error" {...props}>
+        <div className={cn('text-destructive text-sm font-normal', className)} data-slot="field-error" role="alert" {...props}>
             {content}
         </div>
     );
