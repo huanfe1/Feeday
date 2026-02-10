@@ -91,15 +91,17 @@ export class DatabaseMethods {
                 try {
                     const result = await fetchFeed(url as string);
                     const { feed, posts } = result;
-                    this.writeLimit(async () => {
+                    await this.writeLimit(async () => {
+                        // 刷新时不更新 url，避免 feed 的 self link 与其它 feed 冲突触发 UNIQUE 约束
+                        const { url: _, ...feedWithoutUrl } = feed;
                         await this.updateFeed(id, {
-                            ...feed,
+                            ...feedWithoutUrl,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         });
                         await Promise.all(posts?.map(post => this.insertPost(id, post as any)) ?? []);
                     });
                 } catch (error: unknown) {
-                    this.writeLimit(async () => {
+                    await this.writeLimit(async () => {
                         await this.updateFeed(id as number, {
                             lastFetchError: error instanceof Error ? error.message : String(error),
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),

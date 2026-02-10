@@ -30,6 +30,15 @@ export default defineConfig(
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/consistent-type-imports': 'error',
             '@typescript-eslint/no-import-type-side-effects': 'error',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                    destructuredArrayIgnorePattern: '^_',
+                },
+            ],
         },
     },
     eslintConfigPrettier,
