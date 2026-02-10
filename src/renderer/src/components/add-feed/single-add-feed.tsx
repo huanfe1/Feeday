@@ -1,4 +1,5 @@
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
+import type { FeedType, PostType } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -14,19 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
-type FeedInfo = {
-    title: string;
-    description?: string;
-    link: string;
-    url?: string;
-    lastUpdated?: string;
-    icon?: string;
-    items?: unknown[];
-};
-
 export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     const [isLoading, setLoading] = useState(false);
-    const feedRef = useRef<FeedInfo | null>(null);
+    const feedRef = useRef<FeedType | null>(null);
+    const postsRef = useRef<PostType[]>([]);
     const folders = useFolderStore(state => state.folders);
 
     const formSchema = z.object({
@@ -56,9 +48,10 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         setLoading(true);
 
         try {
-            const { feed: fetchFeed } = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
-            form.setValue('title', fetchFeed.title);
-            feedRef.current = fetchFeed;
+            const data = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
+            form.setValue('title', data.feed.title);
+            feedRef.current = data.feed;
+            postsRef.current = data.posts || [];
         } catch (error: unknown) {
             if (error instanceof Error) {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -71,11 +64,11 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const params = {
             title: values.title,
-            description: feedRef.current?.description || null,
+            description: feedRef.current?.description,
             link: feedRef.current?.link,
             url: feedRef.current?.url ?? values.url,
             lastUpdated: feedRef.current?.lastUpdated,
-            icon: feedRef.current?.icon || null,
+            icon: feedRef.current?.icon,
             folderId: values.folderId ? Number(values.folderId) : null,
             view: Number(values.view),
         };
@@ -86,7 +79,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                 toast.error('该订阅源地址已存在', { position: 'top-center', richColors: true });
                 return;
             }
-            const tasks = (feedRef.current?.items || []).map((post: unknown) => window.electron.ipcRenderer.invoke('db-insert-post', feedId, post));
+            const tasks = postsRef.current.map(post => window.electron.ipcRenderer.invoke('db-insert-post', feedId, post));
             await Promise.all(tasks);
 
             useFeedStore.getState().refreshFeeds();

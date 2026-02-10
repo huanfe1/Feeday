@@ -9,9 +9,6 @@ import { settings } from '@/lib/settings';
 
 import icon from '../../resources/icon.png?asset';
 
-// app.commandLine.appendSwitch('use-gl', 'egl');
-// app.commandLine.appendSwitch('ignore-certificate-errors');
-
 async function createWindow() {
     const mainWindow = new BrowserWindow({
         width: settings.get('windowWidth'),
@@ -79,6 +76,8 @@ async function createWindow() {
 
     app.commandLine.appendSwitch('disable-autofill-keyboard-accessory-view');
     app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication');
+    // app.commandLine.appendSwitch('use-gl', 'egl');
+    // app.commandLine.appendSwitch('ignore-certificate-errors');
 
     const { platform } = process;
     if (platform === 'win32') {

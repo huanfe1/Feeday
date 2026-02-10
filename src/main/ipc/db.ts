@@ -82,8 +82,8 @@ ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {
     return db
-        .selectFrom('postContents')
-        .leftJoin('posts', 'postContents.postId', 'posts.id')
+        .selectFrom('posts')
+        .leftJoin('postContents', 'posts.id', 'postContents.postId')
         .select(['posts.summary', 'postContents.content'])
         .where('posts.id', '=', postId)
         .executeTakeFirst();

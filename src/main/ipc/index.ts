@@ -1,5 +1,4 @@
 import { ipcMain } from 'electron';
-import { readFileSync } from 'fs';
 
 import { fetchFeed } from '@/lib/rss';
 

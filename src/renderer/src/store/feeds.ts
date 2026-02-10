@@ -6,9 +6,11 @@ import { usePostStore } from './posts';
 export type FeedType = {
     id: number;
     title: string;
+    description: string;
     link: string;
     url: string;
     icon: string;
+    lastUpdated: string;
     hasUnread: boolean;
     fetchFrequency: number;
     folderId: number | null;
