@@ -1,11 +1,11 @@
 import { db, dbMethods } from '@/database';
-import { ipcMain } from 'electron';
 import { toString } from 'hast-util-to-string';
 import { sql } from 'kysely';
 import rehypeParse from 'rehype-parse';
 import { unified } from 'unified';
 
 import { settings } from '@/lib/settings';
+import { ipcMain } from '@/lib/utils';
 import { truncate } from '@/lib/utils';
 
 function getSummary(summary: string, view?: number): string {
@@ -21,7 +21,7 @@ ipcMain.handle('db-get-feeds', async () => {
     return db
         .selectFrom('feeds')
         .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', sql`0`))
-        .select(sql<number>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
+        .select(sql<boolean>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
         .selectAll('feeds')
         .groupBy('feeds.id')
         .orderBy('feeds.title', 'asc')
@@ -38,27 +38,17 @@ ipcMain.handle('db-insert-feed', async (_event, feed) => {
     return dbMethods.insertFeed(feed);
 });
 
-ipcMain.handle('db-update-feed', async (_event, feedId: number, feed) => {
+ipcMain.handle('db-update-feed', async (_event, feedId, feed) => {
     return dbMethods.updateFeed(feedId, feed);
 });
 
-ipcMain.handle('db-delete-feed', async (_event, feedId: number) => {
-    return db.deleteFrom('feeds').where('id', '=', feedId).execute();
-});
-
-ipcMain.handle('db-insert-post', async (_event, feed_id: number, post) => {
-    return dbMethods.insertPost(feed_id, post);
+ipcMain.handle('db-delete-feed', async (_event, feedId) => {
+    await db.deleteFrom('feeds').where('id', '=', feedId).execute();
 });
 
 // Posts
 
-type GetPostsParams = {
-    onlyUnread: boolean;
-    feedId?: number;
-    folderId?: number;
-    view: number;
-};
-ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
+ipcMain.handle('db-get-posts', async (_event, params) => {
     const { onlyUnread, feedId, folderId, view } = params;
     const needsJoinFeeds = folderId != null || view != null;
 
@@ -80,38 +70,43 @@ ipcMain.handle('db-get-posts', async (_event, params: GetPostsParams) => {
     }));
 });
 
-ipcMain.handle('db-get-post-content-by-id', async (_event, postId: number) => {
+ipcMain.handle('db-insert-post', async (_event, feed_id, post) => {
+    return dbMethods.insertPost(feed_id, post);
+});
+
+ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {
     return db
         .selectFrom('posts')
         .leftJoin('postContents', 'posts.id', 'postContents.postId')
         .select(['posts.summary', 'postContents.content'])
         .where('posts.id', '=', postId)
-        .executeTakeFirst();
+        .executeTakeFirst()
+        .then(row => ({ summary: row?.summary ?? '', content: row?.content ?? '' }));
 });
 
-ipcMain.handle('db-update-post-read-by-id', async (_event, post_id: number, is_read: boolean) => {
-    return db
+ipcMain.handle('db-update-post-read-by-id', async (_event, postId, isRead) => {
+    await db
         .updateTable('posts')
-        .set({ isRead: is_read ? 1 : 0 })
-        .where('id', '=', post_id)
+        .set({ isRead: isRead ? 1 : 0 })
+        .where('id', '=', postId)
         .execute();
 });
 
-ipcMain.handle('db-read-all-posts', async (_event, feed_id?: number, folder_id?: number) => {
-    const feeds = folder_id != null ? await db.selectFrom('feeds').select(['id']).where('folderId', '=', folder_id).execute() : [];
-    return db
+ipcMain.handle('db-read-all-posts', async (_event, feedId, folderId) => {
+    const feeds = folderId != null ? await db.selectFrom('feeds').select(['id']).where('folderId', '=', folderId).execute() : [];
+    await db
         .updateTable('posts')
         .set({ isRead: 1 })
-        .$if(folder_id != null && feeds.length > 0, qb =>
+        .$if(folderId != null && feeds.length > 0, qb =>
             qb.where(
                 'feedId',
                 'in',
                 feeds.map(f => f.id as number),
             ),
         )
-        .$if(folder_id == null && feed_id != null, qb => qb.where('feedId', '=', feed_id!))
-        .$if(folder_id == null && feed_id == null, qb => qb.where('isRead', '=', 0))
-        .$if(folder_id != null && feeds.length === 0, qb => qb.where(sql<boolean>`1 = 0`))
+        .$if(folderId == null && feedId != null, qb => qb.where('feedId', '=', feedId!))
+        .$if(folderId == null && feedId == null, qb => qb.where('isRead', '=', 0))
+        .$if(folderId != null && feeds.length === 0, qb => qb.where(sql<boolean>`1 = 0`))
         .execute();
 });
 
@@ -130,10 +125,10 @@ ipcMain.handle('db-insert-folder', async (_event, folder_name) => {
         .then(row => row?.id);
 });
 
-ipcMain.handle('db-update-folder', async (_event, folder_id: number, folder_name: string) => {
-    return db.updateTable('folders').set({ name: folder_name }).where('id', '=', folder_id).execute();
+ipcMain.handle('db-update-folder', async (_event, folderId, folderName: string) => {
+    await db.updateTable('folders').set({ name: folderName }).where('id', '=', folderId).execute();
 });
 
 ipcMain.handle('db-delete-folder', async (_event, folderId: number) => {
-    return db.deleteFrom('folders').where('id', '=', folderId).execute();
+    await db.deleteFrom('folders').where('id', '=', folderId).execute();
 });

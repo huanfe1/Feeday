@@ -1,10 +1,11 @@
 import { db, dbMethods } from '@/database';
-import { dialog, ipcMain } from 'electron';
+import { dialog } from 'electron';
 import { readFileSync } from 'node:fs';
 import pLimit from 'p-limit';
 
 import { parseOpmlContent } from '@/lib/opml';
 import { fetchFeed } from '@/lib/rss';
+import { ipcMain } from '@/lib/utils';
 
 ipcMain.handle('opml-select-file-dialog', async () => {
     const result = await dialog.showOpenDialog({
@@ -19,7 +20,7 @@ ipcMain.handle('opml-select-file-dialog', async () => {
 
 const fetchLimit = pLimit(5);
 const writeLimit = pLimit(1);
-ipcMain.handle('opml-import-from-content', async (_event, content: string) => {
+ipcMain.handle('opml-import-from-content', async (_event, content) => {
     const opmlFeeds = parseOpmlContent(content);
     const tasks = opmlFeeds.map(opmlFeed => {
         return fetchLimit(async () => {
@@ -47,16 +48,14 @@ ipcMain.handle('opml-import-from-content', async (_event, content: string) => {
                         });
                     }),
                 );
-                return { success: true, feedId, title: feed.title, url: opmlFeed.url };
+                return { success: true, message: `${feed.title} 导入成功` };
             } catch (error: unknown) {
-                return { success: false, message: (error as Error)?.message ?? String(error) };
+                return { success: false, message: `导入失败: ${(error as Error)?.message ?? String(error)}` };
             }
         });
     });
 
-    const settled = await Promise.allSettled(tasks);
-    const results = settled.map(r => (r.status === 'fulfilled' ? r.value : { feedId: null, url: 'unknown', error: (r.reason as Error)?.message ?? String(r.reason) }));
-    return { success: true, results };
+    return Promise.allSettled(tasks);
 });
 
 async function getFolderId(folderName?: string): Promise<number | undefined> {

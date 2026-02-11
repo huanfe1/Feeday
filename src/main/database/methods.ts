@@ -1,11 +1,10 @@
+import type { Database, Feeds, Podcast, PostContents, Posts } from '@shared/types/database';
 import dayjs from 'dayjs';
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
 import pLimit from 'p-limit';
 
 import { fetchFeed } from '@/lib/rss';
-
-import type { Database, Feeds, Podcast, PostContents, Posts } from './types';
 
 export class DatabaseMethods {
     private db: Kysely<Database>;
@@ -28,8 +27,7 @@ export class DatabaseMethods {
     }
 
     async updateFeed(feedId: number, feed: Omit<Partial<Feeds>, 'id'>) {
-        const qb = this.db.updateTable('feeds').set(feed).where('id', '=', feedId);
-        return qb.execute();
+        await this.db.updateTable('feeds').set(feed).where('id', '=', feedId).execute();
     }
 
     async insertPost(feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast?: Podcast }) {
@@ -51,12 +49,12 @@ export class DatabaseMethods {
                 summary: postData.summary,
                 pubDate: postData.pubDate,
                 isRead: postData.isRead ?? 0,
-                podcast: podcast?.url && JSON.stringify(podcast),
+                podcast: podcast?.url ? JSON.stringify(podcast) : undefined,
             };
 
             const postRow = await trx
                 .insertInto('posts')
-                .values(values)
+                .values(values as unknown as Posts)
                 .onConflict(oc => oc.column('link').doNothing())
                 .returning('id')
                 .executeTakeFirst();
@@ -92,10 +90,9 @@ export class DatabaseMethods {
                     const result = await fetchFeed(url as string);
                     const { feed, posts } = result;
                     await this.writeLimit(async () => {
-                        // 刷新时不更新 url，避免 feed 的 self link 与其它 feed 冲突触发 UNIQUE 约束
-                        const { url: _, ...feedWithoutUrl } = feed;
+                        const { url: _, link: __, ...feedWithoutUniqueFields } = feed;
                         await this.updateFeed(id, {
-                            ...feedWithoutUrl,
+                            ...feedWithoutUniqueFields,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         });
                         await Promise.all(posts?.map(post => this.insertPost(id, post as any)) ?? []);
