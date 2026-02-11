@@ -31,7 +31,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
 
     const clickFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        useFeedStore.getState().setSelectedFeedId(feed.id);
+        useFeedStore.getState().setSelectedFeedId(feed.id ?? null);
         useFolderStore.getState().setSelectedFolderId(null);
         usePostStore.getState().refreshPosts();
     };
@@ -49,7 +49,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
                         <Avatar src={feed.icon} title={feed.title} />
-                        <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title}</span>
+                        <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title ?? ''}</span>
                         {feed.lastFetchError && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -67,10 +67,10 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                     <ContextMenuItem onSelect={() => setActive('edit')}>编辑</ContextMenuItem>
                     <ContextMenuItem onSelect={() => setActive('delete')}>删除</ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onSelect={() => window.open(feed.link, '_blank')}>在浏览器中打开网站</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => window.open(feed.url, '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.link)}>复制网站地址</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.url)}>复制订阅源地址</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open(feed.link ?? '', '_blank')}>在浏览器中打开网站</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open(feed.url ?? '', '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.link ?? '')}>复制网站地址</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.url ?? '')}>复制订阅源地址</ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
             {active === 'delete' && <DeleteModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'delete'} />}
@@ -90,7 +90,7 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>取消</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => deleteFeed(feed.id)}>确定</AlertDialogAction>
+                    <AlertDialogAction onClick={() => feed.id != null && deleteFeed(feed.id)}>确定</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -135,11 +135,12 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
 
     const onSubmit = (data: EditFeedFormValues) => {
+        if (feed.id == null) return;
         updateFeed(feed.id, {
             title: data.title,
             link: data.link,
             fetchFrequency: data.fetchFrequency,
-            folderId: data.folderId ?? null,
+            folderId: data.folderId ?? undefined,
             view: data.view,
         })
             .then(() => {

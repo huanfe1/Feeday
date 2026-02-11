@@ -12,24 +12,10 @@ export function BatchImportFeed({ isImporting, setIsImporting }: { onClose: () =
         setIsImporting(true);
         window.electron.ipcRenderer
             .invoke('opml-import-from-content', content)
-            .then(data => {
-                console.log(data);
-                if (!data.success) {
-                    toast.error(data.error ?? '解析 OPML 失败', { position: 'top-center', richColors: true });
-                    return;
-                }
-                const succeeded = data.results.filter((r: { feedId: number | null }) => r.feedId != null);
-                const failed = data.results.filter((r: { feedId: number | null; error?: string }) => r.feedId == null);
-                if (data.results.length === 0) {
-                    toast.info('未找到可导入的订阅源', { position: 'top-center', richColors: true });
-                } else if (failed.length > 0) {
-                    toast.warning(
-                        `导入完成：成功 ${succeeded.length} 个，失败 ${failed.length} 个${failed.length <= 3 ? '\n' + failed.map((f: { title?: string; url: string; error: string }) => `${f.title ?? f.url}: ${f.error}`).join('\n') : ''}`,
-                        { position: 'top-center', richColors: true, duration: 5000 },
-                    );
-                } else {
-                    toast.success(`成功导入 ${succeeded.length} 个订阅源`, { position: 'top-center', richColors: true });
-                }
+            .then(results => {
+                const messages = results.filter(result => result.status === 'fulfilled').map(result => result.value);
+                console.log(messages);
+                toast.success(`成功导入 ${messages.filter(message => message.success).length} 个订阅源`, { position: 'top-center', richColors: true });
                 useFeedStore.getState().refreshFeeds();
             })
             .catch(err => {

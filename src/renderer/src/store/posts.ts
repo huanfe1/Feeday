@@ -93,7 +93,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
 
             if (folderId) {
                 const feedStore = useFeedStore.getState();
-                feedStore.feeds.filter(feed => feed.folderId === folderId).forEach(feed => feedStore.updateFeedHasUnread(feed.id, false));
+                feedStore.feeds.filter(feed => feed.folderId === folderId).forEach(feed => feed.id != null && feedStore.updateFeedHasUnread(feed.id, false));
                 return;
             }
 
@@ -105,9 +105,9 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         const selectedFeedId = useFeedStore.getState().selectedFeedId;
         const selectedFolderId = useFolderStore.getState().selectedFolderId;
         const view = useView.getState().view;
-        window.electron.ipcRenderer.invoke('db-get-posts', { onlyUnread: get().onlyUnread, feedId: selectedFeedId, folderId: selectedFolderId, view }).then(posts => {
-            set({ posts });
-        });
+        window.electron.ipcRenderer
+            .invoke('db-get-posts', { onlyUnread: get().onlyUnread, feedId: selectedFeedId ?? undefined, folderId: selectedFolderId ?? undefined, view })
+            .then(posts => set({ posts: posts as unknown as PostType[] }));
     };
 
     return {

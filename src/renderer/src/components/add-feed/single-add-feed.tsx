@@ -1,6 +1,6 @@
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
-import type { FeedType, PostType } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { FetchFeedResult, FetchFeedResultPost } from '@shared/types/ipc';
 import { useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils';
 
 export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     const [isLoading, setLoading] = useState(false);
-    const feedRef = useRef<FeedType | null>(null);
-    const postsRef = useRef<PostType[]>([]);
+    const feedRef = useRef<FetchFeedResult['feed'] | null>(null);
+    const postsRef = useRef<FetchFeedResultPost[]>([]);
     const folders = useFolderStore(state => state.folders);
 
     const formSchema = z.object({
@@ -49,9 +49,9 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
 
         try {
             const data = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
-            form.setValue('title', data.feed.title);
+            form.setValue('title', data.feed.title ?? '');
             feedRef.current = data.feed;
-            postsRef.current = data.posts || [];
+            postsRef.current = data.posts ?? [];
         } catch (error: unknown) {
             if (error instanceof Error) {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
@@ -62,14 +62,16 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     };
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        const feed = feedRef.current;
+        const link = feed?.link ?? feed?.url ?? values.url;
         const params = {
             title: values.title,
-            description: feedRef.current?.description,
-            link: feedRef.current?.link,
-            url: feedRef.current?.url ?? values.url,
-            lastUpdated: feedRef.current?.lastUpdated,
-            icon: feedRef.current?.icon,
-            folderId: values.folderId ? Number(values.folderId) : null,
+            description: feed?.description,
+            link,
+            url: feed?.url ?? values.url,
+            lastUpdated: feed?.lastUpdated,
+            icon: feed?.icon,
+            folderId: values.folderId ? Number(values.folderId) : undefined,
             view: Number(values.view),
         };
 

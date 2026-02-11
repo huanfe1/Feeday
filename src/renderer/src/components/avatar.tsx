@@ -4,7 +4,7 @@ import { AvatarFallback, AvatarImage, Avatar as AvatarRoot } from '@/components/
 import { cn } from '@/lib/utils';
 
 type AvatarType = {
-    src: string;
+    src?: string;
     title: string;
     className?: string;
 };

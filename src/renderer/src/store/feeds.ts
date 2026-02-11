@@ -1,22 +1,10 @@
+import type { Feeds } from '@shared/types/database';
 import { create } from 'zustand';
 
 import { useFolderStore } from './folders';
 import { usePostStore } from './posts';
 
-export type FeedType = {
-    id: number;
-    title: string;
-    description: string;
-    link: string;
-    url: string;
-    icon: string;
-    lastUpdated: string;
-    hasUnread: boolean;
-    fetchFrequency: number;
-    folderId: number | null;
-    view: number;
-    lastFetchError: string | null;
-};
+export type FeedType = Feeds & { hasUnread?: boolean };
 
 interface UseFeedStore {
     feeds: FeedType[];
@@ -32,7 +20,7 @@ interface UseFeedStore {
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
         window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => {
-            set({ feeds: feeds || [] });
+            set({ feeds });
             useFolderStore.getState().refreshFolders();
         });
     };
@@ -69,14 +57,10 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
         updateFeedHasUnread: (feedId, hasUnread) => {
             set(state => {
                 const feed = state.feeds.find(f => f.id === feedId);
-                // 如果 feed 不存在或 hasUnread 值没有变化，则不更新
-                if (!feed || feed.hasUnread === hasUnread) {
-                    return state;
-                }
-                // 只有当值实际变化时才创建新的数组和对象
+                if (!feed || feed.hasUnread === hasUnread) return state;
                 return {
                     ...state,
-                    feeds: state.feeds.map(f => (f.id === feedId ? { ...f, hasUnread: hasUnread } : f)),
+                    feeds: state.feeds.map(f => (f.id === feedId ? { ...f, hasUnread } : f)),
                 };
             });
         },

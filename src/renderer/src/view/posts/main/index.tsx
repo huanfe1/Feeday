@@ -111,8 +111,11 @@ function Main() {
                                         </a>
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
-                                        <div className="flex cursor-pointer items-center gap-x-1" onClick={() => clickFeedHandle(currentFeed.id, currentPost.id)}>
-                                            <Avatar src={currentFeed.icon} title={currentPost.title} />
+                                        <div
+                                            className="flex cursor-pointer items-center gap-x-1"
+                                            onClick={() => currentFeed.id != null && currentPost.id != null && clickFeedHandle(currentFeed.id, currentPost.id)}
+                                        >
+                                            <Avatar src={currentFeed.icon} title={currentFeed.title} />
                                             <span className="font-medium">{currentFeed.title}</span>
                                         </div>
                                         {currentPost.author && currentPost.author !== currentFeed.title && (

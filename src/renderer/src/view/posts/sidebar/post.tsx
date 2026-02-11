@@ -41,11 +41,11 @@ function Post({ id, className }: { id: number; className?: string }) {
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-                <ContextMenuItem onSelect={() => updatePostReadById(post.id, !post.isRead)}>{post.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+                <ContextMenuItem onSelect={() => post.id != null && updatePostReadById(post.id, !post.isRead)}>{post.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
                 <ContextMenuItem onSelect={() => setSelectFeed(post.feedId)}>跳转至该订阅源</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onSelect={openLink}>在浏览器中打开文章</ContextMenuItem>
-                <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link)}>复制文章链接</ContextMenuItem>
+                <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link ?? '')}>复制文章链接</ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
     );

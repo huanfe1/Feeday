@@ -21,7 +21,10 @@ interface UseFolderStore {
 
 export const useFolderStore = create<UseFolderStore>((set, get) => {
     const refreshFolders = () => {
-        window.electron.ipcRenderer.invoke('db-get-folders').then(folders => set({ folders: folders || [] }));
+        window.electron.ipcRenderer.invoke('db-get-folders').then(folders => {
+            const valid = (folders || []).filter((f): f is FolderType => f.id != null);
+            set({ folders: valid });
+        });
     };
     refreshFolders();
 
@@ -32,9 +35,9 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
         getSelectedFolder: () => get().folders.find(folder => folder.id === get().selectedFolderId) || null,
         refreshFolders,
         createFolder: async (name: string) => {
-            const result = await window.electron.ipcRenderer.invoke('db-insert-folder', name);
+            const id = await window.electron.ipcRenderer.invoke('db-insert-folder', name);
             get().refreshFolders();
-            return result.lastInsertRowid;
+            return id ?? 0;
         },
         updateFolder: async (id: number, name: string) => {
             await window.electron.ipcRenderer.invoke('db-update-folder', id, name);

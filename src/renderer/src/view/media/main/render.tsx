@@ -79,15 +79,15 @@ function Render({ id }: { id: number }) {
                 <div
                     className="relative rounded p-2 select-none hover:bg-gray-200"
                     key={media.id}
-                    onClick={() => updatePostReadById(media.id, true)}
+                    onClick={() => media.id != null && updatePostReadById(media.id, true)}
                     onDoubleClick={() => window.open(media.link, '_blank')}
                 >
                     <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
                         <Display media={media} />
                     </div>
-                    <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title}</div>
+                    <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title ?? ''}</div>
                     <div className="mt-1 flex text-xs text-gray-600">
-                        <Avatar src={feed.icon} title={feed.title} />
+                        <Avatar src={feed.icon} title={feed.title ?? ''} />
                         <span className="ml-1 truncate">{feed.title}</span>
                         <span className="ml-3 flex-none text-gray-400">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>
@@ -95,7 +95,7 @@ function Render({ id }: { id: number }) {
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-                <ContextMenuItem onSelect={() => updatePostReadById(media.id, !media.isRead)}>{media.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+                <ContextMenuItem onSelect={() => media.id != null && updatePostReadById(media.id, !media.isRead)}>{media.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
                 {/* <ContextMenuItem onSelect={() => setSelectFeed(post.feedId)}>跳转至该订阅源</ContextMenuItem> */}
                 <ContextMenuSeparator />
                 <ContextMenuItem onSelect={() => window.open(media.link, '_blank')}>在浏览器中打开</ContextMenuItem>
