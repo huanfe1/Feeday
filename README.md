@@ -1,34 +1,49 @@
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/2ad25149-2271-4d22-9059-264b9b294710" />
+
 # Feeday
 
-An Electron application with React and TypeScript
+一个基于 Electron 的桌面 RSS 阅读器应用，支持订阅管理、文章阅读、播客播放等功能。
 
-## Recommended IDE Setup
+## 功能特性
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+- 📰 **RSS/Atom 订阅**：支持 RSS 2.0 和 Atom 格式的订阅源
+- 📁 **文件夹管理**：可将订阅源分类整理到不同文件夹
+- 📝 **文章阅读**：富文本渲染，支持 HTML 内容展示
+- 🎙️ **播客支持**：内置播客播放器，支持音频节目
+- 📥 **OPML 导入**：批量导入订阅源
 
-## Project Setup
+## 环境要求
 
-### Install
+- Node.js >= 18
+- pnpm
 
-```bash
-$ pnpm install
-```
+## 快速开始
 
-### Development
-
-```bash
-$ pnpm dev
-```
-
-### Build
+### 安装依赖
 
 ```bash
-# For windows
-$ pnpm build:win
-
-# For macOS
-$ pnpm build:mac
-
-# For Linux
-$ pnpm build:linux
+pnpm install
 ```
+
+### 开发模式
+
+```bash
+pnpm dev
+```
+
+### 构建
+
+```bash
+# Windows
+pnpm build:win
+
+# macOS
+pnpm build:mac
+
+# Linux
+pnpm build:linux
+```
+
+## 许可证
+
+[MIT](LICENSE)
