@@ -1,19 +1,8 @@
 import { db, dbMethods } from '@/database';
-import { toString } from 'hast-util-to-string';
 import { sql } from 'kysely';
-import rehypeParse from 'rehype-parse';
-import { unified } from 'unified';
 
 import { settings } from '@/lib/settings';
 import { ipcMain } from '@/lib/utils';
-import { truncate } from '@/lib/utils';
-
-function getSummary(summary: string, view?: number): string {
-    if (view === 2) return summary;
-    if (!summary) return '';
-    const result = unified().use(rehypeParse, { fragment: true }).parse(summary.slice(0, 500));
-    return truncate(toString(result)) ?? '';
-}
 
 // Feeds
 
@@ -66,7 +55,7 @@ ipcMain.handle('db-get-posts', async (_event, params) => {
     const rows = await query.execute();
     return rows.map(post => ({
         ...post,
-        summary: getSummary(post.summary ?? '', view),
+        summary: post.summary ?? '',
     }));
 });
 
@@ -76,12 +65,11 @@ ipcMain.handle('db-insert-post', async (_event, feed_id, post) => {
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {
     return db
-        .selectFrom('posts')
-        .leftJoin('postContents', 'posts.id', 'postContents.postId')
-        .select(['posts.summary', 'postContents.content'])
-        .where('posts.id', '=', postId)
+        .selectFrom('postContents')
+        .select('content')
+        .where('postId', '=', postId)
         .executeTakeFirst()
-        .then(row => ({ summary: row?.summary ?? '', content: row?.content ?? '' }));
+        .then(row => row?.content ?? '');
 });
 
 ipcMain.handle('db-update-post-read-by-id', async (_event, postId, isRead) => {

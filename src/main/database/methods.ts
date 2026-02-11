@@ -5,6 +5,7 @@ import { sql } from 'kysely';
 import pLimit from 'p-limit';
 
 import { fetchFeed } from '@/lib/rss';
+import { truncate } from '@/lib/utils';
 
 export class DatabaseMethods {
     private db: Kysely<Database>;
@@ -31,13 +32,17 @@ export class DatabaseMethods {
     }
 
     async insertPost(feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast?: Podcast }) {
-        const { content, podcast, ...postData } = post;
+        const { podcast, ...postData } = post;
 
-        // 跳过无效的 post（缺少必需字段）
         if (!postData.title || !postData.link) {
             console.warn('Skipping post with missing required fields:', postData);
             return;
         }
+
+        const rawSummarySource = post.summary || post.content || '';
+        postData.summary = truncate(rawSummarySource) ?? '';
+
+        const contentToStore = post.content || post.summary || '';
 
         return this.db.transaction().execute(async trx => {
             const values = {
@@ -59,11 +64,11 @@ export class DatabaseMethods {
                 .returning('id')
                 .executeTakeFirst();
 
-            if (postRow?.id && content) {
+            if (postRow?.id && contentToStore) {
                 await trx
                     .insertInto('postContents')
-                    .values({ postId: postRow.id, content })
-                    .onConflict(oc => oc.column('postId').doUpdateSet({ content }))
+                    .values({ postId: postRow.id, content: contentToStore })
+                    .onConflict(oc => oc.column('postId').doUpdateSet({ content: contentToStore }))
                     .execute();
                 console.log('Insert Post', postData.title);
             }

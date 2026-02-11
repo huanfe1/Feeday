@@ -40,9 +40,7 @@ function Main() {
 
     useEffect(() => {
         if (!currentPost?.id) return;
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost?.id)).then(data => {
-            setContent(data?.content || data?.summary || '');
-        });
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(currentPost?.id)).then(setContent);
         return () => setIsScrolled(false);
     }, [currentPost?.id]);
 

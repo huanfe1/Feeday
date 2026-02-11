@@ -34,7 +34,7 @@ export interface IpcEvents {
 
     'db-get-posts': (params: GetPostsParams) => Promise<Posts[]>;
     'db-insert-post': (feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast?: Podcast }) => Promise<void>;
-    'db-get-post-content-by-id': (postId: number) => Promise<{ summary?: string; content?: string }>;
+    'db-get-post-content-by-id': (postId: number) => Promise<string>;
     'db-update-post-read-by-id': (postId: number, isRead: boolean) => Promise<void>;
     'db-read-all-posts': (feedId?: number, folderId?: number) => Promise<void>;
 
