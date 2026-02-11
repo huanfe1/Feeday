@@ -9,7 +9,7 @@ interface GetPostsParams {
 }
 
 export interface FetchFeedResultPost {
-    title: string;
+    title?: string;
     link: string;
     author?: string;
     imageUrl?: string;
