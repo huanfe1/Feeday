@@ -81,7 +81,9 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                 toast.error('该订阅源地址已存在', { position: 'top-center', richColors: true });
                 return;
             }
-            const tasks = postsRef.current.map(post => window.electron.ipcRenderer.invoke('db-insert-post', feedId, post));
+            const tasks = postsRef.current
+                .filter((post): post is FetchFeedResultPost & { title: string; link: string } => !!(post.title && post.link))
+                .map(post => window.electron.ipcRenderer.invoke('db-insert-post', feedId, { ...post, title: post.title, link: post.link }));
             await Promise.all(tasks);
 
             useFeedStore.getState().refreshFeeds();

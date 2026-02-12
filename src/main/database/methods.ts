@@ -1,4 +1,5 @@
-import type { Database, Feeds, Podcast, PostContents, Posts } from '@shared/types/database';
+import type { Database, Feeds, InsertPost, Updateable } from '@shared/types/database';
+import type { IpcEvents } from '@shared/types/ipc';
 import dayjs from 'dayjs';
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
@@ -17,7 +18,7 @@ export class DatabaseMethods {
         this.db = db;
     }
 
-    async insertFeed(feed: Feeds) {
+    async insertFeed(feed: Parameters<IpcEvents['db-insert-feed']>[0]) {
         return this.db
             .insertInto('feeds')
             .values(feed)
@@ -27,11 +28,11 @@ export class DatabaseMethods {
             .then(row => row?.id);
     }
 
-    async updateFeed(feedId: number, feed: Omit<Partial<Feeds>, 'id'>) {
+    async updateFeed(feedId: number, feed: Updateable<Feeds>) {
         await this.db.updateTable('feeds').set(feed).where('id', '=', feedId).execute();
     }
 
-    async insertPost(feedId: number, post: Omit<Posts, 'feedId' | 'podcast'> & PostContents & { podcast?: Podcast }) {
+    async insertPost(feedId: number, post: InsertPost) {
         const { podcast, ...postData } = post;
 
         if (!postData.title || !postData.link) {
@@ -59,7 +60,7 @@ export class DatabaseMethods {
 
             const postRow = await trx
                 .insertInto('posts')
-                .values(values as unknown as Posts)
+                .values(values)
                 .onConflict(oc => oc.column('link').doNothing())
                 .returning('id')
                 .executeTakeFirst();

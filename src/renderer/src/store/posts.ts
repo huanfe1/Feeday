@@ -1,21 +1,11 @@
+import type { PostWithNormalized } from '@shared/types/database';
 import { create } from 'zustand';
 
 import { useView } from './common';
 import { useFeedStore } from './feeds';
 import { useFolderStore } from './folders';
 
-export type PostType = {
-    id: number;
-    title: string;
-    link: string;
-    author: string;
-    imageUrl: string;
-    summary: string;
-    podcast: string;
-    isRead: boolean;
-    pubDate: string;
-    feedId: number;
-};
+export type PostType = PostWithNormalized;
 
 interface UsePostStore {
     posts: PostType[];
@@ -107,7 +97,17 @@ export const usePostStore = create<UsePostStore>((set, get) => {
         const view = useView.getState().view;
         window.electron.ipcRenderer
             .invoke('db-get-posts', { onlyUnread: get().onlyUnread, feedId: selectedFeedId ?? undefined, folderId: selectedFolderId ?? undefined, view })
-            .then(posts => set({ posts: posts as unknown as PostType[] }));
+            .then(posts =>
+                set({
+                    posts: posts.map(
+                        (p): PostWithNormalized => ({
+                            ...p,
+                            isRead: p.isRead === 1,
+                            summary: p.summary ?? '',
+                        }),
+                    ),
+                }),
+            );
     };
 
     return {

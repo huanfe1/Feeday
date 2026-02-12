@@ -30,7 +30,8 @@ function Main() {
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!currentPost?.podcast) return null;
-        const parsed = JSON.parse(currentPost.podcast);
+        const parsed =
+            typeof currentPost.podcast === 'string' ? JSON.parse(currentPost.podcast) : currentPost.podcast;
 
         parsed.image ??= currentPost.imageUrl;
         parsed.title ??= currentPost.title;

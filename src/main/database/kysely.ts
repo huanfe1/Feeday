@@ -1,6 +1,6 @@
 // https://github.com/kysely-org/kysely/issues/1292#issuecomment-2670341588
 import type { Database } from '@shared/types/database';
-import { CamelCasePlugin, Kysely } from 'kysely';
+import { CamelCasePlugin, Kysely, ParseJSONResultsPlugin } from 'kysely';
 import { GenericSqliteDialect, buildQueryFn, parseBigInt } from 'kysely-generic-sqlite';
 import type { IGenericSqlite } from 'kysely-generic-sqlite';
 import type { DatabaseSync } from 'node:sqlite';
@@ -8,7 +8,7 @@ import type { DatabaseSync } from 'node:sqlite';
 export function createKysely(db: DatabaseSync): Kysely<Database> {
     return new Kysely<Database>({
         dialect: new GenericSqliteDialect(() => createSqliteExecutor(db)),
-        plugins: [new CamelCasePlugin()],
+        plugins: [new ParseJSONResultsPlugin(), new CamelCasePlugin()],
     });
 }
 

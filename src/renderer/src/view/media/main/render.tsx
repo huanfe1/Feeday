@@ -50,7 +50,7 @@ const components = {
 const parser = unified().use(rehypeParse, { fragment: true });
 
 const Display = memo(function Display({ media }: { media: PostType }) {
-    if (media.link.startsWith('https://www.youtube.com/watch?v=')) {
+    if (media.link.startsWith('https://www.youtube.com/watch?v=') && media.imageUrl) {
         const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
         return <img className="w-full" alt={media.title} loading="lazy" src={imgUrl} />;
     }

@@ -1,10 +1,10 @@
-import type { Feeds } from '@shared/types/database';
+import type { GetFeedsResult } from '@shared/types/database';
 import { create } from 'zustand';
 
 import { useFolderStore } from './folders';
 import { usePostStore } from './posts';
 
-export type FeedType = Feeds & { hasUnread?: boolean };
+export type FeedType = GetFeedsResult;
 
 interface UseFeedStore {
     feeds: FeedType[];
@@ -20,6 +20,7 @@ interface UseFeedStore {
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
         window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => {
+            console.log(feeds);
             set({ feeds });
             useFolderStore.getState().refreshFolders();
         });
