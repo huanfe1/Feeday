@@ -102,7 +102,7 @@ export const usePostStore = create<UsePostStore>((set, get) => {
                     posts: posts.map(
                         (p): PostWithNormalized => ({
                             ...p,
-                            isRead: p.isRead === 1,
+                            isRead: Boolean(p.isRead),
                             summary: p.summary ?? '',
                         }),
                     ),

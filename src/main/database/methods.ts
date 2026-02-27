@@ -1,7 +1,6 @@
-import type { Database, Feeds, InsertPost, Updateable } from '@shared/types/database';
-import type { IpcEvents } from '@shared/types/ipc';
+import type { Database, Feeds, InsertPost } from '@shared/types/database';
 import dayjs from 'dayjs';
-import type { Kysely } from 'kysely';
+import type { Insertable, Kysely, Updateable } from 'kysely';
 import { sql } from 'kysely';
 import pLimit from 'p-limit';
 
@@ -18,7 +17,7 @@ export class DatabaseMethods {
         this.db = db;
     }
 
-    async insertFeed(feed: Parameters<IpcEvents['db-insert-feed']>[0]) {
+    async insertFeed(feed: Insertable<Feeds>) {
         return this.db
             .insertInto('feeds')
             .values(feed)

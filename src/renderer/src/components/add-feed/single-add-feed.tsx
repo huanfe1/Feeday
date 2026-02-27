@@ -1,6 +1,7 @@
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { FetchFeedResult, FetchFeedResultPost } from '@shared/types/ipc';
+import type { FetchFeedResult, FetchFeedPostsResult } from '@shared/types/ipc';
+import type { Podcast } from '@shared/types/database';
 import { useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,8 +18,8 @@ import { cn } from '@/lib/utils';
 
 export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     const [isLoading, setLoading] = useState(false);
-    const feedRef = useRef<FetchFeedResult['feed'] | null>(null);
-    const postsRef = useRef<FetchFeedResultPost[]>([]);
+    const feedRef = useRef<FetchFeedResult | null>(null);
+    const postsRef = useRef<FetchFeedPostsResult[]>([]);
     const folders = useFolderStore(state => state.folders);
 
     const formSchema = z.object({
@@ -82,8 +83,16 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                 return;
             }
             const tasks = postsRef.current
-                .filter((post): post is FetchFeedResultPost & { title: string; link: string } => !!(post.title && post.link))
-                .map(post => window.electron.ipcRenderer.invoke('db-insert-post', feedId, { ...post, title: post.title, link: post.link }));
+                .filter((post): post is FetchFeedPostsResult & { title: string; link: string } => !!(post.title && post.link))
+                .map(post =>
+                    window.electron.ipcRenderer.invoke('db-insert-post', feedId, {
+                        ...post,
+                        title: post.title,
+                        link: post.link,
+                        content: post.content ?? null,
+                        podcast: post.podcast && typeof post.podcast === 'object' && 'url' in post.podcast ? (post.podcast as Podcast) : undefined,
+                    }),
+                );
             await Promise.all(tasks);
 
             useFeedStore.getState().refreshFeeds();

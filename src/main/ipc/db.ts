@@ -9,7 +9,7 @@ import { ipcMain } from '@/lib/utils';
 ipcMain.handle('db-get-feeds', async () => {
     return db
         .selectFrom('feeds')
-        .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', sql`0`))
+        .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', 0 as never))
         .select(sql<boolean>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
         .select(['feeds.id', 'feeds.title', 'feeds.link', 'feeds.url', 'feeds.view', 'feeds.fetchFrequency', 'feeds.folderId', 'feeds.lastFetchError', 'feeds.icon'])
         .groupBy('feeds.id')
@@ -46,7 +46,7 @@ ipcMain.handle('db-get-posts', async (_event, params) => {
         .selectFrom('posts')
         .$if(needsJoinFeeds, qb => qb.innerJoin('feeds', 'posts.feedId', 'feeds.id'))
         .select(['posts.id', 'posts.title', 'posts.link', 'posts.summary', 'posts.feedId', 'posts.author', 'posts.pubDate', 'posts.isRead', 'posts.imageUrl', 'posts.podcast'])
-        .$if(onlyUnread, qb => qb.where('posts.isRead', '=', 0))
+        .$if(onlyUnread, qb => qb.where('posts.isRead', '=', 0 as never))
         .$if(feedId != null, qb => qb.where('posts.feedId', '=', feedId!))
         .$if(folderId != null, qb => qb.where(sql<boolean>`feeds.folder_id = ${folderId!}`))
         .$if(view != null, qb => qb.where(sql<boolean>`feeds.view = ${view!}`))
@@ -76,7 +76,7 @@ ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {
 ipcMain.handle('db-update-post-read-by-id', async (_event, postId, isRead) => {
     await db
         .updateTable('posts')
-        .set({ isRead: isRead ? 1 : 0 })
+        .set({ isRead: (isRead ? 1 : 0) as 0 | 1 })
         .where('id', '=', postId)
         .execute();
 });
@@ -85,7 +85,7 @@ ipcMain.handle('db-read-all-posts', async (_event, feedId, folderId) => {
     const feeds = folderId != null ? await db.selectFrom('feeds').select(['id']).where('folderId', '=', folderId).execute() : [];
     await db
         .updateTable('posts')
-        .set({ isRead: 1 })
+        .set({ isRead: 1 as 0 | 1 })
         .$if(folderId != null && feeds.length > 0, qb =>
             qb.where(
                 'feedId',
@@ -94,7 +94,7 @@ ipcMain.handle('db-read-all-posts', async (_event, feedId, folderId) => {
             ),
         )
         .$if(folderId == null && feedId != null, qb => qb.where('feedId', '=', feedId!))
-        .$if(folderId == null && feedId == null, qb => qb.where('isRead', '=', 0))
+        .$if(folderId == null && feedId == null, qb => qb.where('isRead', '=', 0 as never))
         .$if(folderId != null && feeds.length === 0, qb => qb.where(sql<boolean>`1 = 0`))
         .execute();
 });

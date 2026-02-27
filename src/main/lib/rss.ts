@@ -1,8 +1,9 @@
+import type { IpcEvents } from '@shared/types/ipc';
 import dayjs from 'dayjs';
 import { net } from 'electron';
 import { parseFeed } from 'feedsmith';
 
-export async function fetchFeed(url: string, timeout: number = 20000) {
+export async function fetchFeed(url: string, timeout: number = 20000): ReturnType<IpcEvents['fetch-feed-info']> {
     const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`获取订阅源超时: ${url}`)), timeout);
     });
@@ -15,10 +16,10 @@ export async function fetchFeed(url: string, timeout: number = 20000) {
     return Promise.race([fetchPromise, timeoutPromise]);
 }
 
-function rssParser(data: string) {
+function rssParser(data: string): Awaited<ReturnType<IpcEvents['fetch-feed-info']>> {
     const { format, feed } = parseFeed(data);
     if (format === 'rss') {
-        return {
+        const result = {
             feed: {
                 title: feed.title,
                 link: feed.link,
@@ -42,8 +43,13 @@ function rssParser(data: string) {
                 };
             }),
         };
+        if (!result?.feed?.title) {
+            throw new Error('Invalid feed data');
+        }
+        console.log(result.feed.title);
+        return result as Awaited<ReturnType<IpcEvents['fetch-feed-info']>>;
     } else if (format === 'atom') {
-        return {
+        const result = {
             feed: {
                 title: feed.title,
                 link: getLink(feed?.links?.find(_ => _.rel === 'alternate')?.href, feed.id),
@@ -67,6 +73,10 @@ function rssParser(data: string) {
                 };
             }),
         };
+        if (!result.feed.title || !result.feed.link || !result.feed.url || !result.feed.description || !result.feed.icon || !result.feed.lastUpdated) {
+            throw new Error('Invalid feed data');
+        }
+        return result as Awaited<ReturnType<IpcEvents['fetch-feed-info']>>;
     } else {
         console.error(`Invalid feed format: ${format}`);
         throw new Error('Invalid feed format');

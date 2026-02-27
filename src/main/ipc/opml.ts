@@ -1,3 +1,4 @@
+import type { Podcast } from '@shared/types/database';
 import { db, dbMethods } from '@/database';
 import { dialog } from 'electron';
 import { readFileSync } from 'node:fs';
@@ -44,7 +45,13 @@ ipcMain.handle('opml-import-from-content', async (_event, content) => {
                         return writeLimit(async () => {
                             const { title, link, ...postData } = post;
                             if (!title || !link) return;
-                            await dbMethods.insertPost(feedId, { ...postData, title, link });
+                            await dbMethods.insertPost(feedId, {
+                                ...postData,
+                                title,
+                                link,
+                                content: postData.content ?? null,
+                                podcast: postData.podcast && typeof postData.podcast === 'object' && 'url' in postData.podcast ? (postData.podcast as Podcast) : undefined,
+                            });
                         });
                     }),
                 );

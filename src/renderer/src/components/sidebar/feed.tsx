@@ -48,7 +48,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
-                        <Avatar src={feed.icon} title={feed.title} />
+                        <Avatar src={feed.icon ?? undefined} title={feed.title} />
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title ?? ''}</span>
                         {feed.lastFetchError && (
                             <Tooltip>

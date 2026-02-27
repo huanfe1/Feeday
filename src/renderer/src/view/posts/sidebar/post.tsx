@@ -32,7 +32,7 @@ function Post({ id, className }: { id: number; className?: string }) {
                     <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
                     <div className="mt-1 flex text-xs text-gray-500">
                         <div className="flex items-center gap-x-1">
-                            <Avatar src={feed.icon} title={feed.title} />
+                            <Avatar src={feed.icon ?? undefined} title={feed.title} />
                             <span>{feed.title}</span>
                         </div>
                         <span className="mx-2">·</span>

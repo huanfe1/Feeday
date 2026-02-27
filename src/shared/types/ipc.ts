@@ -1,4 +1,6 @@
-import type { Feeds, Folders, GetFeedsResult, InsertPost, Insertable, Podcast, Posts, Selectable, Updateable } from './database';
+import type { Insertable, Selectable, Updateable } from 'kysely';
+
+import type { Feeds, Folders, GetFeedsResult, InsertPost, Podcast, Posts } from './database';
 import type { SettingsSchema } from './settings';
 
 interface GetPostsParams {
@@ -11,7 +13,7 @@ interface GetPostsParams {
 export interface FetchFeedResultPost {
     title?: string;
     link: string;
-    author?: string;
+    author?: string | null;
     imageUrl?: string;
     summary?: string;
     pubDate: string;
@@ -19,13 +21,11 @@ export interface FetchFeedResultPost {
     podcast?: Podcast;
 }
 
-export interface FetchFeedResult {
-    feed: Partial<Pick<Feeds, 'title' | 'link' | 'url' | 'description' | 'icon' | 'lastUpdated'>> & { lastUpdated: string };
-    posts?: FetchFeedResultPost[];
-}
+export type FetchFeedResult = Omit<Feeds, 'id' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency'>;
+export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead'> & { content?: string };
 
 export interface IpcEvents {
-    'fetch-feed-info': (url: string) => Promise<FetchFeedResult>;
+    'fetch-feed-info': (url: string) => Promise<{ feed: FetchFeedResult; posts?: FetchFeedPostsResult[] }>;
 
     'db-get-feeds': () => Promise<GetFeedsResult[]>;
     'db-insert-feed': (feed: Insertable<Feeds>) => Promise<number | undefined>;

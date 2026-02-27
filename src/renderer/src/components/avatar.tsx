@@ -4,7 +4,7 @@ import { AvatarFallback, AvatarImage, Avatar as AvatarRoot } from '@/components/
 import { cn } from '@/lib/utils';
 
 type AvatarType = {
-    src?: string;
+    src?: string | null;
     title: string;
     className?: string;
 };
@@ -12,7 +12,7 @@ type AvatarType = {
 const Avatar = memo(function Avatar({ src, title, className }: AvatarType) {
     return (
         <AvatarRoot className={cn('size-4', className)}>
-            <AvatarImage src={src} />
+            <AvatarImage src={src ?? undefined} />
             <AvatarFallback>{title.slice(0, 1)}</AvatarFallback>
         </AvatarRoot>
     );

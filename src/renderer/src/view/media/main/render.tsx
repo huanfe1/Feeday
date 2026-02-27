@@ -87,7 +87,7 @@ function Render({ id }: { id: number }) {
                     </div>
                     <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title ?? ''}</div>
                     <div className="mt-1 flex text-xs text-gray-600">
-                        <Avatar src={feed.icon} title={feed.title ?? ''} />
+                        <Avatar src={feed.icon ?? undefined} title={feed.title ?? ''} />
                         <span className="ml-1 truncate">{feed.title}</span>
                         <span className="ml-3 flex-none text-gray-400">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>

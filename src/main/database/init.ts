@@ -1,6 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 
 const initSql = `
+    PRAGMA foreign_keys = ON;
+
     CREATE TABLE IF NOT EXISTS feeds (
         id INTEGER PRIMARY KEY AUTOINCREMENT, -- 订阅源ID
         title TEXT NOT NULL, -- 订阅源标题
@@ -24,7 +26,7 @@ const initSql = `
         id INTEGER PRIMARY KEY AUTOINCREMENT, -- 文章ID
         feed_id INTEGER NOT NULL, -- 关联订阅源ID
         title TEXT NOT NULL, -- 文章标题
-        link TEXT NOT NULL UNIQUE, -- 文章原文链接（唯一）
+        link TEXT NOT NULL, -- 文章原文链接
         author TEXT NULL, -- 文章作者
         image_url TEXT NULL, -- 文章图片URL
         summary TEXT NULL, -- 文章简略描述
@@ -34,6 +36,7 @@ const initSql = `
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间
         
+        UNIQUE(feed_id, link), -- 文章原文链接和订阅源ID唯一
         FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE -- 外键关联订阅源，删除订阅源时自动删除文章
     );
 
@@ -84,8 +87,6 @@ const initSql = `
     BEGIN
         UPDATE folders SET updated_at = (DATETIME('now', 'localtime')) WHERE id = OLD.id;
     END;
-
-    PRAGMA foreign_keys = ON;
 `;
 
 export function initDB(db: DatabaseSync) {

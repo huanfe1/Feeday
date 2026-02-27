@@ -30,8 +30,7 @@ function Main() {
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!currentPost?.podcast) return null;
-        const parsed =
-            typeof currentPost.podcast === 'string' ? JSON.parse(currentPost.podcast) : currentPost.podcast;
+        const parsed = typeof currentPost.podcast === 'string' ? JSON.parse(currentPost.podcast) : currentPost.podcast;
 
         parsed.image ??= currentPost.imageUrl;
         parsed.title ??= currentPost.title;
@@ -114,7 +113,7 @@ function Main() {
                                             className="flex cursor-pointer items-center gap-x-1"
                                             onClick={() => currentFeed.id != null && currentPost.id != null && clickFeedHandle(currentFeed.id, currentPost.id)}
                                         >
-                                            <Avatar src={currentFeed.icon} title={currentFeed.title} />
+                                            <Avatar src={currentFeed.icon ?? undefined} title={currentFeed.title} />
                                             <span className="font-medium">{currentFeed.title}</span>
                                         </div>
                                         {currentPost.author && currentPost.author !== currentFeed.title && (
