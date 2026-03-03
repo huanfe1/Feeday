@@ -66,7 +66,7 @@ function rssParser(data: string): Awaited<ReturnType<IpcEvents['fetch-feed-info'
                     link: getLink(item?.links?.find(_ => _.rel === 'alternate')?.href, item.id),
                     imageUrl: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
                     author: item.authors?.map(_ => _.name).join('、'),
-                    pubDate: dayjs(item.updated || item.published).format('YYYY-MM-DD HH:mm:ss'),
+                    pubDate: dayjs(item.published || item.updated).format('YYYY-MM-DD HH:mm:ss'),
                     summary: item.summary,
                     content: item.content,
                     podcast: podcastUrl ? { ...item.itunes, url: podcastUrl, image: podcastImage } : undefined,

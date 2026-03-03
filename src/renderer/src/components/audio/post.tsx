@@ -13,7 +13,7 @@ type PostAudioProps = {
     audio: AudioTrack;
 };
 
-export function PostAudio({ className, audio }: PostAudioProps) {
+export const PostAudio = memo(function PostAudio({ className, audio }: PostAudioProps) {
     const SEEK_STEP = 5;
 
     const src = useAudioStore(state => state?.podcast?.url);
@@ -88,7 +88,7 @@ export function PostAudio({ className, audio }: PostAudioProps) {
             </div>
         </div>
     );
-}
+});
 
 const ProgressBar = memo(function ProgressBar({ isActive, duration: initialDuration }: { isActive: boolean; duration?: number }) {
     const currentTime = useAudioStore(state => Math.trunc(state.currentTime));

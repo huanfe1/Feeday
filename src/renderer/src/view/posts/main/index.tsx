@@ -68,7 +68,7 @@ function Main() {
     return (
         <div className="min-h-0 flex-1 overflow-y-hidden">
             <div className={cn('flex items-center justify-between px-5 pt-1 pb-2 text-lg font-bold', { 'border-b': isScrolled })}>
-                <span className={cn('truncate opacity-0', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
+                <span className={cn('truncate opacity-0 transition-opacity', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
                 <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
