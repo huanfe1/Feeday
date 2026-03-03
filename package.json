@@ -71,6 +71,7 @@
         "@iconify-json/mingcute": "^1.2.6",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.1.18",
+        "@toolwind/anchors": "^1.0.10",
         "@trivago/prettier-plugin-sort-imports": "^6.0.0",
         "@types/node": "^22.19.1",
         "@types/node-schedule": "^2.1.8",

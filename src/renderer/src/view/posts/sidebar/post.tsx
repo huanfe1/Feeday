@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { relativeTime } from '@/lib/relativeTime';
 import { cn } from '@/lib/utils';
 
 function Post({ id, className }: { id: number; className?: string }) {
@@ -22,22 +23,31 @@ function Post({ id, className }: { id: number; className?: string }) {
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
-                <div className={cn('bg-white p-4 select-none', { 'bg-gray-200': isSelected }, className)} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
-                    <h3 className="relative mb-2 flex items-center font-bold text-gray-800">
-                        <span className="truncate" title={post.title}>
-                            {post.title}
-                        </span>
-                        <span className={cn('absolute -left-3 size-1.5 rounded-full bg-orange-400', { hidden: post.isRead })}></span>
-                    </h3>
-                    <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
-                    <div className="mt-1 flex text-xs text-gray-500">
-                        <div className="flex items-center gap-x-1">
-                            <Avatar src={feed.icon ?? undefined} title={feed.title} />
-                            <span>{feed.title}</span>
-                        </div>
-                        <span className="mx-2">·</span>
-                        <span>{dayjs(post.pubDate).format('YYYY-MM-DD')}</span>
+                <div className={cn('flex bg-white p-4 select-none', { 'bg-gray-200': isSelected }, className)} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
+                    <div className={cn('right-anchor-left-1.5 h-anchor anchored/title flex items-center', { hidden: post.isRead })}>
+                        <div className="size-1.5 rounded-full bg-orange-400"></div>
                     </div>
+                    <div className="flex-1 overflow-hidden">
+                        <div className="anchor/title mb-2 truncate font-bold text-gray-800" title={post.title}>
+                            {post.title}
+                        </div>
+                        <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
+                        <div className="mt-1 flex text-xs text-gray-500">
+                            <div className="flex items-center gap-x-1 overflow-hidden">
+                                <Avatar src={feed.icon ?? undefined} title={feed.title} />
+                                <span className="truncate">{feed.title}</span>
+                            </div>
+                            <span className="mx-1">·</span>
+                            <span className="flex-none" title={dayjs(post.pubDate).format('YYYY-MM-DD')}>
+                                {relativeTime(post.pubDate).fromNow()}
+                            </span>
+                        </div>
+                    </div>
+                    {post.imageUrl && (
+                        <div className="ml-3 flex w-1/3 flex-none items-center">
+                            <img className="rounded-sm" alt="" src={post.imageUrl} />
+                        </div>
+                    )}
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>

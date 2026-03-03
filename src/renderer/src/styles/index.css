@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@toolwind/anchors';
 
 @plugin '@egoist/tailwindcss-icons';
 @plugin '@tailwindcss/typography';

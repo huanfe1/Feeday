@@ -34,7 +34,7 @@ function rssParser(data: string): Awaited<ReturnType<IpcEvents['fetch-feed-info'
                 return {
                     title: item.title,
                     link: getLink(item.guid?.value, item.link),
-                    imageUrl: item.enclosures?.find(_ => _.type?.startsWith('image'))?.url,
+                    imageUrl: getImageUrl(item.enclosures?.find(_ => _.type?.startsWith('image'))?.url, item.content?.encoded, item.description),
                     author: item.dc?.creators?.join('、') || item.authors?.join(''),
                     pubDate: dayjs(item.pubDate).format('YYYY-MM-DD HH:mm:ss'),
                     summary: item.description,
@@ -64,7 +64,7 @@ function rssParser(data: string): Awaited<ReturnType<IpcEvents['fetch-feed-info'
                 return {
                     title: item.title,
                     link: getLink(item?.links?.find(_ => _.rel === 'alternate')?.href, item.id),
-                    imageUrl: item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href,
+                    imageUrl: getImageUrl(item.links?.find(_ => _.rel === 'enclosure' && _.type?.startsWith('image'))?.href, item.content, item.summary),
                     author: item.authors?.map(_ => _.name).join('、'),
                     pubDate: dayjs(item.published || item.updated).format('YYYY-MM-DD HH:mm:ss'),
                     summary: item.summary,
@@ -81,6 +81,23 @@ function rssParser(data: string): Awaited<ReturnType<IpcEvents['fetch-feed-info'
         console.error(`Invalid feed format: ${format}`);
         throw new Error('Invalid feed format');
     }
+}
+
+function extractFirstImageFromHtml(html: string | undefined): string | undefined {
+    if (!html || typeof html !== 'string') return undefined;
+    const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return match?.[1]?.trim();
+}
+
+function getImageUrl(
+    primary: string | undefined,
+    fallbackContent: string | { value?: string } | undefined,
+    fallbackSummary: string | { value?: string } | undefined,
+): string | undefined {
+    if (primary) return primary;
+    const content = typeof fallbackContent === 'string' ? fallbackContent : fallbackContent?.value;
+    const summary = typeof fallbackSummary === 'string' ? fallbackSummary : fallbackSummary?.value;
+    return extractFirstImageFromHtml(content) ?? extractFirstImageFromHtml(summary);
 }
 
 function getLink(...props: unknown[]): string {
