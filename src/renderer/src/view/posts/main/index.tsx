@@ -52,7 +52,7 @@ function Main() {
         return (
             <div className="h-full overflow-hidden">
                 <motion.div
-                    className="flex h-full items-center justify-center text-gray-400 select-none"
+                    className="text-muted-foreground flex h-full items-center justify-center select-none"
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     initial={{ opacity: 0, y: 30 }}
@@ -76,7 +76,7 @@ function Main() {
                                 <i className={cn('text-xl opacity-75', !currentPost.isRead ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent side="bottom">
                             <p>{currentPost.isRead ? '标记为未读' : '标记为已读'}</p>
                         </TooltipContent>
                     </Tooltip>
@@ -86,7 +86,7 @@ function Main() {
                                 <i className="i-mingcute-world-2-line text-xl opacity-75"></i>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent side="bottom">
                             <p>在浏览器中打开</p>
                         </TooltipContent>
                     </Tooltip>
@@ -137,7 +137,7 @@ function Main() {
                                     </div>
                                 )}
 
-                                <div className="prose prose-img:mx-auto max-w-none">
+                                <div className="prose dark:prose-invert prose-img:mx-auto max-w-none">
                                     <Render audio={audio} content={content} />
                                 </div>
                             </article>

@@ -43,7 +43,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
             <ContextMenu modal={false}>
                 <ContextMenuTrigger asChild>
                     <div
-                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-gray-300/70', className)}
+                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-sidebar-accent', className)}
                         id={`feed-${feed.id}`}
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
@@ -60,7 +60,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.hasUnread })}></span>
+                        <span className={cn('size-1.5 rounded-full bg-primary', { hidden: !feed.hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>

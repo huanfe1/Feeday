@@ -77,19 +77,19 @@ function Render({ id }: { id: number }) {
         <ContextMenu>
             <ContextMenuTrigger asChild>
                 <div
-                    className="relative rounded p-2 select-none hover:bg-gray-200"
+                    className="relative rounded p-2 select-none hover:bg-accent"
                     key={media.id}
                     onClick={() => media.id != null && updatePostReadById(media.id, true)}
                     onDoubleClick={() => window.open(media.link, '_blank')}
                 >
-                    <div className="flex aspect-video items-center overflow-hidden rounded bg-gray-100">
+                    <div className="flex aspect-video items-center overflow-hidden rounded bg-muted">
                         <Display media={media} />
                     </div>
-                    <div className="mt-2 truncate text-sm font-medium text-gray-600">{media.title ?? ''}</div>
-                    <div className="mt-1 flex text-xs text-gray-600">
+                    <div className="mt-2 truncate text-sm font-medium text-foreground">{media.title ?? ''}</div>
+                    <div className="mt-1 flex text-xs text-muted-foreground">
                         <Avatar src={feed.icon ?? undefined} title={feed.title ?? ''} />
                         <span className="ml-1 truncate">{feed.title}</span>
-                        <span className="ml-3 flex-none text-gray-400">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
+                        <span className="ml-3 flex-none">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>
                     <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.isRead })}></span>
                 </div>

@@ -130,7 +130,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
     };
 
     return (
-        <span className={cn('flex-none space-x-1 text-xl text-gray-500', className)}>
+        <span className={cn('flex-none space-x-1 text-xl text-muted-foreground', className)}>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button className="" onClick={refreshHandle} size="icon" variant="ghost">

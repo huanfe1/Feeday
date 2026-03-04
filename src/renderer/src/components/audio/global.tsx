@@ -33,7 +33,7 @@ export function GlobalAudio() {
     };
 
     return (
-        <div className="shrink-0 bg-white shadow-2xl">
+        <div className="shrink-0 border-t shadow-2xl">
             <div className="flex items-center justify-between px-1.5">
                 <div className="flex items-center gap-1">
                     <Tooltip>
@@ -77,7 +77,7 @@ export function GlobalAudio() {
                             backgroundImage: `url(${podcast.image})`,
                         }}
                     >
-                        <span className="flex items-center rounded-full bg-white p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="bg-background flex items-center rounded-full p-2 opacity-0 shadow-md transition-opacity group-hover:opacity-100">
                             <i className={cn('text-2xl', isPlaying ? 'i-mingcute-pause-fill' : 'i-mingcute-play-fill')} />
                         </span>
                     </div>

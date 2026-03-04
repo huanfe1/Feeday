@@ -23,16 +23,20 @@ function Post({ id, className }: { id: number; className?: string }) {
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
-                <div className={cn('flex bg-white p-4 select-none', { 'bg-gray-200': isSelected }, className)} onClick={() => setSelectedPost(post.id)} onDoubleClick={openLink}>
+                <div
+                    className={cn('hover:bg-accent dark:hover:bg-accent/50 flex p-4 select-none', { 'dark:bg-accent bg-gray-200/75': isSelected }, className)}
+                    onClick={() => setSelectedPost(post.id)}
+                    onDoubleClick={openLink}
+                >
                     <div className={cn('right-anchor-left-1.5 h-anchor anchored/title flex items-center', { hidden: post.isRead })}>
                         <div className="size-1.5 rounded-full bg-orange-400"></div>
                     </div>
                     <div className="flex-1 overflow-hidden">
-                        <div className="anchor/title mb-2 truncate font-bold text-gray-800" title={post.title}>
+                        <div className="anchor/title text-foreground mb-2 truncate font-bold" title={post.title}>
                             {post.title}
                         </div>
-                        <p className="line-clamp-2 text-sm text-gray-500">{post.summary}</p>
-                        <div className="mt-1 flex text-xs text-gray-500">
+                        <p className="text-muted-foreground line-clamp-2 text-sm">{post.summary}</p>
+                        <div className="text-muted-foreground mt-1 flex text-xs">
                             <div className="flex items-center gap-x-1 overflow-hidden">
                                 <Avatar src={feed.icon ?? undefined} title={feed.title} />
                                 <span className="truncate">{feed.title}</span>

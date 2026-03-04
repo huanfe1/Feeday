@@ -93,7 +93,7 @@ function Feeds({ className }: { className?: string }) {
                     <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
                         <span>订阅源</span>
                         <Tabs onValueChange={value => toggleView(Number(value))} value={view.toString()}>
-                            <TabsList className="h-8 bg-gray-200/75 px-1">
+                            <TabsList className="h-8 px-1">
                                 <TabsTrigger className="h-full px-3" value="1">
                                     文章
                                 </TabsTrigger>
@@ -272,7 +272,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         return () => removeListener();
     }, [feeds, setFolderOpen, id, isOpen]);
 
-    // if (feeds.length === 0) return null;
+    if (feeds.length === 0) return null;
     if (id === 0) return feeds.map(item => <Feed className="pl-5" feed={item} key={item.id} />);
 
     const hasUnread = feeds.some(feed => feed.hasUnread);
@@ -280,7 +280,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         <div>
             <ContextMenu>
                 <ContextMenuTrigger asChild>
-                    <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-gray-300/70')} onClick={clickFolder}>
+                    <div className={cn('flex cursor-default items-center gap-x-1 rounded-sm p-2', isSelected && 'bg-sidebar-accent')} onClick={clickFolder}>
                         <motion.span
                             className="i-mingcute-right-line"
                             animate={{ rotate: isOpen ? 90 : 0 }}
@@ -289,7 +289,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                             transition={{ duration: DURATION }}
                         />
                         <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>
-                        <span className={cn('size-1.5 shrink-0 rounded-full bg-gray-400', { hidden: !hasUnread })}></span>
+                        <span className={cn('bg-primary size-1.5 shrink-0 rounded-full', { hidden: !hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
