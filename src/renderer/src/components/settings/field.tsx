@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CommonField {
-    id: keyof SettingsSchema;
+    id?: keyof SettingsSchema;
     title: string;
     description?: string;
 }
@@ -30,6 +30,8 @@ interface SelectField extends CommonField {
         label: string;
         value: string;
     }[];
+    value?: string | (() => string);
+    onChange?: (value: string) => void;
 }
 
 interface ButtonField extends Omit<CommonField, 'id'> {
@@ -44,14 +46,16 @@ export type SettingsFieldType = SwitchField | InputField | SelectField | ButtonF
 function InputField({ field }: { field: InputField }) {
     const [value, setValue] = useState<string>('');
     useEffect(() => {
+        if (!field.id) return;
         window.electron.ipcRenderer.invoke('settings-get', field.id).then(value => {
             setValue(value.toString());
         });
     }, [field.id]);
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
-        window.electron.ipcRenderer.invoke('settings-update', field.id, newValue as SettingsSchema[typeof field.id]);
         setValue(newValue);
+        if (!field.id) return;
+        window.electron.ipcRenderer.invoke('settings-update', field.id, newValue as SettingsSchema[typeof field.id]);
     };
     return (
         <Field orientation="horizontal">
@@ -65,9 +69,10 @@ function InputField({ field }: { field: InputField }) {
 }
 
 function SelectField({ field }: { field: SelectField }) {
-    const [value, setValue] = useState<string>('');
+    const [value, setValue] = useState<string>(typeof field.value === 'function' ? field.value() : (field.value ?? ''));
 
     useEffect(() => {
+        if (!field.id) return;
         window.electron.ipcRenderer.invoke('settings-get', field.id).then(value => {
             setValue(value.toString());
         });
@@ -75,6 +80,8 @@ function SelectField({ field }: { field: SelectField }) {
 
     const handleValueChange = (value: string) => {
         setValue(value);
+        field.onChange?.(value);
+        if (!field.id) return;
         window.electron.ipcRenderer.invoke('settings-update', field.id, value as SettingsSchema[typeof field.id]);
     };
     return (
@@ -105,6 +112,7 @@ function SwitchField({ field }: { field: SwitchField }) {
     const [value, setValue] = useState<boolean>(false);
 
     useEffect(() => {
+        if (!field.id) return;
         window.electron.ipcRenderer.invoke('settings-get', field.id).then(value => {
             setValue(!!value);
         });
@@ -112,6 +120,7 @@ function SwitchField({ field }: { field: SwitchField }) {
 
     const handleValueChange = (value: boolean) => {
         setValue(value);
+        if (!field.id) return;
         window.electron.ipcRenderer.invoke('settings-update', field.id, value as SettingsSchema[typeof field.id]);
     };
     return (
@@ -151,16 +160,16 @@ export function SettingsField({ fields }: { fields: SettingsFieldType[] }) {
         <FieldGroup className="p-6">
             {fields.map(field => {
                 if (field.type === 'input') {
-                    return <InputField field={field} key={field.id} />;
+                    return <InputField field={field} key={field.id + field.title} />;
                 }
                 if (field.type === 'select') {
-                    return <SelectField field={field} key={field.id} />;
+                    return <SelectField field={field} key={field.id + field.title} />;
                 }
                 if (field.type === 'switch') {
-                    return <SwitchField field={field} key={field.id} />;
+                    return <SwitchField field={field} key={field.id + field.title} />;
                 }
                 if (field.type === 'button') {
-                    return <ButtonField field={field} key={field.id} />;
+                    return <ButtonField field={field} key={field.id + field.title} />;
                 }
                 return null;
             })}

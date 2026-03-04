@@ -1,14 +1,6 @@
+import type { SettingsSchema } from '@shared/types/settings';
 import Store from 'electron-store';
 import type { Schema } from 'electron-store';
-
-interface SettingsSchema {
-    windowWidth: number;
-    windowHeight: number;
-    isMaximized: boolean;
-    rsshubSource: string;
-    avatarProxy: string;
-    proxy: string;
-}
 
 const schema: Schema<SettingsSchema> = {
     windowWidth: {

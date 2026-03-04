@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Toaster } from 'sonner';
 
 import Sidebar from '@/components/sidebar';
+import { ThemeProvider } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 import { useDragging } from '@/store/common';
 
@@ -26,13 +27,13 @@ function App() {
     }, []);
 
     return (
-        <>
+        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
             <div className={cn('flex h-screen w-screen', isDragging ? 'cursor-ew-resize' : 'cursor-auto')}>
                 <Sidebar />
                 <View />
             </div>
             <Toaster toastOptions={{ style: { fontFamily: 'var(--font-custom)' } }} />
-        </>
+        </ThemeProvider>
     );
 }
 

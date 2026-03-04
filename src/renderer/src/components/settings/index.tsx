@@ -4,11 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 
 import { SettingsField } from './field';
 import type { SettingsFieldType } from './field';
 
 const fields: SettingsFieldType[] = [
+    {
+        type: 'select',
+        title: '主题',
+        description: '调整应用主题',
+        options: [
+            { value: 'system', label: '跟随系统' },
+            { value: 'dark', label: '深色' },
+            { value: 'light', label: '浅色' },
+        ],
+        value: () => localStorage.getItem('vite-ui-theme') || 'system',
+        onChange: value => eventBus.emit('theme-change', value as 'system' | 'dark' | 'light'),
+    },
     {
         type: 'input',
         id: 'avatarProxy',
