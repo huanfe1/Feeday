@@ -7,6 +7,7 @@ interface SettingsSchema {
     isMaximized: boolean;
     rsshubSource: string;
     avatarProxy: string;
+    proxy: string;
 }
 
 const schema: Schema<SettingsSchema> = {
@@ -30,6 +31,10 @@ const schema: Schema<SettingsSchema> = {
         type: 'string',
         default: 'https://unavatar.webp.se/',
         format: 'url',
+    },
+    proxy: {
+        type: 'string',
+        default: '',
     },
 } as const;
 

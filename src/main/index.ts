@@ -104,8 +104,10 @@ app.whenReady().then(() => {
         optimizer.watchWindowShortcuts(window);
     });
 
-    session.defaultSession.setProxy({
-        proxyRules: 'http://127.0.0.1:7890',
+    session.defaultSession.setProxy({ proxyRules: settings.get('proxy')?.trim() ?? '' });
+    settings.onDidChange('proxy', newValue => {
+        console.log(newValue);
+        session.defaultSession.setProxy({ proxyRules: newValue?.trim() ?? '' });
     });
 
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
