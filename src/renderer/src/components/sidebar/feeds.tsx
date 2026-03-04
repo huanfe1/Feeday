@@ -5,6 +5,16 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -174,9 +184,11 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
     const isSelected = useFolderStore(state => state.selectedFolderId === id);
     const setFolderOpen = useFolderStore(state => state.setFolderOpen);
     const updateFolder = useFolderStore(state => state.updateFolder);
+    const deleteFolder = useFolderStore(state => state.deleteFolder);
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
 
     const [showRenameFolder, setShowRenameFolder] = useState(false);
+    const [showDeleteFolder, setShowDeleteFolder] = useState(false);
     const [renameFolderName, setRenameFolderName] = useState(name ?? '');
 
     const openRenameDialog = () => {
@@ -199,6 +211,22 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                 setShowRenameFolder(false);
             })
             .catch(err => handleFolderError(err, '更新'));
+    };
+
+    const handleDeleteFolder = () => {
+        if (id == null) return;
+        deleteFolder(id)
+            .then(() => {
+                refreshFeeds();
+                toast.success('文件夹删除成功', { position: 'top-center', richColors: true });
+                setShowDeleteFolder(false);
+            })
+            .catch(err => {
+                toast.error(`删除文件夹失败：${err instanceof Error ? err.message : String(err)}`, {
+                    position: 'top-center',
+                    richColors: true,
+                });
+            });
     };
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -244,7 +272,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         return () => removeListener();
     }, [feeds, setFolderOpen, id, isOpen]);
 
-    if (feeds.length === 0) return null;
+    // if (feeds.length === 0) return null;
     if (id === 0) return feeds.map(item => <Feed className="pl-5" feed={item} key={item.id} />);
 
     const hasUnread = feeds.some(feed => feed.hasUnread);
@@ -265,7 +293,10 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
-                    <ContextMenuItem onSelect={openRenameDialog}>重命名文件夹</ContextMenuItem>
+                    <ContextMenuItem onSelect={openRenameDialog}>重命名</ContextMenuItem>
+                    <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setShowDeleteFolder(true)}>
+                        删除
+                    </ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
 
@@ -302,6 +333,26 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog onOpenChange={setShowDeleteFolder} open={showDeleteFolder}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>删除文件夹</AlertDialogTitle>
+                        <AlertDialogDescription>确定要删除文件夹「{name || '未命名文件夹'}」吗？该文件夹内的订阅源将移至未分类。</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={e => {
+                                e.preventDefault();
+                                handleDeleteFolder();
+                            }}
+                        >
+                            确定
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AnimatePresence initial={false}>
                 {isOpen && (

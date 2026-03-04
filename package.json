@@ -53,6 +53,7 @@
         "motion": "^12.23.26",
         "node-schedule": "^2.1.1",
         "p-limit": "^7.3.0",
+        "radix-ui": "^1.4.3",
         "react-hook-form": "^7.70.0",
         "react-resizable-layout": "^0.7.3",
         "react-scan": "^0.4.3",
