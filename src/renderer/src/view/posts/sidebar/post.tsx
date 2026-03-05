@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
@@ -47,11 +47,7 @@ function Post({ id, className }: { id: number; className?: string }) {
                             </span>
                         </div>
                     </div>
-                    {post.imageUrl && (
-                        <div className="ml-3 flex w-1/3 flex-none items-center">
-                            <img className="rounded-sm" alt="" src={post.imageUrl} />
-                        </div>
-                    )}
+                    {post.imageUrl && <Image src={post.imageUrl} />}
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
@@ -64,5 +60,38 @@ function Post({ id, className }: { id: number; className?: string }) {
         </ContextMenu>
     );
 }
+
+const MIN_IMAGE_SIZE = 10; // 过滤 1 像素等过小的占位图
+
+const Image = memo(function Image({ src }: { src: string }) {
+    const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'too-small'>('loading');
+
+    useEffect(() => {
+        setStatus('loading');
+        const img = new window.Image();
+        img.onload = () => {
+            if (img.naturalWidth >= MIN_IMAGE_SIZE && img.naturalHeight >= MIN_IMAGE_SIZE) {
+                setStatus('ready');
+            } else {
+                setStatus('too-small');
+            }
+        };
+        img.onerror = () => setStatus('error');
+        img.src = src;
+        return () => {
+            img.onload = null;
+            img.onerror = null;
+            img.src = '';
+        };
+    }, [src]);
+
+    if (status !== 'ready') return null;
+
+    return (
+        <div className="ml-3 flex w-1/3 flex-none items-center">
+            <img className="rounded-sm" alt="" src={src} />
+        </div>
+    );
+});
 
 export default memo(Post);
