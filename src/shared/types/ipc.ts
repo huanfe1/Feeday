@@ -22,7 +22,7 @@ export interface FetchFeedResultPost {
 }
 
 export type FetchFeedResult = Omit<Feeds, 'id' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency'>;
-export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead'> & { content?: string };
+export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead' | 'podcast'> & { content?: string; podcast?: Podcast | null };
 
 export interface IpcEvents {
     'fetch-feed-info': (url: string) => Promise<{ feed: FetchFeedResult; posts?: FetchFeedPostsResult[] }>;

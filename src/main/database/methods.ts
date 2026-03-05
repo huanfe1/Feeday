@@ -100,8 +100,8 @@ export class DatabaseMethods {
                             ...feedWithoutUniqueFields,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         });
-                        await Promise.all(posts?.map(post => this.insertPost(id, post as any)) ?? []);
                     });
+                    await Promise.all(posts?.map(post => this.writeLimit(() => this.insertPost(id, post as any))) ?? []);
                 } catch (error: unknown) {
                     await this.writeLimit(async () => {
                         await this.updateFeed(id as number, {

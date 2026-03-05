@@ -289,7 +289,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                             transition={{ duration: DURATION }}
                         />
                         <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>
-                        <span className={cn('bg-primary size-1.5 shrink-0 rounded-full', { hidden: !hasUnread })}></span>
+                        <span className={cn('size-1.5 shrink-0 rounded-full bg-gray-400', { hidden: !hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>

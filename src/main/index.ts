@@ -24,6 +24,7 @@ async function createWindow() {
         webPreferences: {
             preload: join(__dirname, '../preload/index.mjs'),
             sandbox: false,
+            // allowRunningInsecureContent: true,
         },
     });
     settings.get('isMaximized') && mainWindow.maximize();

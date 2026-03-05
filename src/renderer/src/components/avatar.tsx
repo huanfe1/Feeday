@@ -12,7 +12,7 @@ type AvatarType = {
 const Avatar = memo(function Avatar({ src, title, className }: AvatarType) {
     return (
         <AvatarRoot className={cn('size-4', className)}>
-            <AvatarImage src={src ?? undefined} />
+            <AvatarImage className="dark:bg-foreground" src={src ?? undefined} />
             <AvatarFallback>{title.slice(0, 1)}</AvatarFallback>
         </AvatarRoot>
     );

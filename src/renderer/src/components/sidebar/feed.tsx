@@ -60,7 +60,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                                 </TooltipContent>
                             </Tooltip>
                         )}
-                        <span className={cn('size-1.5 rounded-full bg-primary', { hidden: !feed.hasUnread })}></span>
+                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>

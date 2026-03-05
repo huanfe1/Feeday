@@ -21,7 +21,7 @@ const schema: Schema<SettingsSchema> = {
     },
     avatarProxy: {
         type: 'string',
-        default: 'https://unavatar.webp.se/',
+        default: 'https://unavatar.webp.se/${url}',
         format: 'url',
     },
     proxy: {
