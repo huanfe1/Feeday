@@ -47,6 +47,7 @@ export const VolumeBar = memo(function VolumeBar() {
                 </TooltipTrigger>
                 <TooltipContent onPointerDown={() => handleDrag(true)} onPointerUp={() => handleDrag(false)} theme="light">
                     <Slider
+                        className="data-[orientation=vertical]:min-h-22"
                         max={1}
                         min={0}
                         onPointerDown={() => handleDrag(true)}

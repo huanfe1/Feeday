@@ -23,7 +23,12 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
     const refreshFolders = () => {
         window.electron.ipcRenderer.invoke('db-get-folders').then(folders => {
             const valid = (folders || []).filter((f): f is FolderType => f.id != null);
-            set({ folders: valid });
+            set(state => ({
+                folders: valid.map(folder => {
+                    const existing = state.folders.find(f => f.id === folder.id);
+                    return { ...folder, isOpen: existing?.isOpen };
+                }),
+            }));
         });
     };
     refreshFolders();
