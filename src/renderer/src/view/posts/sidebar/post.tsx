@@ -24,7 +24,7 @@ function Post({ id, className }: { id: number; className?: string }) {
         <ContextMenu>
             <ContextMenuTrigger asChild>
                 <div
-                    className={cn('hover:bg-accent dark:hover:bg-accent/50 flex p-4 select-none', { 'dark:bg-accent bg-gray-200/75': isSelected }, className)}
+                    className={cn('flex p-4 select-none', { 'bg-sidebar-accent dark:bg-accent': isSelected, 'dark:hover:bg-accent/50 hover:bg-accent': !isSelected }, className)}
                     onClick={() => setSelectedPost(post.id)}
                     onDoubleClick={openLink}
                 >
