@@ -27,7 +27,7 @@ function App() {
     }, []);
 
     return (
-        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="system" storageKey="feeday-theme">
             <div className={cn('flex h-screen w-screen', isDragging ? 'cursor-ew-resize' : 'cursor-auto')}>
                 <Sidebar />
                 <View />

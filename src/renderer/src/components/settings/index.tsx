@@ -19,7 +19,7 @@ const fields: SettingsFieldType[] = [
             { value: 'dark', label: '深色' },
             { value: 'light', label: '浅色' },
         ],
-        value: () => localStorage.getItem('vite-ui-theme') || 'system',
+        value: () => localStorage.getItem('feeday-theme') || 'system',
         onChange: value => eventBus.emit('theme-change', value as 'system' | 'dark' | 'light'),
     },
     {

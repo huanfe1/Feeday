@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const AUDIO_STORAGE_KEY = 'audio-track';
+
 const value = localStorage.getItem('audio-volume');
 const VOLUME_DEFAULT = value ? Number(value) : 0.2;
 
@@ -15,6 +17,27 @@ export type AudioTrack = {
     postId: number | null;
     podcast: PodcastType;
 };
+
+type SavedAudioState = AudioTrack & {
+    currentTime: number;
+    rate: number;
+};
+
+function loadSavedTrack(): SavedAudioState | null {
+    const raw = localStorage.getItem(AUDIO_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedAudioState;
+    if (!parsed?.podcast?.url) return null;
+    return parsed;
+}
+
+function saveTrackToStorage(state: SavedAudioState) {
+    localStorage.setItem(AUDIO_STORAGE_KEY, JSON.stringify(state));
+}
+
+function clearTrackFromStorage() {
+    localStorage.removeItem(AUDIO_STORAGE_KEY);
+}
 
 type AudioState = AudioTrack & {
     audio: HTMLAudioElement;
@@ -40,6 +63,9 @@ type AudioState = AudioTrack & {
     toggleMute: () => void;
 };
 
+const SAVE_THROTTLE_MS = 5000;
+let lastSaveTime = 0;
+
 export const useAudioStore = create<AudioState>((set, get) => {
     const audio = new Audio();
     audio.preload = 'none';
@@ -50,7 +76,23 @@ export const useAudioStore = create<AudioState>((set, get) => {
     });
 
     audio.addEventListener('timeupdate', () => {
-        set({ currentTime: audio.currentTime });
+        const now = audio.currentTime;
+        set({ currentTime: now });
+        // 节流保存播放进度
+        const t = Date.now();
+        if (t - lastSaveTime >= SAVE_THROTTLE_MS) {
+            lastSaveTime = t;
+            const s = get();
+            if (s.podcast?.url) {
+                saveTrackToStorage({
+                    feedId: s.feedId,
+                    postId: s.postId,
+                    podcast: s.podcast,
+                    currentTime: now,
+                    rate: s.rate,
+                });
+            }
+        }
     });
 
     audio.addEventListener('volumechange', () => {
@@ -108,24 +150,41 @@ export const useAudioStore = create<AudioState>((set, get) => {
         setTrack: ({ feedId, postId, podcast }: AudioTrack) => {
             const { audio } = get();
             const url = podcast.url;
+            const saved = loadSavedTrack();
+            const resumeTime = saved?.podcast?.url === url && saved.feedId === (feedId ?? null) && saved.postId === (postId ?? null) ? saved.currentTime : 0;
 
             if (audio.src !== url) {
                 audio.src = url;
-                audio.currentTime = 0;
+                audio.currentTime = resumeTime;
+            } else if (resumeTime > 0) {
+                audio.currentTime = resumeTime;
             }
+
+            const rate = saved?.rate ?? 1;
+            audio.playbackRate = rate;
 
             set({
                 feedId: feedId ?? null,
                 postId: postId ?? null,
                 podcast: podcast ?? null,
-                currentTime: 0,
+                currentTime: resumeTime,
                 duration: podcast.duration ?? get().duration,
+                rate,
+            });
+
+            saveTrackToStorage({
+                feedId: feedId ?? null,
+                postId: postId ?? null,
+                podcast: podcast ?? null,
+                currentTime: resumeTime,
+                rate,
             });
         },
 
         clearTrack: () => {
             set({ feedId: null, postId: null, podcast: { url: '' } });
             audio.src = '';
+            clearTrackFromStorage();
         },
 
         play: () => {
@@ -176,3 +235,30 @@ export const useAudioStore = create<AudioState>((set, get) => {
         },
     };
 });
+
+// 应用关闭前保存当前播放状态
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+        const s = useAudioStore.getState();
+        if (s.podcast?.url) {
+            saveTrackToStorage({
+                feedId: s.feedId,
+                postId: s.postId,
+                podcast: s.podcast,
+                currentTime: s.audio.currentTime,
+                rate: s.rate,
+            });
+        }
+    });
+}
+
+// 应用启动时恢复上次播放的音频
+if (typeof window !== 'undefined') {
+    const saved = loadSavedTrack();
+    if (saved) {
+        // 延迟执行，确保 store 已完全初始化
+        setTimeout(() => {
+            useAudioStore.getState().setTrack(saved);
+        }, 0);
+    }
+}
