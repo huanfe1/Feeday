@@ -3,7 +3,7 @@ import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
 import type { Root } from 'hast';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
-import { memo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 import rehypeParse from 'rehype-parse';
 import { unified } from 'unified';
@@ -42,20 +42,14 @@ const VideoPreview = memo(function VideoPreview({ ...props }: React.ComponentPro
     );
 });
 
-const components = {
-    video: VideoPreview,
-    img: Image,
-};
-
 const parser = unified().use(rehypeParse, { fragment: true });
 
-const Display = memo(function Display({ media }: { media: PostType }) {
+const Display = memo(function Display({ media, content }: { media: PostType; content: string }) {
     if (media.link.startsWith('https://www.youtube.com/watch?v=') && media.imageUrl) {
         const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
         return <img className="w-full" alt={media.title} loading="lazy" src={imgUrl} />;
     }
-    const tree = parser.parse(media.summary);
-
+    const tree = parser.parse(content);
     const newTree: Root = { type: 'root', children: [] };
     visit(tree, 'element', node => {
         if (node.tagName === 'img' || node.tagName === 'video') {
@@ -64,6 +58,16 @@ const Display = memo(function Display({ media }: { media: PostType }) {
         }
         return;
     });
+
+    if (newTree.children.length === 0 && media.imageUrl) {
+        return <Image alt={media.title} loading="lazy" src={media.imageUrl} />;
+    }
+
+    const components = {
+        video: VideoPreview,
+        img: Image,
+    };
+
     return toJsxRuntime(newTree, { Fragment, jsxs, jsx, components });
 });
 
@@ -71,6 +75,12 @@ function Render({ id }: { id: number }) {
     const media = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media?.feedId));
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
+    const [content, setContent] = useState('');
+
+    useEffect(() => {
+        if (media?.id == null) return;
+        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(media.id)).then(setContent);
+    }, [media?.id]);
 
     if (!feed || !media) return null;
     return (
@@ -83,7 +93,7 @@ function Render({ id }: { id: number }) {
                     onDoubleClick={() => window.open(media.link, '_blank')}
                 >
                     <div className="bg-muted flex aspect-video items-center overflow-hidden rounded">
-                        <Display media={media} />
+                        <Display content={content} media={media} />
                     </div>
                     <div className="text-foreground mt-2 truncate text-sm font-medium">{media.title ?? ''}</div>
                     <div className="text-muted-foreground mt-1 flex text-xs">
