@@ -43,7 +43,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
             <ContextMenu modal={false}>
                 <ContextMenuTrigger asChild>
                     <div
-                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', isSelected && 'bg-sidebar-accent', className)}
+                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', { 'bg-sidebar-accent': isSelected }, className)}
                         id={`feed-${feed.id}`}
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}

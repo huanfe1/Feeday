@@ -47,7 +47,7 @@ export default function Sidebar() {
                     >
                         <ScrollArea className="flex h-full" viewportRef={parentRef}>
                             {postIds.length === 0 ? (
-                                <div className="flex h-[calc(100vh-60px)] items-center justify-center text-muted-foreground select-none">
+                                <div className="text-muted-foreground flex h-[calc(100vh-60px)] items-center justify-center select-none">
                                     <div className="flex flex-col items-center gap-y-3">
                                         <i className="i-mingcute-celebrate-line text-3xl"></i>
                                         <span>全部已读</span>
@@ -110,7 +110,7 @@ const Buttons = memo(function Buttons({ className }: { className?: string }) {
     };
 
     return (
-        <span className={cn('flex-none space-x-1 text-xl text-muted-foreground', className)}>
+        <span className={cn('text-muted-foreground flex-none space-x-1 text-xl', className)}>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button className="" onClick={refreshHandle} size="icon" variant="ghost">

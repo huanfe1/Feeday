@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
 
-import { cn } from '../lib/utils';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
     const [isMaximized, setIsMaximized] = useState(false);
@@ -21,24 +21,20 @@ export default function Header() {
     return (
         <div className="drag-region flex h-[35px] flex-none items-center justify-end">
             <div className="no-drag-region flex h-full">
-                <Button onClick={handleMinimize}>
+                <HearderButton onClick={handleMinimize}>
                     <i className="i-mingcute-minimize-line" />
-                </Button>
-                <Button onClick={handleMaximize}>
+                </HearderButton>
+                <HearderButton onClick={handleMaximize}>
                     <i className={cn(isMaximized ? 'i-mingcute-restore-line' : 'i-mingcute-square-line')}></i>
-                </Button>
-                <Button className="hover:bg-destructive hover:text-white" onClick={handleClose}>
+                </HearderButton>
+                <HearderButton className="dark:hover:bg-destructive hover:bg-destructive hover:text-white" onClick={handleClose}>
                     <i className="i-mingcute-close-line" />
-                </Button>
+                </HearderButton>
             </div>
         </div>
     );
 }
 
-function Button({ children, onClick, className }: { children: ReactNode; onClick: () => void; className?: string }) {
-    return (
-        <button className={cn('pointer-events-auto flex h-full w-[50px] items-center justify-center duration-200 hover:bg-accent', className)} onClick={onClick} type="button">
-            {children}
-        </button>
-    );
+function HearderButton(props: React.ComponentProps<'button'>) {
+    return <Button {...props} className={cn('w-[50px] rounded-none', props.className)} size="icon" variant="ghost" />;
 }

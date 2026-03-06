@@ -1,5 +1,5 @@
-import type { Podcast } from '@shared/types/database';
 import { db, dbMethods } from '@/database';
+import type { Podcast } from '@shared/types/database';
 import { dialog } from 'electron';
 import { readFileSync } from 'node:fs';
 import pLimit from 'p-limit';

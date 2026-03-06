@@ -2,6 +2,7 @@ import { dbMethods } from '@/database';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import dayjs from 'dayjs';
 import { BrowserWindow, app, ipcMain, session, shell } from 'electron';
+import contextMenu from 'electron-context-menu';
 import schedule from 'node-schedule';
 import { join } from 'path';
 
@@ -90,6 +91,11 @@ async function createWindow() {
         });
     }
 }
+
+contextMenu({
+    showSaveImageAs: true,
+    showInspectElement: is.dev,
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

@@ -1,7 +1,7 @@
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { FetchFeedResult, FetchFeedPostsResult } from '@shared/types/ipc';
 import type { Podcast } from '@shared/types/database';
+import type { FetchFeedPostsResult, FetchFeedResult } from '@shared/types/ipc';
 import { useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';

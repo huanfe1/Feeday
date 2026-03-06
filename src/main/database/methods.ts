@@ -60,7 +60,7 @@ export class DatabaseMethods {
             const postRow = await trx
                 .insertInto('posts')
                 .values(values)
-                .onConflict(oc => oc.column('link').doNothing())
+                .onConflict(oc => oc.columns(['feedId', 'link']).doNothing())
                 .returning('id')
                 .executeTakeFirst();
 
@@ -99,6 +99,7 @@ export class DatabaseMethods {
                         await this.updateFeed(id, {
                             ...feedWithoutUniqueFields,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                            lastFetchError: null,
                         });
                     });
                     await Promise.all(posts?.map(post => this.writeLimit(() => this.insertPost(id, post as any))) ?? []);

@@ -1,10 +1,10 @@
 import type { AudioTrack } from '@/store';
 import { useAudioStore } from '@/store';
-import { findAndReplace } from 'hast-util-find-and-replace';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
 import { h } from 'hastscript';
 import { memo, useMemo } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
+import { visit } from 'unist-util-visit';
 
 import parseHtml from '@/lib/parse-html';
 
@@ -48,8 +48,13 @@ function Render({ content, audio }: { content: string; audio: AudioTrack | null 
     const tree = useMemo(() => {
         const tree = parseHtml(content);
         if (audio?.podcast?.url) {
-            findAndReplace(tree, [[/\d{1,2}:\d{2}(?::\d{2})?/g, $0 => h('podcast-time', $0)]], {
-                ignore: node => node.type === 'element' && node.tagName === 'podcast-time',
+            visit(tree, 'element', (node, index, parent) => {
+                if (parent && typeof index === 'number' && node.children[0]?.type === 'text') {
+                    const content = node.children[0]?.value;
+                    if (/\d{1,2}:\d{2}(?::\d{2})?/.test(content)) {
+                        parent.children[index] = h('podcast-time', content);
+                    }
+                }
             });
         }
         return tree;

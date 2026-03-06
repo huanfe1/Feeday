@@ -93,7 +93,7 @@ function Feeds({ className }: { className?: string }) {
                     <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
                         <span>订阅源</span>
                         <Tabs onValueChange={value => toggleView(Number(value))} value={view.toString()}>
-                            <TabsList className="h-8 px-1">
+                            <TabsList className="bg-sidebar-accent/75 h-8 px-1">
                                 <TabsTrigger className="h-full px-3" value="1">
                                     文章
                                 </TabsTrigger>
