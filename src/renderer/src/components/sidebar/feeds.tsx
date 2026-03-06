@@ -262,7 +262,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
             if (!feeds.some(feed => feed.id === feedId)) return;
             needJumpFeedId.current = feedId;
             needJumpPostId.current = postId;
-            if (id === null || isOpen) {
+            if (id === 0 || id === null || isOpen) {
                 scrollToFeed();
             } else {
                 setFolderOpen(id, true);
