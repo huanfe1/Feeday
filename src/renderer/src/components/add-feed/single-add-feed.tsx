@@ -2,7 +2,7 @@ import { useFeedStore, useFolderStore, usePostStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Podcast } from '@shared/types/database';
 import type { FetchFeedPostsResult, FetchFeedResult } from '@shared/types/ipc';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -20,7 +20,16 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<FetchFeedResult | null>(null);
     const postsRef = useRef<FetchFeedPostsResult[]>([]);
+    const isMountedRef = useRef(true);
     const folders = useFolderStore(state => state.folders);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            window.electron.ipcRenderer.send('cancel-fetch-feed-info');
+        };
+    }, []);
 
     const formSchema = z.object({
         url: z.url('请输入正确的订阅源地址').min(1, { message: '请输入订阅源地址' }),
@@ -50,15 +59,19 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
 
         try {
             const data = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
+            if (!isMountedRef.current) return;
             form.setValue('title', data.feed.title ?? '');
             feedRef.current = data.feed;
             postsRef.current = data.posts ?? [];
         } catch (error: unknown) {
-            if (error instanceof Error) {
+            if (!isMountedRef.current) return;
+            if (error instanceof Error && error.message !== '请求已取消') {
                 toast.error('获取订阅源信息失败：' + error.message, { position: 'top-center', richColors: true });
             }
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
     };
 

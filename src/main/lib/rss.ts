@@ -33,13 +33,19 @@ Error: ${error instanceof Error ? error.message : String(error)}
     }
 }
 
-export async function fetchFeed(url: string, timeout: number = 30000): ReturnType<IpcEvents['fetch-feed-info']> {
+export async function fetchFeed(
+    url: string,
+    options?: { timeout?: number; signal?: AbortSignal },
+): ReturnType<IpcEvents['fetch-feed-info']> {
+    const timeout = options?.timeout ?? 30000;
+    const signal = options?.signal;
+
     const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`获取订阅源超时: ${url}`)), timeout);
     });
 
     const fetchPromise = net
-        .fetch(url)
+        .fetch(url, { signal })
         .then(res => res.text())
         .then(rawContent => {
             try {
