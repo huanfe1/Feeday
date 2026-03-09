@@ -89,9 +89,9 @@ function Feeds({ className }: { className?: string }) {
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
-                <ScrollArea className={cn('min-h-0 flex-1 overflow-hidden px-3', className)} onClick={cancelSelectFeed}>
+                <ScrollArea className={cn('min-h-0 flex-1 overflow-hidden px-2', className)} onClick={cancelSelectFeed}>
                     <div className="mt-3 mb-2 flex items-center justify-between text-sm font-medium select-none">
-                        <span>订阅源</span>
+                        <span className="pl-2">订阅源</span>
                         <Tabs onValueChange={value => toggleView(Number(value))} value={view.toString()}>
                             <TabsList className="bg-sidebar-accent/75 h-8 px-1">
                                 <TabsTrigger className="h-full px-3" value="1">
@@ -273,7 +273,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
     }, [feeds, setFolderOpen, id, isOpen]);
 
     if (feeds.length === 0) return null;
-    if (id === 0) return feeds.map(item => <Feed className="pl-5" feed={item} key={item.id} />);
+    if (id === 0) return feeds.map(item => <Feed feed={item} key={item.id} />);
 
     const hasUnread = feeds.some(feed => feed.hasUnread);
     return (
@@ -366,7 +366,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                         transition={{ duration: DURATION, ease: 'easeInOut' }}
                     >
                         {feeds.map(item => (
-                            <Feed className="pl-5" feed={item} key={item.id} />
+                            <Feed className="pl-6" feed={item} key={item.id} />
                         ))}
                     </motion.div>
                 )}

@@ -140,7 +140,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
             title: data.title,
             link: data.link,
             fetchFrequency: data.fetchFrequency,
-            folderId: data.folderId ?? undefined,
+            folderId: data.folderId === null ? null : data.folderId,
             view: data.view,
         })
             .then(() => {
