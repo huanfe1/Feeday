@@ -1,5 +1,6 @@
 import type { AudioTrack } from '@/store';
 import { useAudioStore } from '@/store';
+import type { ElementContent } from 'hast';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
 import { h } from 'hastscript';
 import { memo, useMemo } from 'react';
@@ -50,9 +51,17 @@ function Render({ content, audio }: { content: string; audio: AudioTrack | null 
         if (audio?.podcast?.url) {
             visit(tree, 'element', (node, index, parent) => {
                 if (parent && typeof index === 'number' && node.children[0]?.type === 'text') {
-                    const content = node.children[0]?.value;
-                    if (/\d{1,2}:\d{2}(?::\d{2})?/.test(content)) {
-                        parent.children[index] = h('podcast-time', content);
+                    const textContent = node.children[0]?.value;
+                    if (/\d{1,2}:\d{2}(?::\d{2})?/.test(textContent)) {
+                        const result: ElementContent[] = textContent.split(/\d{1,2}:\d{2}(?::\d{2})?/).map(item => ({ type: 'text', value: item }));
+                        textContent.match(/\d{1,2}:\d{2}(?::\d{2})?/g)?.forEach((item, index) => {
+                            result.splice(index * 2 + 1, 0, h('podcast-time', item));
+                        });
+
+                        if (parent.children[index].type === 'element') {
+                            const tagName = parent.children[index].tagName;
+                            parent.children[index] = h(tagName === 'a' ? 'span' : tagName, result);
+                        }
                     }
                 }
             });

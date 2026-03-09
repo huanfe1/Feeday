@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { relativeTime } from '@/lib/relativeTime';
+import { dayjsPlugin } from '@/lib/dayjs';
 import { cn } from '@/lib/utils';
 
 function Post({ id, className }: { id: number; className?: string }) {
@@ -43,7 +43,7 @@ function Post({ id, className }: { id: number; className?: string }) {
                             </div>
                             <span className="mx-1">·</span>
                             <span className="flex-none" title={dayjs(post.pubDate).format('YYYY-MM-DD')}>
-                                {relativeTime(post.pubDate).fromNow()}
+                                {dayjsPlugin(post.pubDate).fromNow()}
                             </span>
                         </div>
                     </div>

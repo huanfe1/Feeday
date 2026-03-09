@@ -112,9 +112,10 @@ app.whenReady().then(() => {
     });
 
     session.defaultSession.setProxy({ proxyRules: settings.get('proxy')?.trim() ?? '' });
-    settings.onDidChange('proxy', newValue => {
-        console.log(newValue);
+    settings.onDidChange('proxy', async newValue => {
         session.defaultSession.setProxy({ proxyRules: newValue?.trim() ?? '' });
+        await session.defaultSession.clearHostResolverCache();
+        await session.defaultSession.closeAllConnections();
     });
 
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {

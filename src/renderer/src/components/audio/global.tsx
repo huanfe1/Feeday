@@ -4,8 +4,9 @@ import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatTime } from '@/lib/dayjs';
 import { eventBus } from '@/lib/events';
-import { cn, formatTime } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { VolumeBar } from './volume';
 
