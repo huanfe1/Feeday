@@ -61,7 +61,7 @@ function Post({ id, className }: { id: number; className?: string }) {
     );
 }
 
-const MIN_IMAGE_SIZE = 10; // 过滤像素过小的占位图
+const MIN_IMAGE_SIZE = 100; // 过滤像素过小的占位图
 
 const Image = memo(function Image({ src }: { src: string }) {
     const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'too-small'>('loading');
@@ -87,7 +87,7 @@ const Image = memo(function Image({ src }: { src: string }) {
     if (status !== 'ready') return null;
 
     return (
-        <div className="ml-3 flex aspect-square w-1/3 flex-none items-center overflow-hidden">
+        <div className="ml-3 flex aspect-square w-1/3 flex-none items-center overflow-hidden rounded-sm">
             <img className="rounded-sm" alt="" src={src} />
         </div>
     );
