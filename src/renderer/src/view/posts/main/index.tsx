@@ -66,8 +66,8 @@ function Main() {
         );
 
     return (
-        <div className="min-h-0 flex-1 overflow-y-hidden">
-            <div className={cn('flex items-center justify-between px-5 pt-1 pb-2 text-lg font-bold', { 'border-b': isScrolled })}>
+        <div className="flex flex-col overflow-hidden">
+            <div className={cn('flex flex-none items-center justify-between px-2 pb-2 text-lg font-bold', { 'border-b': isScrolled })}>
                 <span className={cn('truncate opacity-0 transition-opacity', { 'opacity-100': isScrolled })}>{currentPost.title}</span>
                 <div className="flex-none space-x-1">
                     <Tooltip>
@@ -93,9 +93,9 @@ function Main() {
                 </div>
             </div>
             <AnimatePresence mode="wait">
-                <motion.div className="h-full" key={currentPost?.id} {...enterVariants}>
+                <motion.div className="min-h-0 grow" key={currentPost?.id} {...enterVariants}>
                     <ScrollArea className="h-full" onScroll={handleScroll}>
-                        <div className="mx-auto max-w-2xl px-8 pt-4 pb-12 2xl:max-w-4xl">
+                        <div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl">
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
                                     <h1>
