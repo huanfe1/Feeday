@@ -150,7 +150,7 @@ function Main() {
                     <AnimatePresence>
                         {isScrolled && (
                             <motion.div
-                                className="absolute right-10 bottom-16 z-10"
+                                className="absolute right-10 bottom-14 z-10"
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 initial={{ opacity: 0, scale: 0.8 }}
