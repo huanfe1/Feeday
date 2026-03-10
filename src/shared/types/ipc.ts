@@ -46,6 +46,7 @@ export interface IpcEvents {
 
     'opml-select-file-dialog': () => Promise<string | null>;
     'opml-import-from-content': (content: string) => Promise<PromiseSettledResult<{ success: boolean; message: string }>[]>;
+    'opml-export-feeds': () => Promise<{ success: boolean; message?: string; canceled?: boolean }>;
 
     'settings-get': <T extends keyof SettingsSchema>(key: T) => SettingsSchema[T];
     'settings-update': <T extends keyof SettingsSchema>(key: T, value: SettingsSchema[T]) => void;

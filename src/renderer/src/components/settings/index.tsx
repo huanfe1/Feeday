@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -47,10 +48,16 @@ const fields: SettingsFieldType[] = [
         type: 'button',
         id: 'exportFeeds',
         title: '导出订阅源',
-        description: '导出订阅源为 XML 文件。',
+        description: '导出订阅源为 OPML 文件。',
         label: '导出',
-        onClick: () => {
-            console.log('export feeds');
+        onClick: async () => {
+            const result = await window.electron.ipcRenderer.invoke('opml-export-feeds');
+            if (result.canceled) return;
+            if (result.success) {
+                toast.success(result.message, { position: 'top-center', richColors: true });
+            } else {
+                toast.error(result.message ?? '导出失败', { position: 'top-center', richColors: true });
+            }
         },
     },
 ];
