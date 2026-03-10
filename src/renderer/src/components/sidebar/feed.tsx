@@ -68,9 +68,9 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                     <ContextMenuItem onSelect={() => setActive('delete')}>删除</ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem onSelect={() => window.open(feed.link ?? '', '_blank')}>在浏览器中打开网站</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => window.open(feed.url ?? '', '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => window.open((feed.type === 1 ? feed.link : feed.url) ?? '', '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
                     <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.link ?? '')}>复制网站地址</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.url ?? '')}>复制订阅源地址</ContextMenuItem>
+                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText((feed.type === 1 ? feed.link : feed.url) ?? '')}>复制订阅源地址</ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu>
             {active === 'delete' && <DeleteModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'delete'} />}
@@ -97,23 +97,51 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
     );
 }
 
-const editFeedSchema = z.object({
-    title: z.string().min(1, '请输入订阅源标题'),
-    link: z.url('请输入正确的网站地址'),
-    fetchFrequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
-    folderId: z.number().nullable().optional(),
-    view: z.number().int().min(1).max(2),
-});
+const editFeedSchema = z
+    .object({
+        type: z.union([z.literal(0), z.literal(1)]),
+        title: z.string().min(1, '请输入订阅源标题'),
+        link: z.string().optional(),
+        url: z.string().min(1, '请输入订阅源地址或路径'),
+        fetchFrequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
+        folderId: z.number().nullable().optional(),
+        view: z.number().int().min(1).max(2),
+    })
+    .superRefine((data, ctx) => {
+        if (data.type === 0) {
+            if (!data.link) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入网站地址', path: ['link'] });
+            } else {
+                try {
+                    z.url().parse(data.link);
+                } catch {
+                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入正确的网站地址', path: ['link'] });
+                }
+            }
+            try {
+                z.url().parse(data.url);
+            } catch {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入正确的订阅源地址', path: ['url'] });
+            }
+        } else {
+            if (data.url.startsWith('http')) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'RSSHub 请输入路径而非完整 URL', path: ['url'] });
+            }
+        }
+    });
 
 type EditFeedFormValues = z.infer<typeof editFeedSchema>;
 
 function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: (open: boolean) => void; feed: FeedType }) {
     const folders = useFolderStore(state => state.folders);
+    const feedType = feed.type ?? 0;
     const form = useForm<EditFeedFormValues>({
         resolver: zodResolver(editFeedSchema),
         defaultValues: {
+            type: feedType,
             title: feed.title,
-            link: feed.link,
+            link: feed.link ?? '',
+            url: feed.url ?? '',
             fetchFrequency: feed.fetchFrequency,
             folderId: feed.folderId ?? null,
             view: feed.view,
@@ -123,8 +151,10 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
     useEffect(() => {
         if (!open) return;
         form.reset({
+            type: feed.type ?? 0,
             title: feed.title,
-            link: feed.link,
+            link: feed.link ?? '',
+            url: feed.url ?? '',
             fetchFrequency: feed.fetchFrequency,
             folderId: feed.folderId ?? null,
             view: feed.view,
@@ -134,11 +164,25 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
     const updateFeed = useFeedStore(state => state.updateFeed);
     const refreshFeeds = useFeedStore(state => state.refreshFeeds);
 
-    const onSubmit = (data: EditFeedFormValues) => {
+    const onSubmit = async (data: EditFeedFormValues) => {
         if (feed.id == null) return;
+
+        let link = data.link ?? '';
+        let url = data.url;
+
+        if (data.type === 1) {
+            const rsshubSource = (await window.electron.ipcRenderer.invoke('settings-get', 'rsshubSource')) as string;
+            const base = (rsshubSource ?? 'https://rsshub.app').replace(/\/$/, '');
+            const path = data.url.startsWith('/') ? data.url : `/${data.url}`;
+            url = path;
+            link = `${base}${path}`;
+        }
+
         updateFeed(feed.id, {
             title: data.title,
-            link: data.link,
+            link,
+            url,
+            type: data.type,
             fetchFrequency: data.fetchFrequency,
             folderId: data.folderId === null ? null : data.folderId,
             view: data.view,
@@ -164,6 +208,27 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
                         <FormField
                             control={form.control}
+                            name="type"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>订阅源类型</FormLabel>
+                                    <Select onValueChange={v => field.onChange(Number(v))} value={field.value.toString()}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="选择类型" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="0">默认链接</SelectItem>
+                                            <SelectItem value="1">RSSHub</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
@@ -175,14 +240,32 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                 </FormItem>
                             )}
                         />
+                        {form.watch('type') === 0 && (
+                            <FormField
+                                control={form.control}
+                                name="link"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>网站地址</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="请输入网站地址" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                         <FormField
                             control={form.control}
-                            name="link"
+                            name="url"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>网站地址</FormLabel>
+                                    <FormLabel>{form.watch('type') === 1 ? 'RSSHub 路径' : '订阅源地址'}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="请输入网站地址" {...field} />
+                                        <Input
+                                            placeholder={form.watch('type') === 1 ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'}
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

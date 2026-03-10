@@ -1,5 +1,8 @@
 import type { ColumnType, Generated, Insertable, JSONColumnType, Selectable } from 'kysely';
 
+/** 订阅源类型：0 默认链接，1 RSSHub */
+export type FeedSourceType = 0 | 1;
+
 export interface Feeds {
     id: Generated<number>;
     title: string;
@@ -12,6 +15,7 @@ export interface Feeds {
     lastFetchError: string | null;
     folderId: number | null;
     view: Generated<number>;
+    type: Generated<FeedSourceType>;
     fetchFrequency: Generated<number>;
 }
 
@@ -44,7 +48,9 @@ export interface PostContents {
 export type InsertPost = Omit<Insertable<Posts>, 'podcast' | 'feedId'> & Partial<Omit<PostContents, 'postId'>> & { podcast?: Podcast | null };
 
 /** db-get-feeds 查询结果：Selectable<Feeds> 子集 + hasUnread */
-export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'link' | 'url' | 'view' | 'fetchFrequency' | 'folderId' | 'lastFetchError' | 'icon'> & { hasUnread: boolean };
+export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'link' | 'url' | 'type' | 'view' | 'fetchFrequency' | 'folderId' | 'lastFetchError' | 'icon'> & {
+    hasUnread: boolean;
+};
 
 /** 前端 store 中的 post：Selectable<Posts> + isRead 转为 boolean + summary 必填 */
 export type PostWithNormalized = Omit<Selectable<Posts>, 'isRead' | 'summary'> & { isRead: boolean; summary: string };

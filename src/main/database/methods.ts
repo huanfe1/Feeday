@@ -5,7 +5,8 @@ import { sql } from 'kysely';
 import pLimit from 'p-limit';
 
 import { fetchFeed } from '@/lib/rss';
-import { truncate } from '@/lib/utils';
+import { settings } from '@/lib/settings';
+import { getFeedFetchUrl, truncate } from '@/lib/utils';
 
 export class DatabaseMethods {
     private db: Kysely<Database>;
@@ -78,24 +79,27 @@ export class DatabaseMethods {
     async refreshFeed(timeLimit: boolean = true) {
         const needFetchFeeds = (await this.db
             .selectFrom('feeds')
-            .select(['id', 'url'])
+            .select(['id', 'url', 'type'])
             .where(eb => {
                 const lastFetchMinutes = sql<number>`(strftime('%s', datetime('now', 'localtime')) - strftime('%s', last_fetch)) / 60`;
                 const threshold = timeLimit ? eb.ref('fetchFrequency') : 5; // 固定值
                 return eb.or([eb(lastFetchMinutes, '>', threshold), eb('lastFetch', 'is', null)]);
             })
-            .execute()) as { id: number; url: string }[];
+            .execute()) as { id: number; url: string; type: number }[];
         console.log('Need Refresh Feeds Count:', needFetchFeeds.length);
 
         if (needFetchFeeds.length === 0) return;
 
-        const tasks = needFetchFeeds.map(({ id, url }) => {
+        const rsshubSource = settings.get('rsshubSource') ?? 'https://rsshub.app';
+
+        const tasks = needFetchFeeds.map(({ id, url, type }) => {
+            const fetchUrl = getFeedFetchUrl(url, type as 0 | 1, rsshubSource);
             return this.fetchLimit(async () => {
                 try {
-                    const result = await fetchFeed(url as string);
+                    const result = await fetchFeed(fetchUrl);
                     const { feed, posts } = result;
                     await this.writeLimit(async () => {
-                        const { url: _, link: __, ...feedWithoutUniqueFields } = feed;
+                        const { url: _, link: __, type: ___, ...feedWithoutUniqueFields } = feed;
                         await this.updateFeed(id, {
                             ...feedWithoutUniqueFields,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),

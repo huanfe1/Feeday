@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
+const FEED_TYPE_RSSHUB = 1;
+
 export function SingleAddFeed({ onClose }: { onClose: () => void }) {
     const [isLoading, setLoading] = useState(false);
     const feedRef = useRef<FetchFeedResult | null>(null);
@@ -31,16 +33,32 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         };
     }, []);
 
-    const formSchema = z.object({
-        url: z.url('请输入正确的订阅源地址').min(1, { message: '请输入订阅源地址' }),
-        folderId: z.string().nullable(),
-        view: z.string(),
-        title: z.string().min(1, { message: '请输入订阅源标题' }).max(30, { message: '订阅源标题不能超过 30 个字符' }),
-    });
+    const formSchema = z
+        .object({
+            type: z.enum(['0', '1']),
+            url: z.string().min(1, { message: '请输入订阅源地址或路径' }),
+            folderId: z.string().nullable(),
+            view: z.string(),
+            title: z.string().min(1, { message: '请输入订阅源标题' }).max(30, { message: '订阅源标题不能超过 30 个字符' }),
+        })
+        .superRefine((data, ctx) => {
+            if (data.type === '0') {
+                try {
+                    z.url().parse(data.url);
+                } catch {
+                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入正确的订阅源地址', path: ['url'] });
+                }
+            } else {
+                if (data.url.startsWith('http')) {
+                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'RSSHub 请输入路径而非完整 URL，如 /twitter/user/xxx', path: ['url'] });
+                }
+            }
+        });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            type: '0',
             url: '',
             folderId: null,
             view: '1',
@@ -48,6 +66,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         },
     });
 
+    const feedType = useWatch({ control: form.control, name: 'type' });
     const title = useWatch({ control: form.control, name: 'title' });
 
     const fetchFeed = async () => {
@@ -55,10 +74,20 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
         if (!isValid) return;
 
         const url = form.getValues('url');
+        const type = form.getValues('type');
+        let fetchUrl = url;
+
+        if (type === '1') {
+            const rsshubSource = (await window.electron.ipcRenderer.invoke('settings-get', 'rsshubSource')) as string;
+            const base = (rsshubSource ?? 'https://rsshub.app').replace(/\/$/, '');
+            const path = url.startsWith('/') ? url : `/${url}`;
+            fetchUrl = `${base}${path}`;
+        }
+
         setLoading(true);
 
         try {
-            const data = await window.electron.ipcRenderer.invoke('fetch-feed-info', url);
+            const data = await window.electron.ipcRenderer.invoke('fetch-feed-info', fetchUrl);
             if (!isMountedRef.current) return;
             form.setValue('title', data.feed.title ?? '');
             feedRef.current = data.feed;
@@ -77,16 +106,33 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const feed = feedRef.current;
-        const link = feed?.link ?? feed?.url ?? values.url;
+        const typeNum = Number(values.type) as 0 | 1;
+
+        let link: string;
+        let url: string;
+
+        if (typeNum === FEED_TYPE_RSSHUB) {
+            const rsshubSource = (await window.electron.ipcRenderer.invoke('settings-get', 'rsshubSource')) as string;
+            const base = (rsshubSource ?? 'https://rsshub.app').replace(/\/$/, '');
+            const path = values.url.startsWith('/') ? values.url : `/${values.url}`;
+            url = path;
+            link = `${base}${path}`;
+        } else {
+            link = feed?.link ?? feed?.url ?? values.url;
+            url = feed?.url ?? values.url;
+        }
+
         const params = {
             title: values.title,
             description: feed?.description,
             link,
-            url: feed?.url ?? values.url,
+            url,
+            type: typeNum,
             lastUpdated: feed?.lastUpdated,
             icon: feed?.icon,
             folderId: values.folderId ? Number(values.folderId) : undefined,
             view: Number(values.view),
+            fetchFrequency: 60,
         };
 
         try {
@@ -131,18 +177,43 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
             <div className="grid grid-cols-12 gap-4">
                 <Controller
                     control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <Field className="col-span-12 flex flex-col items-start gap-2 space-y-0">
+                            <FieldLabel>订阅源类型</FieldLabel>
+                            <Select name={field.name} onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="选择类型" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="0">默认链接</SelectItem>
+                                    <SelectItem value="1">RSSHub</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    )}
+                />
+                <Controller
+                    control={form.control}
                     name="url"
                     render={({ field, fieldState }) => (
                         <>
                             <Field className="col-span-9 flex flex-col items-start gap-2 space-y-0" data-invalid={fieldState.invalid}>
-                                <FieldLabel className="flex w-auto! @3xl:flex">订阅源地址</FieldLabel>
+                                <FieldLabel className="flex w-auto! @3xl:flex">
+                                    {feedType === '1' ? 'RSSHub 路径' : '订阅源地址'}
+                                </FieldLabel>
                                 <InputGroup className="flex-1">
                                     <InputGroupAddon align="inline-end">
                                         <InputGroupButton className="rounded-full" onClick={onReset} size="icon-xs" type="button">
                                             <i className="i-mingcute-close-line"></i>
                                         </InputGroupButton>
                                     </InputGroupAddon>
-                                    <InputGroupInput autoFocus placeholder="请输入订阅源地址" type="text" {...field} />
+                                    <InputGroupInput
+                                        autoFocus
+                                        placeholder={feedType === '1' ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'}
+                                        type="text"
+                                        {...field}
+                                    />
                                 </InputGroup>
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                             </Field>

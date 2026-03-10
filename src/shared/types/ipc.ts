@@ -1,6 +1,6 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
 
-import type { Feeds, Folders, GetFeedsResult, InsertPost, Podcast, Posts } from './database';
+import type { FeedSourceType, Feeds, Folders, GetFeedsResult, InsertPost, Podcast, Posts } from './database';
 import type { SettingsSchema } from './settings';
 
 interface GetPostsParams {
@@ -21,7 +21,7 @@ export interface FetchFeedResultPost {
     podcast?: Podcast;
 }
 
-export type FetchFeedResult = Omit<Feeds, 'id' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency'>;
+export type FetchFeedResult = Omit<Feeds, 'id' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency' | 'type'> & { type: FeedSourceType };
 export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead' | 'podcast'> & { content?: string; podcast?: Podcast | null };
 
 export interface IpcEvents {

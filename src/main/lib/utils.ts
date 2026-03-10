@@ -1,6 +1,17 @@
+import type { FeedSourceType } from '@shared/types/database';
 import type { IpcEvents } from '@shared/types/ipc';
 import type { IpcMainInvokeEvent } from 'electron';
 import { ipcMain as ipcMainOriginal } from 'electron';
+
+/** 根据订阅源类型和 url 获取用于拉取的完整 URL（RSSHub 类型需拼接 rsshubSource） */
+export function getFeedFetchUrl(url: string, type: FeedSourceType, rsshubSource: string): string {
+    if (type === 1) {
+        const base = rsshubSource.replace(/\/$/, '');
+        const path = url.startsWith('/') ? url : `/${url}`;
+        return `${base}${path}`;
+    }
+    return url;
+}
 
 export function truncate(str: string, length = 60) {
     if (typeof str !== 'string' || str.trim() === '') return;

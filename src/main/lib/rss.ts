@@ -101,6 +101,7 @@ function normalizeFeed(feed: Partial<FetchFeedResult>): FetchFeedResult {
         url,
         lastUpdated: feed.lastUpdated ?? null,
         icon: feed.icon?.trim() ?? null,
+        type: 0,
     };
 }
 

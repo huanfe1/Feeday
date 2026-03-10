@@ -8,13 +8,14 @@ const initSql = `
         title TEXT NOT NULL, -- 订阅源标题
         description TEXT, -- 订阅源描述
         link TEXT NOT NULL UNIQUE, -- 网址
-        url TEXT NOT NULL UNIQUE, -- 订阅源网址
+        url TEXT NOT NULL UNIQUE, -- 订阅源网址/路径
         last_updated DATETIME NULL, -- 订阅源上次更新时间
         icon TEXT NULL, -- 订阅源图标
         last_fetch DATETIME NOT NULL DEFAULT (DATETIME('now', 'localtime')), -- 最后抓取时间
         last_fetch_error TEXT NULL, -- 最后抓取错误信息
         folder_id INTEGER NULL, -- 文件夹ID
         view INTEGER NOT NULL DEFAULT 1, -- 视图（1: 文章, 2: 媒体）
+        type INTEGER NOT NULL DEFAULT 0, -- 类型（0: 默认链接, 1: RSSHub）
         fetch_frequency INTEGER NOT NULL DEFAULT 60, -- 拉取频率（分钟，默认60）
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 更新时间

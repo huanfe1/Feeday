@@ -30,7 +30,7 @@ ipcMain.handle('opml-import-from-content', async (_event, content) => {
                 const { folderName, ...opmlFeedWithoutFolderName } = opmlFeed;
                 const folderId = await getFolderId(folderName);
 
-                const feed = { ...fetchFeedData, ...opmlFeedWithoutFolderName, folderId };
+                const feed = { ...fetchFeedData, ...opmlFeedWithoutFolderName, folderId, type: 0 as const };
                 if (!feed?.title || !feed?.link || !feed?.url) {
                     throw new Error('Feed 缺少必要字段 (title/link/url)');
                 }
