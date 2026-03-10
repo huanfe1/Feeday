@@ -5,11 +5,11 @@ import App from './App';
 
 import './styles/index.css';
 
-if (import.meta.env.DEV) {
-    import('react-scan').then(({ scan }) => {
-        scan({ enabled: false, log: false, showToolbar: true });
-    });
-}
+// if (import.meta.env.DEV) {
+//     import('react-scan').then(({ scan }) => {
+//         scan({ enabled: false, log: false, showToolbar: true });
+//     });
+// }
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

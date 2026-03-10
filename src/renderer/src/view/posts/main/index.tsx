@@ -2,7 +2,7 @@ import { useFeedStore, usePostStore } from '@/store';
 import type { AudioTrack } from '@/store';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PostAudio } from '@/components/audio/post';
 import Avatar from '@/components/avatar';
@@ -24,8 +24,12 @@ function Main() {
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
     const [isScrolled, setIsScrolled] = useState(false);
+    const scrollViewRef = useRef<HTMLDivElement>(null);
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         setIsScrolled(e.currentTarget.scrollTop > 50);
+    };
+    const scrollToTop = () => {
+        scrollViewRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const audio: AudioTrack | null = useMemo(() => {
@@ -93,8 +97,8 @@ function Main() {
                 </div>
             </div>
             <AnimatePresence mode="wait">
-                <motion.div className="min-h-0 grow" key={currentPost?.id} {...enterVariants}>
-                    <ScrollArea className="h-full" onScroll={handleScroll}>
+                <motion.div className="relative min-h-0 grow" key={currentPost?.id} {...enterVariants}>
+                    <ScrollArea className="h-full" onScroll={handleScroll} viewportRef={scrollViewRef}>
                         <div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl">
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
@@ -143,6 +147,21 @@ function Main() {
                             </article>
                         </div>
                     </ScrollArea>
+                    <AnimatePresence>
+                        {isScrolled && (
+                            <motion.div
+                                className="absolute right-10 bottom-16 z-10"
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <Button className="size-10 rounded-full" onClick={scrollToTop} size="icon" variant="outline">
+                                    <i className="i-mingcute-arrow-to-up-line text-lg" />
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </AnimatePresence>
         </div>
