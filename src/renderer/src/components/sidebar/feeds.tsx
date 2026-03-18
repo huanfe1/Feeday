@@ -236,7 +236,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         usePostStore.getState().refreshPosts();
     };
 
-    const clickHandle = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         if (id !== null) setFolderOpen(id, !isOpen);
     };
@@ -285,7 +285,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                             className="i-mingcute-right-line"
                             animate={{ rotate: isOpen ? 90 : 0 }}
                             initial={false}
-                            onClick={clickHandle}
+                            onClick={handleClick}
                             transition={{ duration: DURATION }}
                         />
                         <span className="w-full text-sm font-medium">{name || '未命名文件夹'}</span>

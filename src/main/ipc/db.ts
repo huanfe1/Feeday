@@ -69,6 +69,22 @@ ipcMain.handle('db-insert-post', async (_event, feed_id, post) => {
     return dbMethods.insertPost(feed_id, post);
 });
 
+ipcMain.handle('db-get-posts-by-id', async (_event, postId) => {
+    return db
+        .selectFrom('posts')
+        .select(['posts.id', 'posts.title', 'posts.link', 'posts.summary', 'posts.feedId', 'posts.author', 'posts.pubDate', 'posts.isRead', 'posts.imageUrl', 'posts.podcast'])
+        .innerJoin('postContents', 'posts.id', 'postContents.postId')
+        .select(['postContents.content'])
+        .innerJoin('feeds', 'posts.feedId', 'feeds.id')
+        .select(['feeds.title as feedTitle', 'feeds.icon as feedIcon', 'feeds.link as feedLink'])
+        .where('posts.id', '=', postId)
+        .executeTakeFirstOrThrow()
+        .then(row => ({
+            ...row,
+            content: row?.content ?? '',
+        }));
+});
+
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {
     return db
         .selectFrom('postContents')

@@ -38,14 +38,9 @@ export default function Sidebar() {
                     <h3 className="truncate text-lg font-bold">{selectedFolder?.name || selectedFeed?.title || '文章列表'}</h3>
                     <Buttons />
                 </div>
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        className="w-full flex-1 overflow-y-hidden"
-                        key={[onlyUnread, selectedFeed?.id, selectedFolderId].join('-')}
-                        {...enterVariants}
-                        transition={{ duration: 0.1, ease: 'easeIn' }}
-                    >
-                        <ScrollArea className="flex h-full" viewportRef={parentRef}>
+                <ScrollArea className="min-h-0 flex-1" viewportRef={parentRef}>
+                    <AnimatePresence mode="popLayout">
+                        <motion.div className="w-full overflow-y-hidden" {...enterVariants} key={[onlyUnread, selectedFeed?.id, selectedFolderId].join('-')}>
                             {postIds.length === 0 ? (
                                 <div className="text-muted-foreground flex h-[calc(100vh-60px)] items-center justify-center select-none">
                                     <div className="flex flex-col items-center gap-y-3">
@@ -83,9 +78,9 @@ export default function Sidebar() {
                                     })}
                                 </div>
                             )}
-                        </ScrollArea>
-                    </motion.div>
-                </AnimatePresence>
+                        </motion.div>
+                    </AnimatePresence>
+                </ScrollArea>
             </div>
         </Resizable>
     );

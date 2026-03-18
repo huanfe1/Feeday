@@ -55,6 +55,13 @@ export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'link' | '
 /** 前端 store 中的 post：Selectable<Posts> + isRead 转为 boolean + summary 必填 */
 export type PostWithNormalized = Omit<Selectable<Posts>, 'isRead' | 'summary'> & { isRead: boolean; summary: string };
 
+export type PostDetail = Omit<PostWithNormalized, 'summary'> & {
+    content: string;
+    feedTitle: string;
+    feedIcon: string | null;
+    feedLink: string;
+};
+
 export interface Folders {
     id: Generated<number>;
     name: string;

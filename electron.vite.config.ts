@@ -21,6 +21,6 @@ export default defineConfig({
                 '@shared': resolve(__dirname, './src/shared'),
             },
         },
-        plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: 'vite', behavior: { locate: false, copy: true } })],
+        plugins: [codeInspectorPlugin({ bundler: 'vite', behavior: { locate: false, copy: true } }), react(), tailwindcss()],
     },
 });

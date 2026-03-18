@@ -1,6 +1,6 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
 
-import type { FeedSourceType, Feeds, Folders, GetFeedsResult, InsertPost, Podcast, Posts } from './database';
+import type { FeedSourceType, Feeds, Folders, GetFeedsResult, InsertPost, Podcast, PostDetail, Posts } from './database';
 import type { SettingsSchema } from './settings';
 
 interface GetPostsParams {
@@ -35,6 +35,7 @@ export interface IpcEvents {
 
     'db-get-posts': (params: GetPostsParams) => Promise<Selectable<Posts>[]>;
     'db-insert-post': (feedId: number, post: InsertPost) => Promise<void>;
+    'db-get-posts-by-id': (postId: number) => Promise<PostDetail>;
     'db-get-post-content-by-id': (postId: number) => Promise<string>;
     'db-update-post-read-by-id': (postId: number, isRead: boolean) => Promise<void>;
     'db-read-all-posts': (feedId?: number, folderId?: number) => Promise<void>;

@@ -20,7 +20,6 @@ interface UseFeedStore {
 export const useFeedStore = create<UseFeedStore>((set, get) => {
     const refreshFeeds = () => {
         window.electron.ipcRenderer.invoke('db-get-feeds').then(feeds => {
-            // console.log(feeds);
             set({ feeds });
             useFolderStore.getState().refreshFolders();
         });

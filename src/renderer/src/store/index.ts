@@ -9,4 +9,10 @@ export type { FolderType } from './folders';
 export type { PostType } from './posts';
 export type { AudioTrack } from './audio';
 
-export { useDragging, useFeedStore, useFolderStore, usePostStore, useView, useAudioStore };
+const refreshAll = () => {
+    useFeedStore.getState().refreshFeeds();
+    usePostStore.getState().refreshPosts();
+    useFolderStore.getState().refreshFolders();
+};
+
+export { useDragging, useFeedStore, useFolderStore, usePostStore, useView, useAudioStore, refreshAll };
