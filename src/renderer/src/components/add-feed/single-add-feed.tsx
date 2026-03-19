@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 const FEED_TYPE_RSSHUB = 1;
@@ -40,6 +41,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
             folderId: z.string().nullable(),
             view: z.string(),
             title: z.string().min(1, { message: '请输入订阅源标题' }).max(30, { message: '订阅源标题不能超过 30 个字符' }),
+            memo: z.string().max(50, { message: '备注不能超过 50 个字符' }).optional(),
         })
         .superRefine((data, ctx) => {
             if (data.type === '0') {
@@ -63,6 +65,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
             folderId: null,
             view: '1',
             title: '',
+            memo: '',
         },
     });
 
@@ -124,6 +127,7 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
 
         const params = {
             title: values.title,
+            memo: values.memo?.trim() || null,
             description: feed?.description,
             link,
             url,
@@ -199,21 +203,14 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                     render={({ field, fieldState }) => (
                         <>
                             <Field className="col-span-9 flex flex-col items-start gap-2 space-y-0" data-invalid={fieldState.invalid}>
-                                <FieldLabel className="flex w-auto! @3xl:flex">
-                                    {feedType === '1' ? 'RSSHub 路径' : '订阅源地址'}
-                                </FieldLabel>
+                                <FieldLabel className="flex w-auto! @3xl:flex">{feedType === '1' ? 'RSSHub 路径' : '订阅源地址'}</FieldLabel>
                                 <InputGroup className="flex-1">
                                     <InputGroupAddon align="inline-end">
                                         <InputGroupButton className="rounded-full" onClick={onReset} size="icon-xs" type="button">
                                             <i className="i-mingcute-close-line"></i>
                                         </InputGroupButton>
                                     </InputGroupAddon>
-                                    <InputGroupInput
-                                        autoFocus
-                                        placeholder={feedType === '1' ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'}
-                                        type="text"
-                                        {...field}
-                                    />
+                                    <InputGroupInput autoFocus placeholder={feedType === '1' ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'} type="text" {...field} />
                                 </InputGroup>
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                             </Field>
@@ -234,7 +231,32 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                             render={({ field, fieldState }) => (
                                 <Field className="col-span-12 col-start-auto flex flex-col items-start gap-2 space-y-0 self-end @3xl:col-span-12" data-invalid={fieldState.invalid}>
                                     <FieldLabel className="flex w-auto!">订阅源标题</FieldLabel>
-                                    <Input className="" key="text-input-0" placeholder="" type="text" {...field} />
+                                    <Input className="" key="text-input-0" placeholder="" readOnly type="text" {...field} />
+                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                </Field>
+                            )}
+                        />
+                        <Controller
+                            control={form.control}
+                            name="memo"
+                            render={({ field, fieldState }) => (
+                                <Field className="col-span-12 col-start-auto flex flex-col items-start gap-2 space-y-0 self-end @3xl:col-span-12" data-invalid={fieldState.invalid}>
+                                    <FieldLabel className="flex w-auto!">备注（可选）</FieldLabel>
+                                    <InputGroup className="flex-1">
+                                        <InputGroupInput placeholder="自定义显示名称，留空则显示订阅源标题" type="text" {...field} />
+                                        <InputGroupAddon align="inline-end">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <InputGroupButton onClick={() => form.setValue('memo', form.getValues('title'))} size="icon-xs" type="button">
+                                                        <i className="i-mingcute-signature-fill"></i>
+                                                    </InputGroupButton>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>填充源标题</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </InputGroupAddon>
+                                    </InputGroup>
                                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )}

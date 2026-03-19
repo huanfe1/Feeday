@@ -22,6 +22,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -48,8 +49,8 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
-                        <Avatar src={feed.icon ?? undefined} title={feed.title} />
-                        <span className="flex-1 truncate text-sm font-medium capitalize">{feed.title ?? ''}</span>
+                        <Avatar src={feed.icon ?? undefined} title={feed.memo ?? feed.title ?? ''} />
+                        <span className="flex-1 truncate text-sm font-medium capitalize">{feed.memo ?? feed.title ?? ''}</span>
                         {feed.lastFetchError && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -86,7 +87,7 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>确定删除吗？</AlertDialogTitle>
-                    <AlertDialogDescription>删除后，「{feed.title}」订阅源及其所有文章将永久删除，无法恢复。</AlertDialogDescription>
+                    <AlertDialogDescription>删除后，「{feed.memo ?? feed.title ?? ''}」订阅源及其所有文章将永久删除，无法恢复。</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>取消</AlertDialogCancel>
@@ -100,7 +101,8 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
 const editFeedSchema = z
     .object({
         type: z.union([z.literal(0), z.literal(1)]),
-        title: z.string().min(1, '请输入订阅源标题'),
+        title: z.string().min(1, '订阅源标题不能为空'),
+        memo: z.string().max(50, '备注不能超过 50 个字符').optional(),
         link: z.string().optional(),
         url: z.string().min(1, '请输入订阅源地址或路径'),
         fetchFrequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
@@ -140,6 +142,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         defaultValues: {
             type: feedType,
             title: feed.title,
+            memo: feed.memo ?? '',
             link: feed.link ?? '',
             url: feed.url ?? '',
             fetchFrequency: feed.fetchFrequency,
@@ -153,6 +156,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         form.reset({
             type: feed.type ?? 0,
             title: feed.title,
+            memo: feed.memo ?? '',
             link: feed.link ?? '',
             url: feed.url ?? '',
             fetchFrequency: feed.fetchFrequency,
@@ -179,7 +183,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
         }
 
         updateFeed(feed.id, {
-            title: data.title,
+            memo: data.memo?.trim() || null,
             link,
             url,
             type: data.type,
@@ -234,7 +238,34 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                 <FormItem>
                                     <FormLabel>订阅源标题</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="请输入订阅源标题" {...field} />
+                                        <Input placeholder="来自订阅源" readOnly {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="memo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>备注（可选）</FormLabel>
+                                    <FormControl>
+                                        <InputGroup className="flex-1">
+                                            <InputGroupInput placeholder="自定义显示名称，留空则显示订阅源标题" {...field} />
+                                            <InputGroupAddon align="inline-end">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <InputGroupButton onClick={() => form.setValue('memo', form.getValues('title'))} size="icon-xs" type="button">
+                                                            <i className="i-mingcute-signature-fill"></i>
+                                                        </InputGroupButton>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>填充源标题</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </InputGroupAddon>
+                                        </InputGroup>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -262,10 +293,7 @@ function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: 
                                 <FormItem>
                                     <FormLabel>{form.watch('type') === 1 ? 'RSSHub 路径' : '订阅源地址'}</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder={form.watch('type') === 1 ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'}
-                                            {...field}
-                                        />
+                                        <Input placeholder={form.watch('type') === 1 ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

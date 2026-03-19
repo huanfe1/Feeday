@@ -21,7 +21,8 @@ export interface FetchFeedResultPost {
     podcast?: Podcast;
 }
 
-export type FetchFeedResult = Omit<Feeds, 'id' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency' | 'type'> & { type: FeedSourceType };
+/** 订阅源抓取结果，不含 memo（memo 为用户自定义，仅存于数据库） */
+export type FetchFeedResult = Omit<Feeds, 'id' | 'memo' | 'lastFetch' | 'lastFetchError' | 'folderId' | 'view' | 'fetchFrequency' | 'type'> & { type: FeedSourceType };
 export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead' | 'podcast'> & { content?: string; podcast?: Podcast | null };
 
 export interface IpcEvents {
@@ -35,7 +36,7 @@ export interface IpcEvents {
 
     'db-get-posts': (params: GetPostsParams) => Promise<Selectable<Posts>[]>;
     'db-insert-post': (feedId: number, post: InsertPost) => Promise<void>;
-    'db-get-posts-by-id': (postId: number) => Promise<PostDetail>;
+    'db-get-posts-by-id': (postId: number) => Promise<PostDetail | null>;
     'db-get-post-content-by-id': (postId: number) => Promise<string>;
     'db-update-post-read-by-id': (postId: number, isRead: boolean) => Promise<void>;
     'db-read-all-posts': (feedId?: number, folderId?: number) => Promise<void>;

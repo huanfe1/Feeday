@@ -5,7 +5,8 @@ const initSql = `
 
     CREATE TABLE IF NOT EXISTS feeds (
         id INTEGER PRIMARY KEY AUTOINCREMENT, -- 订阅源ID
-        title TEXT NOT NULL, -- 订阅源标题
+        title TEXT NOT NULL, -- 订阅源标题（来自订阅源，更新时会被覆盖）
+        memo TEXT NULL, -- 自定义备注（可选，显示时优先于 title）
         description TEXT, -- 订阅源描述
         link TEXT NOT NULL UNIQUE, -- 网址
         url TEXT NOT NULL UNIQUE, -- 订阅源网址/路径

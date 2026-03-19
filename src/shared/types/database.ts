@@ -6,6 +6,7 @@ export type FeedSourceType = 0 | 1;
 export interface Feeds {
     id: Generated<number>;
     title: string;
+    memo: string | null;
     description: string | null;
     link: string;
     url: string;
@@ -48,7 +49,7 @@ export interface PostContents {
 export type InsertPost = Omit<Insertable<Posts>, 'podcast' | 'feedId'> & Partial<Omit<PostContents, 'postId'>> & { podcast?: Podcast | null };
 
 /** db-get-feeds 查询结果：Selectable<Feeds> 子集 + hasUnread */
-export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'link' | 'url' | 'type' | 'view' | 'fetchFrequency' | 'folderId' | 'lastFetchError' | 'icon'> & {
+export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'memo' | 'link' | 'url' | 'type' | 'view' | 'fetchFrequency' | 'folderId' | 'lastFetchError' | 'icon'> & {
     hasUnread: boolean;
 };
 

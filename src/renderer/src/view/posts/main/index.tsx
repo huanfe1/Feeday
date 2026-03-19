@@ -167,6 +167,4 @@ function Main() {
     );
 }
 
-function PostHeader() {}
-
 export default memo(Main);

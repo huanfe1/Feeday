@@ -100,8 +100,12 @@ export class DatabaseMethods {
                     const { feed, posts } = result;
                     await this.writeLimit(async () => {
                         const { url: _, link: __, type: ___, ...feedWithoutUniqueFields } = feed;
+                        // 仅更新 title 等源数据，不覆盖用户自定义的 memo
                         await this.updateFeed(id, {
-                            ...feedWithoutUniqueFields,
+                            title: feedWithoutUniqueFields.title,
+                            description: feedWithoutUniqueFields.description,
+                            lastUpdated: feedWithoutUniqueFields.lastUpdated,
+                            icon: feedWithoutUniqueFields.icon,
                             lastFetch: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                             lastFetchError: null,
                         });

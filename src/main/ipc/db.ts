@@ -11,7 +11,7 @@ ipcMain.handle('db-get-feeds', async () => {
         .selectFrom('feeds')
         .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', 0 as never))
         .select(sql<boolean>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
-        .select(['feeds.id', 'feeds.title', 'feeds.link', 'feeds.url', 'feeds.type', 'feeds.view', 'feeds.fetchFrequency', 'feeds.folderId', 'feeds.lastFetchError', 'feeds.icon'])
+        .select(['feeds.id', 'feeds.title', 'feeds.memo', 'feeds.link', 'feeds.url', 'feeds.type', 'feeds.view', 'feeds.fetchFrequency', 'feeds.folderId', 'feeds.lastFetchError', 'feeds.icon'])
         .groupBy('feeds.id')
         .orderBy('feeds.title', 'asc')
         .execute()
@@ -70,19 +70,24 @@ ipcMain.handle('db-insert-post', async (_event, feed_id, post) => {
 });
 
 ipcMain.handle('db-get-posts-by-id', async (_event, postId) => {
-    return db
+    if (postId == null) return null;
+
+    const row = await db
         .selectFrom('posts')
         .select(['posts.id', 'posts.title', 'posts.link', 'posts.summary', 'posts.feedId', 'posts.author', 'posts.pubDate', 'posts.isRead', 'posts.imageUrl', 'posts.podcast'])
-        .innerJoin('postContents', 'posts.id', 'postContents.postId')
+        .leftJoin('postContents', 'posts.id', 'postContents.postId')
         .select(['postContents.content'])
         .innerJoin('feeds', 'posts.feedId', 'feeds.id')
-        .select(['feeds.title as feedTitle', 'feeds.icon as feedIcon', 'feeds.link as feedLink'])
+        .select([sql<string>`COALESCE(feeds.memo, feeds.title)`.as('feedTitle'), 'feeds.icon as feedIcon', 'feeds.link as feedLink'])
         .where('posts.id', '=', postId)
-        .executeTakeFirstOrThrow()
-        .then(row => ({
-            ...row,
-            content: row?.content ?? '',
-        }));
+        .executeTakeFirst();
+
+    if (!row) return null;
+
+    return {
+        ...row,
+        content: row?.content ?? '',
+    };
 });
 
 ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {

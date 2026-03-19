@@ -69,7 +69,7 @@ ipcMain.handle('opml-export-feeds', async () => {
     const feedsWithFolders = await db
         .selectFrom('feeds')
         .leftJoin('folders', 'feeds.folderId', 'folders.id')
-        .select(['feeds.title', 'feeds.url', 'feeds.link', 'folders.name as folderName'])
+        .select(['feeds.title', 'feeds.memo', 'feeds.url', 'feeds.link', 'folders.name as folderName'])
         .execute();
 
     if (feedsWithFolders.length === 0) {
@@ -77,7 +77,7 @@ ipcMain.handle('opml-export-feeds', async () => {
     }
 
     const exportFeeds = feedsWithFolders.map(f => ({
-        title: f.title,
+        title: f.memo ?? f.title,
         url: f.url,
         link: f.link,
         folderName: f.folderName ?? undefined,

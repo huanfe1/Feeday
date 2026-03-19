@@ -97,8 +97,8 @@ function Render({ id }: { id: number }) {
                     </div>
                     <div className="text-foreground mt-2 truncate text-sm font-medium">{media.title ?? ''}</div>
                     <div className="text-muted-foreground mt-1 flex text-xs">
-                        <Avatar src={feed.icon ?? undefined} title={feed.title ?? ''} />
-                        <span className="ml-1 truncate">{feed.title}</span>
+                        <Avatar src={feed.icon ?? undefined} title={(feed.memo ?? feed.title) ?? ''} />
+                        <span className="ml-1 truncate">{(feed.memo ?? feed.title) ?? ''}</span>
                         <span className="ml-3 flex-none">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>
                     <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.isRead })}></span>
