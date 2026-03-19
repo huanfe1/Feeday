@@ -1,7 +1,7 @@
 export type Theme = 'dark' | 'light' | 'system';
 
 export interface EventMap {
-    'jump-to-feed': { feedId: number; postId: number };
+    'jump-to-feed': { feedId: number; postId?: number | null };
     'theme-change': Theme;
 }
 

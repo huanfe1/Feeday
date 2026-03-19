@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { dayjsPlugin } from '@/lib/dayjs';
+import { eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 function Post({ id, className }: { id: number; className?: string }) {
@@ -38,8 +39,8 @@ function Post({ id, className }: { id: number; className?: string }) {
                         <p className="text-muted-foreground line-clamp-2 text-sm">{post.summary}</p>
                         <div className="text-muted-foreground mt-1 flex text-xs">
                             <div className="flex items-center gap-x-1 overflow-hidden">
-                                <Avatar src={feed.icon ?? undefined} title={(feed.memo ?? feed.title) ?? ''} />
-                                <span className="truncate">{(feed.memo ?? feed.title) ?? ''}</span>
+                                <Avatar src={feed.icon ?? undefined} title={feed.memo ?? feed.title ?? ''} />
+                                <span className="truncate">{feed.memo ?? feed.title ?? ''}</span>
                             </div>
                             <span className="mx-1">·</span>
                             <span className="flex-none" title={dayjs(post.pubDate).format('YYYY-MM-DD')}>
@@ -52,7 +53,7 @@ function Post({ id, className }: { id: number; className?: string }) {
             </ContextMenuTrigger>
             <ContextMenuContent>
                 <ContextMenuItem onSelect={() => post.id != null && updatePostReadById(post.id, !post.isRead)}>{post.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
-                <ContextMenuItem onSelect={() => setSelectFeed(post.feedId)}>跳转至该订阅源</ContextMenuItem>
+                <ContextMenuItem onSelect={() => eventBus.emit('jump-to-feed', { feedId: post.feedId })}>跳转至该订阅源</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onSelect={openLink}>在浏览器中打开文章</ContextMenuItem>
                 <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link ?? '')}>复制文章链接</ContextMenuItem>

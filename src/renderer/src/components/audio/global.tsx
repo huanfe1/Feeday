@@ -23,7 +23,7 @@ export function GlobalAudio() {
     const handleJumpToPost = () => {
         const feedId = useAudioStore.getState().feedId;
         const postId = useAudioStore.getState().postId;
-        if (!feedId || !postId) return;
+        if (!feedId) return;
         eventBus.emit('jump-to-feed', { feedId, postId });
     };
 

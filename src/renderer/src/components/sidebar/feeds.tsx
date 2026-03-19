@@ -244,7 +244,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
     const scrollToFeed = () => {
         // TODO: Feeds 存在滚动条，且目标文件夹未打开时，点击跳转等待文件夹打开时滚动条会出现抽搐
         // 似乎是因为文件夹打开导致的滚动条位置变化
-        if (!needJumpFeedId.current || !needJumpPostId.current) return;
+        if (!needJumpFeedId.current) return;
         const feedElement = document.getElementById(`feed-${needJumpFeedId.current}`);
         if (feedElement) {
             useFolderStore.getState().setSelectedFolderId(null);
@@ -261,7 +261,7 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
         const handleJumpToFeed = ({ feedId, postId }: EventMap['jump-to-feed']) => {
             if (!feeds.some(feed => feed.id === feedId)) return;
             needJumpFeedId.current = feedId;
-            needJumpPostId.current = postId;
+            needJumpPostId.current = postId ?? null;
             if (id === 0 || id === null || isOpen) {
                 scrollToFeed();
             } else {
