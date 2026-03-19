@@ -4,6 +4,7 @@ import type { PostDetail } from '@shared/types/database';
 import dayjs from 'dayjs';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import useSWR from 'swr';
 
 import { PostAudio } from '@/components/audio/post';
 import Avatar from '@/components/avatar';
@@ -16,22 +17,15 @@ import { cn, enterVariants } from '@/lib/utils';
 
 import Render from './render';
 
-function Main() {
-    const [post, setPost] = useState<PostDetail | null>(null);
+const fetcher = ([_channel, postId]) => window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId);
 
+function Main() {
     const selectedPostId = usePostStore(state => state.selectedPostId);
-    const updatePostReadById = usePostStore(state => state.updatePostReadById);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const scrollViewRef = useRef<HTMLDivElement>(null);
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        setIsScrolled(e.currentTarget.scrollTop > 50);
-    };
-
-    const scrollToTop = () => {
-        scrollViewRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    const { data: post, mutate } = useSWR<PostDetail>(['db-get-posts-by-id', selectedPostId], fetcher);
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!post?.podcast) return null;
@@ -42,32 +36,37 @@ function Main() {
         return { postId: post.id, feedId: post.feedId, podcast: post?.podcast };
     }, [post]);
 
-    useEffect(() => {
-        if (!selectedPostId) return;
-        window.electron.ipcRenderer.invoke('db-get-posts-by-id', selectedPostId).then(setPost);
-        setIsScrolled(false);
-    }, [selectedPostId]);
+    useEffect(() => setIsScrolled(false), [selectedPostId]);
 
     const handleFeedClick = (feedId: number, postId: number) => {
         eventBus.emit('jump-to-feed', { feedId, postId });
     };
 
-    if (!selectedPostId || !post)
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        setIsScrolled(e.currentTarget.scrollTop > 50);
+    };
+
+    const handleScrollToTop = () => {
+        scrollViewRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleUpdatePostReadById = () => {
+        if (!post?.id) return;
+        usePostStore.getState().updatePostReadById(post?.id, !post?.isRead);
+        mutate({ ...post, isRead: !post?.isRead }, false);
+    };
+
+    if (!post) {
         return (
             <div className="h-full overflow-hidden">
-                <motion.div
-                    className="text-muted-foreground flex h-full items-center justify-center select-none"
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    initial={{ opacity: 0, y: 30 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                >
+                <motion.div className="text-muted-foreground flex h-full items-center justify-center select-none" {...enterVariants}>
                     <div className="flex flex-col items-center gap-y-3">
                         <Logo className="size-25 opacity-50" />
                     </div>
                 </motion.div>
             </div>
         );
+    }
 
     return (
         <div className="flex flex-col overflow-hidden">
@@ -76,7 +75,7 @@ function Main() {
                 <div className="flex-none space-x-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button onClick={() => updatePostReadById(post.id, !post.isRead)} size="icon" variant="ghost">
+                            <Button onClick={handleUpdatePostReadById} size="icon" variant="ghost">
                                 <i className={cn('text-xl opacity-75', !post.isRead ? 'i-mingcute-round-fill' : 'i-mingcute-round-line')}></i>
                             </Button>
                         </TooltipTrigger>
@@ -97,9 +96,9 @@ function Main() {
                 </div>
             </div>
             <div className="relative min-h-0 grow">
-                <ScrollArea className="h-full" onScroll={handleScroll} viewportRef={scrollViewRef}>
+                <ScrollArea className="h-full" key={post.id} onScroll={handleScroll} viewportRef={scrollViewRef}>
                     <AnimatePresence mode="popLayout">
-                        <motion.div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl" {...enterVariants} key={post.id}>
+                        <motion.div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl" {...enterVariants}>
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
                                     <h1>
@@ -157,7 +156,7 @@ function Main() {
                             initial={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Button className="size-10 rounded-full" onClick={scrollToTop} size="icon" variant="outline">
+                            <Button className="size-10 rounded-full" onClick={handleScrollToTop} size="icon" variant="outline">
                                 <i className="i-mingcute-arrow-to-up-line text-lg" />
                             </Button>
                         </motion.div>
@@ -167,5 +166,7 @@ function Main() {
         </div>
     );
 }
+
+function PostHeader() {}
 
 export default memo(Main);
