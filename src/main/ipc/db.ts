@@ -11,7 +11,19 @@ ipcMain.handle('db-get-feeds', async () => {
         .selectFrom('feeds')
         .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', 0 as never))
         .select(sql<boolean>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
-        .select(['feeds.id', 'feeds.title', 'feeds.memo', 'feeds.link', 'feeds.url', 'feeds.type', 'feeds.view', 'feeds.fetchFrequency', 'feeds.folderId', 'feeds.lastFetchError', 'feeds.icon'])
+        .select([
+            'feeds.id',
+            'feeds.title',
+            'feeds.memo',
+            'feeds.link',
+            'feeds.url',
+            'feeds.type',
+            'feeds.view',
+            'feeds.fetchFrequency',
+            'feeds.folderId',
+            'feeds.lastFetchError',
+            'feeds.icon',
+        ])
         .groupBy('feeds.id')
         .orderBy('feeds.title', 'asc')
         .execute()
@@ -88,15 +100,6 @@ ipcMain.handle('db-get-posts-by-id', async (_event, postId) => {
         ...row,
         content: row?.content ?? '',
     };
-});
-
-ipcMain.handle('db-get-post-content-by-id', async (_event, postId) => {
-    return db
-        .selectFrom('postContents')
-        .select('content')
-        .where('postId', '=', postId)
-        .executeTakeFirst()
-        .then(row => row?.content ?? '');
 });
 
 ipcMain.handle('db-update-post-read-by-id', async (_event, postId, isRead) => {

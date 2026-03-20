@@ -17,7 +17,8 @@ import { cn, enterVariants } from '@/lib/utils';
 
 import Render from './render';
 
-const fetcher = ([_channel, postId]) => window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId);
+const fetcher = ([_channel, postId]: readonly [string, number | null]): Promise<PostDetail | null> =>
+    postId != null ? window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId) : Promise.resolve(null);
 
 function Main() {
     const selectedPostId = usePostStore(state => state.selectedPostId);
@@ -25,7 +26,7 @@ function Main() {
     const [isScrolled, setIsScrolled] = useState(false);
     const scrollViewRef = useRef<HTMLDivElement>(null);
 
-    const { data: post, mutate } = useSWR<PostDetail>(['db-get-posts-by-id', selectedPostId], fetcher);
+    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-posts-by-id', selectedPostId], fetcher);
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!post?.podcast) return null;

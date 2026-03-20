@@ -38,13 +38,20 @@ export const useFeedStore = create<UseFeedStore>((set, get) => {
         getSelectedFeed: getSelectFeed,
         refreshFeeds,
         deleteFeed: feedId => {
-            usePostStore.getState().setSelectedPost(null);
-            get().setSelectedFeedId(null);
+            const postStore = usePostStore.getState();
+            if (get().selectedFeedId === feedId) {
+                get().setSelectedFeedId(null);
+            }
+            const selectedPost = postStore.getSelectedPost();
+            if (selectedPost?.feedId === feedId) {
+                postStore.setSelectedPost(null);
+            }
             window.electron.ipcRenderer.invoke('db-delete-feed', feedId).then(() => {
                 set(state => ({
                     ...state,
                     feeds: state.feeds.filter(feed => feed.id !== feedId),
                 }));
+                postStore.refreshPosts();
             });
         },
         updateFeed: async (feedId, data) => {

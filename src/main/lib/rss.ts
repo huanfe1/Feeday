@@ -33,10 +33,7 @@ Error: ${error instanceof Error ? error.message : String(error)}
     }
 }
 
-export async function fetchFeed(
-    url: string,
-    options?: { timeout?: number; signal?: AbortSignal },
-): ReturnType<IpcEvents['fetch-feed-info']> {
+export async function fetchFeed(url: string, options?: { timeout?: number; signal?: AbortSignal }): ReturnType<IpcEvents['fetch-feed-info']> {
     const timeout = options?.timeout ?? 30000;
     const signal = options?.signal;
 

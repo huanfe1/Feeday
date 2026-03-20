@@ -15,7 +15,6 @@ function Post({ id, className }: { id: number; className?: string }) {
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
     const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
-    const setSelectFeed = useFeedStore(state => state.setSelectedFeedId);
     const feed = useFeedStore(state => state.feeds.find(f => f.id === post?.feedId));
 
     const openLink = () => window.open(post?.link, '_blank');

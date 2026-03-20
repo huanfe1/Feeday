@@ -1,11 +1,13 @@
 import type { PostType } from '@/store';
 import { useFeedStore, usePostStore } from '@/store';
+import type { PostDetail } from '@shared/types/database';
 import dayjs from 'dayjs';
 import type { Root } from 'hast';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 import rehypeParse from 'rehype-parse';
+import useSWR from 'swr';
 import { unified } from 'unified';
 import { EXIT, visit } from 'unist-util-visit';
 import { useShallow } from 'zustand/react/shallow';
@@ -44,6 +46,8 @@ const VideoPreview = memo(function VideoPreview({ ...props }: React.ComponentPro
 
 const parser = unified().use(rehypeParse, { fragment: true });
 
+const fetcher = ([_channel, postId]) => window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId);
+
 const Display = memo(function Display({ media, content }: { media: PostType; content: string }) {
     if (media.link.startsWith('https://www.youtube.com/watch?v=') && media.imageUrl) {
         const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
@@ -75,12 +79,8 @@ function Render({ id }: { id: number }) {
     const media = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media?.feedId));
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
-    const [content, setContent] = useState('');
-
-    useEffect(() => {
-        if (media?.id == null) return;
-        window.electron.ipcRenderer.invoke('db-get-post-content-by-id', Number(media.id)).then(setContent);
-    }, [media?.id]);
+    const { data: postDetail } = useSWR<PostDetail | null>(['db-get-posts-by-id', id], fetcher);
+    const content = postDetail?.content ?? '';
 
     if (!feed || !media) return null;
     return (
@@ -97,8 +97,8 @@ function Render({ id }: { id: number }) {
                     </div>
                     <div className="text-foreground mt-2 truncate text-sm font-medium">{media.title ?? ''}</div>
                     <div className="text-muted-foreground mt-1 flex text-xs">
-                        <Avatar src={feed.icon ?? undefined} title={(feed.memo ?? feed.title) ?? ''} />
-                        <span className="ml-1 truncate">{(feed.memo ?? feed.title) ?? ''}</span>
+                        <Avatar src={feed.icon ?? undefined} title={feed.memo ?? feed.title ?? ''} />
+                        <span className="ml-1 truncate">{feed.memo ?? feed.title ?? ''}</span>
                         <span className="ml-3 flex-none">{dayjs(media.pubDate).format('YYYY-MM-DD')}</span>
                     </div>
                     <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.isRead })}></span>
