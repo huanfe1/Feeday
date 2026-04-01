@@ -81,7 +81,7 @@ ipcMain.handle('db-insert-post', async (_event, feed_id, post) => {
     return dbMethods.insertPost(feed_id, post);
 });
 
-ipcMain.handle('db-get-posts-by-id', async (_event, postId) => {
+ipcMain.handle('db-get-post-by-id', async (_event, postId) => {
     if (postId == null) return null;
 
     const row = await db

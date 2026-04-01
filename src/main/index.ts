@@ -95,6 +95,17 @@ async function createWindow() {
 contextMenu({
     showSaveImageAs: true,
     showInspectElement: is.dev,
+    showSelectAll: false,
+    labels: {
+        copy: '复制',
+        paste: '粘贴',
+        cut: '剪切',
+        copyLink: '复制链接地址',
+        copyImage: '复制图片',
+        inspect: '检查元素',
+        saveImageAs: '图片另存为...',
+        searchWithGoogle: '使用 Google 搜索',
+    },
 });
 
 // This method will be called when Electron has finished

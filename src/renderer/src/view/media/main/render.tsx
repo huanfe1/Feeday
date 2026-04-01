@@ -4,7 +4,7 @@ import type { PostDetail } from '@shared/types/database';
 import dayjs from 'dayjs';
 import type { Root } from 'hast';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
-import { memo, useRef, useState } from 'react';
+import { memo, useMemo, useRef, useState } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 import rehypeParse from 'rehype-parse';
 import useSWR from 'swr';
@@ -46,40 +46,42 @@ const VideoPreview = memo(function VideoPreview({ ...props }: React.ComponentPro
 
 const parser = unified().use(rehypeParse, { fragment: true });
 
-const fetcher = ([_channel, postId]) => window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId);
+const fetcher = ([_channel, postId]) => window.electron.ipcRenderer.invoke('db-get-post-by-id', postId);
+
+const displayComponents = {
+    video: VideoPreview,
+    img: Image,
+};
 
 const Display = memo(function Display({ media, content }: { media: PostType; content: string }) {
-    if (media.link.startsWith('https://www.youtube.com/watch?v=') && media.imageUrl) {
-        const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
-        return <img className="w-full" alt={media.title} loading="lazy" src={imgUrl} />;
-    }
-    const tree = parser.parse(content);
-    const newTree: Root = { type: 'root', children: [] };
-    visit(tree, 'element', node => {
-        if (node.tagName === 'img' || node.tagName === 'video') {
-            newTree.children.push(node);
-            return EXIT;
+    return useMemo(() => {
+        if (media.link.startsWith('https://www.youtube.com/watch?v=') && media.imageUrl) {
+            const imgUrl = media.imageUrl.replace(new URL(media.imageUrl).search, '');
+            return <img className="w-full" alt={media.title} loading="lazy" src={imgUrl} />;
         }
-        return;
-    });
+        const tree = parser.parse(content);
+        const newTree: Root = { type: 'root', children: [] };
+        visit(tree, 'element', node => {
+            if (node.tagName === 'img' || node.tagName === 'video') {
+                newTree.children.push(node);
+                return EXIT;
+            }
+            return;
+        });
 
-    if (newTree.children.length === 0 && media.imageUrl) {
-        return <Image alt={media.title} loading="lazy" src={media.imageUrl} />;
-    }
+        if (newTree.children.length === 0 && media.imageUrl) {
+            return <Image alt={media.title} loading="lazy" src={media.imageUrl} />;
+        }
 
-    const components = {
-        video: VideoPreview,
-        img: Image,
-    };
-
-    return toJsxRuntime(newTree, { Fragment, jsxs, jsx, components });
+        return toJsxRuntime(newTree, { Fragment, jsxs, jsx, components: displayComponents });
+    }, [content, media.imageUrl, media.link, media.title]);
 });
 
 function Render({ id }: { id: number }) {
     const media = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
     const feed = useFeedStore(state => state.feeds.find(f => f.id === media?.feedId));
     const updatePostReadById = usePostStore(state => state.updatePostReadById);
-    const { data: postDetail } = useSWR<PostDetail | null>(['db-get-posts-by-id', id], fetcher);
+    const { data: postDetail } = useSWR<PostDetail | null>(['db-get-post-by-id', id], fetcher);
     const content = postDetail?.content ?? '';
 
     if (!feed || !media) return null;

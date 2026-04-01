@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
@@ -48,6 +48,11 @@ function Post({ id, className }: { id: number; className?: string }) {
                         </div>
                     </div>
                     {post.imageUrl && <Image key={post.imageUrl} src={post.imageUrl} />}
+                    {/* {post.imageUrl && (
+                        <div className="bg-muted/75 ml-3 flex aspect-square w-1/3 flex-none items-center overflow-hidden rounded-sm">
+                            <img className="rounded-sm" alt="" src={post.imageUrl} />
+                        </div>
+                    )} */}
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
@@ -62,33 +67,32 @@ function Post({ id, className }: { id: number; className?: string }) {
 }
 
 const MIN_IMAGE_SIZE = 100; // 过滤像素过小的占位图
+const errorImages = new Set<string>(); // 临时存储需要隐藏的图片，避免重复加载
 
 const Image = memo(function Image({ src }: { src: string }) {
-    const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'too-small'>('loading');
+    const imageRef = useRef<HTMLImageElement>(null);
+    const [isHidden, setIsHidden] = useState(false);
 
-    useEffect(() => {
-        const img = new window.Image();
-        img.onload = () => {
-            if (img.naturalWidth >= MIN_IMAGE_SIZE && img.naturalHeight >= MIN_IMAGE_SIZE) {
-                setStatus('ready');
-            } else {
-                setStatus('too-small');
-            }
-        };
-        img.onerror = () => setStatus('error');
-        img.src = src;
-        return () => {
-            img.onload = null;
-            img.onerror = null;
-            img.src = '';
-        };
-    }, [src]);
+    if (errorImages.has(src)) {
+        return null;
+    }
 
-    if (status !== 'ready') return null;
+    const handleLoad = () => {
+        if (!imageRef?.current) return;
+        if (imageRef.current.naturalWidth < MIN_IMAGE_SIZE && imageRef.current.naturalHeight < MIN_IMAGE_SIZE) {
+            setIsHidden(true);
+            errorImages.add(src);
+        }
+    };
+
+    const handleError = () => {
+        setIsHidden(true);
+        errorImages.add(src);
+    };
 
     return (
-        <div className="ml-3 flex aspect-square w-1/3 flex-none items-center overflow-hidden rounded-sm">
-            <img className="rounded-sm" alt="" src={src} />
+        <div className={cn('bg-sidebar ml-3 flex aspect-square w-1/3 flex-none items-center overflow-hidden rounded-sm', { hidden: isHidden })}>
+            <img className="rounded-sm" alt="" loading="lazy" onError={handleError} onLoad={handleLoad} ref={imageRef} src={src} />
         </div>
     );
 });

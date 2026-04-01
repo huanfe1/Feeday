@@ -18,7 +18,7 @@ import { cn, enterVariants } from '@/lib/utils';
 import Render from './render';
 
 const fetcher = ([_channel, postId]: readonly [string, number | null]): Promise<PostDetail | null> =>
-    postId != null ? window.electron.ipcRenderer.invoke('db-get-posts-by-id', postId) : Promise.resolve(null);
+    postId != null ? window.electron.ipcRenderer.invoke('db-get-post-by-id', postId) : Promise.resolve(null);
 
 function Main() {
     const selectedPostId = usePostStore(state => state.selectedPostId);
@@ -26,7 +26,7 @@ function Main() {
     const [isScrolled, setIsScrolled] = useState(false);
     const scrollViewRef = useRef<HTMLDivElement>(null);
 
-    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-posts-by-id', selectedPostId], fetcher);
+    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-post-by-id', selectedPostId], fetcher);
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!post?.podcast) return null;
@@ -98,7 +98,7 @@ function Main() {
             </div>
             <div className="relative min-h-0 grow">
                 <ScrollArea className="h-full" key={post.id} onScroll={handleScroll} viewportRef={scrollViewRef}>
-                    <AnimatePresence mode="popLayout">
+                    <AnimatePresence mode="wait">
                         <motion.div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl" {...enterVariants}>
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">

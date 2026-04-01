@@ -39,8 +39,8 @@ export default function Sidebar() {
                     <Buttons />
                 </div>
                 <ScrollArea className="min-h-0 flex-1" viewportRef={parentRef}>
-                    <AnimatePresence mode="popLayout">
-                        <motion.div className="w-full overflow-y-hidden" {...enterVariants} key={[onlyUnread, selectedFeed?.id, selectedFolderId].join('-')}>
+                    <AnimatePresence mode="wait">
+                        <motion.div className="w-full overflow-y-hidden" {...enterVariants} key={postIds.join('-')}>
                             {postIds.length === 0 ? (
                                 <div className="text-muted-foreground flex h-[calc(100vh-60px)] items-center justify-center select-none">
                                     <div className="flex flex-col items-center gap-y-3">

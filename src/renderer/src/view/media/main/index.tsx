@@ -35,7 +35,7 @@ function Main() {
             if (width >= 1280) newColumns = 4;
             else if (width < 900) newColumns = 2;
 
-            setColumnsPerRow(newColumns);
+            setColumnsPerRow(prev => (prev === newColumns ? prev : newColumns));
         });
 
         resizeObserver.observe(target);

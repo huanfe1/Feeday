@@ -8,12 +8,17 @@ export function cn(...inputs: ClassValue[]): string {
 
 export const enterVariants: Variants = {
     initial: {
-        opacity: 0.5,
-        y: 40,
+        opacity: 0,
+        y: 30,
     },
     animate: {
         opacity: 1,
         y: 0,
         transition: { duration: 0.2, ease: 'easeOut' },
+    },
+    exit: {
+        opacity: 0,
+        // y: 30,
+        transition: { duration: 0.1, ease: 'easeOut' },
     },
 };

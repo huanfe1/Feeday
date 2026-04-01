@@ -2,8 +2,9 @@ import rehypeParse from 'rehype-parse';
 import rehypeSanitize from 'rehype-sanitize';
 import { unified } from 'unified';
 
+const htmlProcessor = unified().use(rehypeParse, { fragment: true }).use(rehypeSanitize);
+
 export default function parseHtml(html: string) {
-    const processor = unified().use(rehypeParse, { fragment: true }).use(rehypeSanitize);
-    const ast = processor.parse(html);
-    return processor.runSync(ast);
+    const ast = htmlProcessor.parse(html);
+    return htmlProcessor.runSync(ast);
 }
