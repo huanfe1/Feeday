@@ -1,6 +1,6 @@
 import { useFeedStore, usePostStore } from '@/store';
 import dayjs from 'dayjs';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';

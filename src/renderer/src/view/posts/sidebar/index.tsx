@@ -14,11 +14,11 @@ import Post from './post';
 
 export default function Sidebar() {
     const selectedFeed = useFeedStore(state => state.getSelectedFeed());
-    const selectedFolderId = useFolderStore(state => state.selectedFolderId);
+    // const selectedFolderId = useFolderStore(state => state.selectedFolderId);
     const selectedFolder = useFolderStore(state => state.getSelectedFolder());
 
     const postIds = usePostStore(useShallow(state => state.posts.map(p => p.id)));
-    const onlyUnread = usePostStore(state => state.onlyUnread);
+    // const onlyUnread = usePostStore(state => state.onlyUnread);
 
     const parentRef = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line react-hooks/incompatible-library
