@@ -106,11 +106,17 @@ function Render({ id }: { id: number }) {
                     <span className={cn('absolute -top-0.5 -left-0.5 size-2 rounded-full bg-orange-400', { hidden: media.isRead })}></span>
                 </div>
             </ContextMenuTrigger>
-            <ContextMenuContent>
-                <ContextMenuItem onSelect={() => media.id != null && updatePostReadById(media.id, !media.isRead)}>{media.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
+            <ContextMenuContent className="border-border/80 min-w-40 rounded-xl p-2 shadow-xl backdrop-blur-md">
+                <ContextMenuItem className="rounded-md" onSelect={() => media.id != null && updatePostReadById(media.id, !media.isRead)}>
+                    <i className={cn('text-muted-foreground size-4', media.isRead ? 'i-mingcute-mail-open-line' : 'i-mingcute-mail-line')} />
+                    {media.isRead ? '标记为未读' : '标记为已读'}
+                </ContextMenuItem>
                 {/* <ContextMenuItem onSelect={() => setSelectFeed(post.feedId)}>跳转至该订阅源</ContextMenuItem> */}
-                <ContextMenuSeparator />
-                <ContextMenuItem onSelect={() => window.open(media.link, '_blank')}>在浏览器中打开</ContextMenuItem>
+                <ContextMenuSeparator className="my-2" />
+                <ContextMenuItem className="rounded-md" onSelect={() => window.open(media.link, '_blank')}>
+                    <i className="i-mingcute-external-link-line text-muted-foreground size-4" />
+                    在浏览器中打开
+                </ContextMenuItem>
                 {/* <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link)}>复制文章链接</ContextMenuItem> */}
             </ContextMenuContent>
         </ContextMenu>

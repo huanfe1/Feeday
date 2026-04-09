@@ -49,9 +49,12 @@ export interface PostContents {
 export type InsertPost = Omit<Insertable<Posts>, 'podcast' | 'feedId'> & Partial<Omit<PostContents, 'postId'>> & { podcast?: Podcast | null };
 
 /** db-get-feeds 查询结果：Selectable<Feeds> 子集 + hasUnread */
-export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'memo' | 'link' | 'url' | 'type' | 'view' | 'fetchFrequency' | 'folderId' | 'lastFetchError' | 'icon'> & {
+export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'memo' | 'link' | 'url' | 'type' | 'view' | 'folderId' | 'lastFetchError' | 'icon'> & {
     hasUnread: boolean;
 };
+
+/** db-get-feed-by-id 查询结果：单条订阅源完整字段 */
+export type FeedDetail = Selectable<Feeds>;
 
 /** 前端 store 中的 post：Selectable<Posts> + isRead 转为 boolean + summary 必填 */
 export type PostWithNormalized = Omit<Selectable<Posts>, 'isRead' | 'summary'> & { isRead: boolean; summary: string };

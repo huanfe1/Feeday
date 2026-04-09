@@ -55,12 +55,24 @@ function Post({ id, className }: { id: number; className?: string }) {
                     )} */}
                 </div>
             </ContextMenuTrigger>
-            <ContextMenuContent>
-                <ContextMenuItem onSelect={() => post.id != null && updatePostReadById(post.id, !post.isRead)}>{post.isRead ? '标记为未读' : '标记为已读'}</ContextMenuItem>
-                <ContextMenuItem onSelect={() => eventBus.emit('jump-to-feed', { feedId: post.feedId })}>跳转至该订阅源</ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onSelect={openLink}>在浏览器中打开文章</ContextMenuItem>
-                <ContextMenuItem onSelect={() => navigator.clipboard.writeText(post.link ?? '')}>复制文章链接</ContextMenuItem>
+            <ContextMenuContent className="border-border/80 min-w-40 rounded-xl p-2 shadow-xl backdrop-blur-md">
+                <ContextMenuItem className="rounded-md" onSelect={() => post.id != null && updatePostReadById(post.id, !post.isRead)}>
+                    <i className={cn('text-muted-foreground size-4', post.isRead ? 'i-mingcute-mail-open-line' : 'i-mingcute-mail-line')} />
+                    {post.isRead ? '标记为未读' : '标记为已读'}
+                </ContextMenuItem>
+                <ContextMenuItem className="rounded-md" onSelect={() => eventBus.emit('jump-to-feed', { feedId: post.feedId })}>
+                    <i className="i-mingcute-send-plane-line text-muted-foreground size-4" />
+                    跳转至该订阅源
+                </ContextMenuItem>
+                <ContextMenuSeparator className="my-2" />
+                <ContextMenuItem className="rounded-md" onSelect={openLink}>
+                    <i className="i-mingcute-external-link-line text-muted-foreground size-4" />
+                    在浏览器中打开文章
+                </ContextMenuItem>
+                <ContextMenuItem className="rounded-md" onSelect={() => navigator.clipboard.writeText(post.link ?? '')}>
+                    <i className="i-mingcute-copy-2-line text-muted-foreground size-4" />
+                    复制文章链接
+                </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
     );

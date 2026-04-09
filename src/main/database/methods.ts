@@ -1,12 +1,31 @@
 import type { Database, Feeds, InsertPost } from '@shared/types/database';
 import dayjs from 'dayjs';
+import { toString } from 'hast-util-to-string';
 import type { Insertable, Kysely, Updateable } from 'kysely';
 import { sql } from 'kysely';
 import pLimit from 'p-limit';
+import rehypeParse from 'rehype-parse';
+import rehypeSanitize from 'rehype-sanitize';
+import { unified } from 'unified';
 
 import { fetchFeed } from '@/lib/rss';
 import { settings } from '@/lib/settings';
 import { getFeedFetchUrl, truncate } from '@/lib/utils';
+
+const plainTextProcessor = unified().use(rehypeParse, { fragment: true }).use(rehypeSanitize);
+
+function sanitizeFeedDescription(description: string | null | undefined): string | null {
+    if (description == null) return null;
+
+    const trimmed = description.trim();
+    if (!trimmed) return null;
+
+    const ast = plainTextProcessor.parse(trimmed);
+    const sanitizedAst = plainTextProcessor.runSync(ast);
+    const text = toString(sanitizedAst).replace(/\s+/g, ' ').trim();
+
+    return text || null;
+}
 
 export class DatabaseMethods {
     private db: Kysely<Database>;
@@ -19,9 +38,14 @@ export class DatabaseMethods {
     }
 
     async insertFeed(feed: Insertable<Feeds>) {
+        const sanitizedFeed: Insertable<Feeds> = {
+            ...feed,
+            description: sanitizeFeedDescription(feed.description),
+        };
+
         return this.db
             .insertInto('feeds')
-            .values(feed)
+            .values(sanitizedFeed)
             .onConflict(oc => oc.column('url').doNothing())
             .returning('id')
             .executeTakeFirst()
@@ -29,7 +53,12 @@ export class DatabaseMethods {
     }
 
     async updateFeed(feedId: number, feed: Updateable<Feeds>) {
-        await this.db.updateTable('feeds').set(feed).where('id', '=', feedId).execute();
+        const sanitizedFeed: Updateable<Feeds> = {
+            ...feed,
+            ...(Object.prototype.hasOwnProperty.call(feed, 'description') ? { description: sanitizeFeedDescription(feed.description) } : {}),
+        };
+
+        await this.db.updateTable('feeds').set(sanitizedFeed).where('id', '=', feedId).execute();
     }
 
     async insertPost(feedId: number, post: InsertPost) {

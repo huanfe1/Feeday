@@ -1,12 +1,10 @@
 import type { FeedType } from '@/store';
 import { useFeedStore, useFolderStore, usePostStore } from '@/store';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { memo, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
+import { memo, useState } from 'react';
 
 import Avatar from '@/components/avatar';
+import FeedContextMenu from '@/components/sidebar/feed-context-menu';
+import FeedEditDialog from '@/components/sidebar/feed-edit-dialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,13 +15,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -41,41 +32,30 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
 
     return (
         <>
-            <ContextMenu modal={false}>
-                <ContextMenuTrigger asChild>
-                    <div
-                        className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', { 'bg-sidebar-accent': isSelected }, className)}
-                        id={`feed-${feed.id}`}
-                        onClick={clickFeed}
-                        onDoubleClick={() => window.open(feed.link, '_blank')}
-                    >
-                        <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link ?? ''} title={feed.memo ?? feed.title ?? ''} />
-                        <span className="flex-1 truncate text-sm font-medium capitalize">{feed.memo ?? feed.title ?? ''}</span>
-                        {feed.lastFetchError && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span className="i-mingcute-close-circle-fill text-red-500"></span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{feed.lastFetchError}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                        <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.hasUnread })}></span>
-                    </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                    <ContextMenuItem onSelect={() => setActive('edit')}>编辑</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => setActive('delete')}>删除</ContextMenuItem>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem onSelect={() => window.open(feed.link ?? '', '_blank')}>在浏览器中打开网站</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => window.open((feed.type === 1 ? feed.link : feed.url) ?? '', '_blank')}>在浏览器中打开订阅源</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText(feed.link ?? '')}>复制网站地址</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => navigator.clipboard.writeText((feed.type === 1 ? feed.link : feed.url) ?? '')}>复制订阅源地址</ContextMenuItem>
-                </ContextMenuContent>
-            </ContextMenu>
+            <FeedContextMenu feed={feed} onDelete={() => setActive('delete')} onEdit={() => setActive('edit')}>
+                <div
+                    className={cn('flex items-center gap-x-3 rounded-sm px-3 py-2 select-none', { 'bg-sidebar-accent': isSelected }, className)}
+                    id={`feed-${feed.id}`}
+                    onClick={clickFeed}
+                    onDoubleClick={() => window.open(feed.link, '_blank')}
+                >
+                    <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link ?? ''} title={feed.memo ?? feed.title ?? ''} />
+                    <span className="flex-1 truncate text-sm font-medium capitalize">{feed.memo ?? feed.title ?? ''}</span>
+                    {feed.lastFetchError && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="i-mingcute-close-circle-fill text-red-500"></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{feed.lastFetchError}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                    <span className={cn('size-1.5 rounded-full bg-gray-400', { hidden: !feed.hasUnread })}></span>
+                </div>
+            </FeedContextMenu>
             {active === 'delete' && <DeleteModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'delete'} />}
-            {active === 'edit' && <EditModal feed={feed} onOpenChange={() => setActive(null)} open={active === 'edit'} />}
+            {active === 'edit' && <FeedEditDialog feed={feed} onOpenChange={() => setActive(null)} open={active === 'edit'} />}
         </>
     );
 }
@@ -95,288 +75,6 @@ function DeleteModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-    );
-}
-
-const editFeedSchema = z
-    .object({
-        type: z.union([z.literal(0), z.literal(1)]),
-        title: z.string().min(1, '订阅源标题不能为空'),
-        memo: z.string().max(50, '备注不能超过 50 个字符').optional(),
-        link: z.string().optional(),
-        url: z.string().min(1, '请输入订阅源地址或路径'),
-        fetchFrequency: z.number('更新频率不能为空').int().min(10, '更新频率必须大于 10 分钟'),
-        folderId: z.number().nullable().optional(),
-        view: z.number().int().min(1).max(2),
-    })
-    .superRefine((data, ctx) => {
-        if (data.type === 0) {
-            if (!data.link) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入网站地址', path: ['link'] });
-            } else {
-                try {
-                    z.url().parse(data.link);
-                } catch {
-                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入正确的网站地址', path: ['link'] });
-                }
-            }
-            try {
-                z.url().parse(data.url);
-            } catch {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: '请输入正确的订阅源地址', path: ['url'] });
-            }
-        } else {
-            if (data.url.startsWith('http')) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'RSSHub 请输入路径而非完整 URL', path: ['url'] });
-            }
-        }
-    });
-
-type EditFeedFormValues = z.infer<typeof editFeedSchema>;
-
-function EditModal({ open, onOpenChange, feed }: { open: boolean; onOpenChange: (open: boolean) => void; feed: FeedType }) {
-    const folders = useFolderStore(state => state.folders);
-    const feedType = feed.type ?? 0;
-    const form = useForm<EditFeedFormValues>({
-        resolver: zodResolver(editFeedSchema),
-        defaultValues: {
-            type: feedType,
-            title: feed.title,
-            memo: feed.memo ?? '',
-            link: feed.link ?? '',
-            url: feed.url ?? '',
-            fetchFrequency: feed.fetchFrequency,
-            folderId: feed.folderId ?? null,
-            view: feed.view,
-        },
-    });
-
-    useEffect(() => {
-        if (!open) return;
-        form.reset({
-            type: feed.type ?? 0,
-            title: feed.title,
-            memo: feed.memo ?? '',
-            link: feed.link ?? '',
-            url: feed.url ?? '',
-            fetchFrequency: feed.fetchFrequency,
-            folderId: feed.folderId ?? null,
-            view: feed.view,
-        });
-    }, [open, form, feed]);
-
-    const updateFeed = useFeedStore(state => state.updateFeed);
-    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
-
-    const onSubmit = async (data: EditFeedFormValues) => {
-        if (feed.id == null) return;
-
-        let link = data.link ?? '';
-        let url = data.url;
-
-        if (data.type === 1) {
-            const rsshubSource = (await window.electron.ipcRenderer.invoke('settings-get', 'rsshubSource')) as string;
-            const base = (rsshubSource ?? 'https://rsshub.app').replace(/\/$/, '');
-            const path = data.url.startsWith('/') ? data.url : `/${data.url}`;
-            url = path;
-            link = `${base}${path}`;
-        }
-
-        updateFeed(feed.id, {
-            memo: data.memo?.trim() || null,
-            link,
-            url,
-            type: data.type,
-            fetchFrequency: data.fetchFrequency,
-            folderId: data.folderId === null ? null : data.folderId,
-            view: data.view,
-        })
-            .then(() => {
-                refreshFeeds();
-                toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
-                onOpenChange(false);
-            })
-            .catch(error => {
-                toast.error('更新订阅源失败：' + error.message, { position: 'top-center', richColors: true });
-            });
-    };
-
-    return (
-        <Dialog onOpenChange={onOpenChange} open={open}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>编辑订阅源</DialogTitle>
-                    <DialogDescription>修改订阅源的基本信息</DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>订阅源类型</FormLabel>
-                                    <Select onValueChange={v => field.onChange(Number(v))} value={field.value.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="选择类型" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="0">默认链接</SelectItem>
-                                            <SelectItem value="1">RSSHub</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>订阅源标题</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="来自订阅源" readOnly {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="memo"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>备注（可选）</FormLabel>
-                                    <FormControl>
-                                        <InputGroup className="flex-1">
-                                            <InputGroupInput placeholder="自定义显示名称，留空则显示订阅源标题" {...field} />
-                                            <InputGroupAddon align="inline-end">
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <InputGroupButton onClick={() => form.setValue('memo', form.getValues('title'))} size="icon-xs" type="button">
-                                                            <i className="i-mingcute-signature-fill"></i>
-                                                        </InputGroupButton>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>填充源标题</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </InputGroupAddon>
-                                        </InputGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {form.watch('type') === 0 && (
-                            <FormField
-                                control={form.control}
-                                name="link"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>网站地址</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="请输入网站地址" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-                        <FormField
-                            control={form.control}
-                            name="url"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{form.watch('type') === 1 ? 'RSSHub 路径' : '订阅源地址'}</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder={form.watch('type') === 1 ? '请输入路径，如 /twitter/user/xxx' : '请输入订阅源地址'} {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="fetchFrequency"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>更新频率（分钟）</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            min="1"
-                                            placeholder="请输入更新频率"
-                                            type="number"
-                                            {...field}
-                                            onChange={e => field.onChange(parseInt(e.target.value))}
-                                            value={field.value}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="folderId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>文件夹</FormLabel>
-                                    <Select onValueChange={value => field.onChange(value === 'none' ? null : parseInt(value))} value={field.value?.toString() ?? 'none'}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="未分类" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="none">未分类</SelectItem>
-                                            {folders.map(folder => (
-                                                <SelectItem key={folder.id} value={folder.id.toString()}>
-                                                    {folder.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="view"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>视图</FormLabel>
-                                    <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="选择视图" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="1">文章</SelectItem>
-                                            <SelectItem value="2">媒体</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button type="button" variant="outline">
-                                    取消
-                                </Button>
-                            </DialogClose>
-                            <Button type="submit">确定</Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
     );
 }
 

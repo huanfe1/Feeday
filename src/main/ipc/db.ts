@@ -10,23 +10,17 @@ ipcMain.handle('db-get-feeds', async () => {
         .selectFrom('feeds')
         .leftJoin('posts', join => join.onRef('posts.feedId', '=', 'feeds.id').on('posts.isRead', '=', 0 as never))
         .select(sql<boolean>`CASE WHEN COUNT(posts.id) > 0 THEN 1 ELSE 0 END`.as('hasUnread'))
-        .select([
-            'feeds.id',
-            'feeds.title',
-            'feeds.memo',
-            'feeds.link',
-            'feeds.url',
-            'feeds.type',
-            'feeds.view',
-            'feeds.fetchFrequency',
-            'feeds.folderId',
-            'feeds.lastFetchError',
-            'feeds.icon',
-        ])
+        .select(['feeds.id', 'feeds.title', 'feeds.memo', 'feeds.link', 'feeds.url', 'feeds.type', 'feeds.view', 'feeds.folderId', 'feeds.lastFetchError', 'feeds.icon'])
         .groupBy('feeds.id')
         .orderBy('feeds.title', 'asc')
         .execute()
         .then(result => result.map(feed => ({ ...feed, hasUnread: !!feed.hasUnread })));
+});
+
+ipcMain.handle('db-get-feed-by-id', async (_event, feedId: number) => {
+    if (feedId == null) return null;
+    const row = await db.selectFrom('feeds').selectAll().where('id', '=', feedId).executeTakeFirst();
+    return row ?? null;
 });
 
 ipcMain.handle('db-insert-feed', async (_event, feed) => {

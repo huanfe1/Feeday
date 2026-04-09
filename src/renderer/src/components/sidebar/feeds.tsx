@@ -135,8 +135,11 @@ function Feeds({ className }: { className?: string }) {
                     </AnimatePresence>
                 </ScrollArea>
             </ContextMenuTrigger>
-            <ContextMenuContent>
-                <ContextMenuItem onSelect={() => setShowAddFolder(true)}>添加文件夹</ContextMenuItem>
+            <ContextMenuContent className="border-border/80 min-w-40 rounded-xl p-2 shadow-xl backdrop-blur-md">
+                <ContextMenuItem className="rounded-md" onSelect={() => setShowAddFolder(true)}>
+                    <i className="i-mingcute-add-line text-muted-foreground size-4" />
+                    添加文件夹
+                </ContextMenuItem>
             </ContextMenuContent>
             <Dialog
                 onOpenChange={open => {
@@ -292,9 +295,13 @@ const FolderItem = memo(function FolderItem({ name, id, feeds, isOpen = false }:
                         <span className={cn('size-1.5 shrink-0 rounded-full bg-gray-400', { hidden: !hasUnread })}></span>
                     </div>
                 </ContextMenuTrigger>
-                <ContextMenuContent>
-                    <ContextMenuItem onSelect={openRenameDialog}>重命名</ContextMenuItem>
-                    <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setShowDeleteFolder(true)}>
+                <ContextMenuContent className="border-border/80 min-w-40 rounded-xl p-2 shadow-xl backdrop-blur-md">
+                    <ContextMenuItem className="rounded-md" onSelect={openRenameDialog}>
+                        <i className="i-mingcute-edit-2-line text-muted-foreground size-4" />
+                        重命名
+                    </ContextMenuItem>
+                    <ContextMenuItem className="text-destructive focus:text-destructive rounded-md" onSelect={() => setShowDeleteFolder(true)}>
+                        <i className="i-mingcute-delete-2-line size-4" />
                         删除
                     </ContextMenuItem>
                 </ContextMenuContent>

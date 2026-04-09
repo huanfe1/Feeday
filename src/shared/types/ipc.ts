@@ -1,6 +1,6 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
 
-import type { FeedSourceType, Feeds, Folders, GetFeedsResult, InsertPost, Podcast, PostDetail, Posts } from './database';
+import type { FeedDetail, FeedSourceType, Feeds, Folders, GetFeedsResult, InsertPost, Podcast, PostDetail, Posts } from './database';
 import type { SettingsSchema } from './settings';
 
 interface GetPostsParams {
@@ -31,6 +31,7 @@ export interface IpcEvents {
     'rss-clear-parse-failures': () => Promise<{ success: boolean; removedFiles: number; message?: string }>;
 
     'db-get-feeds': () => Promise<GetFeedsResult[]>;
+    'db-get-feed-by-id': (feedId: number) => Promise<FeedDetail | null>;
     'db-insert-feed': (feed: Insertable<Feeds>) => Promise<number | undefined>;
     'db-update-feed': (feedId: number, feed: Updateable<Feeds>) => Promise<void>;
     'db-delete-feed': (feedId: number) => Promise<void>;
