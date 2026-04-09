@@ -1,6 +1,6 @@
-import { useFeedStore, usePostStore } from '@/store';
+import { refreshAll } from '@/store';
 import dayjs from 'dayjs';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 
 import Sidebar from '@/components/sidebar';
@@ -13,17 +13,12 @@ import View from './view';
 function App() {
     const isDragging = useDragging(state => state.isDragging);
 
-    const isDone = useRef(false);
     useEffect(() => {
-        if (useFeedStore.getState().feeds.length === 0) return;
-        if (isDone.current) return;
-        isDone.current = true;
-
-        window.electron.ipcRenderer.on('refresh-feeds', () => {
+        const remove = window.electron.ipcRenderer.on('refresh-feeds', () => {
             console.log('refresh-feeds', dayjs().format('YYYY-MM-DD HH:mm:ss'));
-            useFeedStore.getState().refreshFeeds();
-            usePostStore.getState().refreshPosts();
+            refreshAll();
         });
+        return remove;
     }, []);
 
     return (
