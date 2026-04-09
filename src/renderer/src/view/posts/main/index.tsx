@@ -117,7 +117,7 @@ function Main() {
                                             className="flex cursor-pointer items-center gap-x-1"
                                             onClick={() => post.feedId != null && post.id != null && handleFeedClick(post.feedId, post.id)}
                                         >
-                                            <Avatar src={post.feedIcon ?? undefined} title={post.feedTitle} />
+                                            <Avatar defaultAvatarUrl={post.feedIcon ?? undefined} domain={post.feedLink} title={post.feedTitle} />
                                             <span className="font-medium">{post.feedTitle}</span>
                                         </div>
                                         {post.author && post.author !== post.feedTitle && (

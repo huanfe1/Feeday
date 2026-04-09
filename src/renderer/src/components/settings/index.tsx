@@ -12,6 +12,7 @@ import type { SettingsFieldType } from './field';
 
 const fields: SettingsFieldType[] = [
     {
+        id: 'theme',
         type: 'select',
         title: '主题',
         description: '调整应用主题',
@@ -20,8 +21,14 @@ const fields: SettingsFieldType[] = [
             { value: 'dark', label: '深色' },
             { value: 'light', label: '浅色' },
         ],
-        value: () => localStorage.getItem('feeday-theme') || 'system',
-        onChange: value => eventBus.emit('theme-change', value as 'system' | 'dark' | 'light'),
+        storage: {
+            type: 'localStorage',
+            key: 'feeday-theme',
+            fallback: 'system',
+            serialize: value => value,
+            deserialize: raw => (raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system'),
+        },
+        onValueChange: value => eventBus.emit('theme-change', value as 'system' | 'dark' | 'light'),
     },
     {
         type: 'input',
@@ -29,6 +36,13 @@ const fields: SettingsFieldType[] = [
         title: '头像代理地址',
         description: '设置头像代理地址，避免头像无法显示。',
         placeholder: 'https://unavatar.webp.se/${url}',
+        storage: {
+            type: 'localStorage',
+            key: 'feeday-avatar-proxy',
+            fallback: '',
+            serialize: value => value,
+            deserialize: raw => raw ?? '',
+        },
     },
     {
         type: 'input',
@@ -36,6 +50,11 @@ const fields: SettingsFieldType[] = [
         title: 'RSSHub 源地址',
         description: '设置 RSSHub 源地址，避免无法获取 RSS 源。',
         placeholder: 'https://rsshub.app',
+        storage: {
+            type: 'db',
+            key: 'rsshubSource',
+            fallback: '',
+        },
     },
     {
         type: 'input',
@@ -43,6 +62,26 @@ const fields: SettingsFieldType[] = [
         title: '代理地址',
         description: '设置代理地址，避免无法访问网络。',
         placeholder: 'http://127.0.0.1:7890',
+        storage: {
+            type: 'db',
+            key: 'proxy',
+            fallback: '',
+        },
+    },
+    {
+        type: 'button',
+        id: 'clearParseFailures',
+        title: '清理日志',
+        description: '清理解析订阅源失败日志文件。',
+        label: '清理',
+        onClick: async () => {
+            const result = await window.electron.ipcRenderer.invoke('rss-clear-parse-failures');
+            if (result.success) {
+                toast.success(result.message ?? `已清理 ${result.removedFiles} 个日志文件`, { position: 'top-center', richColors: true });
+            } else {
+                toast.error(result.message ?? '清理失败', { position: 'top-center', richColors: true });
+            }
+        },
     },
     {
         type: 'button',

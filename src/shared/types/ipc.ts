@@ -28,6 +28,7 @@ export type FetchFeedPostsResult = Omit<Posts, 'id' | 'feedId' | 'isRead' | 'pod
 export interface IpcEvents {
     'fetch-feed-info': (url: string) => Promise<{ feed: FetchFeedResult; posts?: FetchFeedPostsResult[] }>;
     'cancel-fetch-feed-info': () => void;
+    'rss-clear-parse-failures': () => Promise<{ success: boolean; removedFiles: number; message?: string }>;
 
     'db-get-feeds': () => Promise<GetFeedsResult[]>;
     'db-insert-feed': (feed: Insertable<Feeds>) => Promise<number | undefined>;

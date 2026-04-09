@@ -1,6 +1,6 @@
 import type { SettingsSchema } from '@shared/types/settings';
 
-import { fetchFeed } from '@/lib/rss';
+import { clearParseFailures, fetchFeed } from '@/lib/rss';
 import { settings } from '@/lib/settings';
 import { ipcMain } from '@/lib/utils';
 
@@ -32,6 +32,10 @@ ipcMain.handle('fetch-feed-info', async (_event, url) => {
     } finally {
         fetchFeedAbortController = null;
     }
+});
+
+ipcMain.handle('rss-clear-parse-failures', async () => {
+    return clearParseFailures();
 });
 
 ipcMain.handle('settings-get', <T extends keyof SettingsSchema>(_, key: T) => settings.get(key));

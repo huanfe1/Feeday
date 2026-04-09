@@ -1,7 +1,6 @@
 import { db, dbMethods } from '@/database';
 import { sql } from 'kysely';
 
-import { settings } from '@/lib/settings';
 import { ipcMain } from '@/lib/utils';
 
 // Feeds
@@ -27,18 +26,7 @@ ipcMain.handle('db-get-feeds', async () => {
         .groupBy('feeds.id')
         .orderBy('feeds.title', 'asc')
         .execute()
-        .then(result =>
-            result.map(feed => {
-                // RSSHub 类型时 link 已是完整 URL；默认类型用 link 作为网站地址
-                const linkForAvatar = feed.link ?? '';
-                const hostname = linkForAvatar.startsWith('http') ? new URL(linkForAvatar).hostname : '';
-                return {
-                    ...feed,
-                    hasUnread: !!feed.hasUnread,
-                    icon: feed.icon ? feed.icon : settings.get('avatarProxy')?.replace('${url}', hostname),
-                };
-            }),
-        );
+        .then(result => result.map(feed => ({ ...feed, hasUnread: !!feed.hasUnread })));
 });
 
 ipcMain.handle('db-insert-feed', async (_event, feed) => {

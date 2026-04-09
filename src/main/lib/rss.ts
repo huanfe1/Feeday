@@ -3,10 +3,27 @@ import type { FetchFeedPostsResult, FetchFeedResult, IpcEvents } from '@shared/t
 import dayjs from 'dayjs';
 import { app, net } from 'electron';
 import { parseFeed } from 'feedsmith';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const PARSE_FAILURES_DIR = 'feed-parse-failures';
+
+export function clearParseFailures(): { success: boolean; removedFiles: number; message?: string } {
+    try {
+        const dir = join(app.getPath('userData'), PARSE_FAILURES_DIR);
+        if (!existsSync(dir)) {
+            return { success: true, removedFiles: 0, message: '暂无解析失败日志可清理' };
+        }
+
+        const removedFiles = readdirSync(dir).length;
+        rmSync(dir, { recursive: true, force: true });
+
+        return { success: true, removedFiles, message: `已清理 ${removedFiles} 个日志文件` };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return { success: false, removedFiles: 0, message: `清理失败：${message}` };
+    }
+}
 
 function saveParseFailure(url: string, rawContent: string, error: unknown): void {
     try {

@@ -49,7 +49,7 @@ function Feed({ feed, className }: { feed: FeedType; className?: string }) {
                         onClick={clickFeed}
                         onDoubleClick={() => window.open(feed.link, '_blank')}
                     >
-                        <Avatar src={feed.icon ?? undefined} title={feed.memo ?? feed.title ?? ''} />
+                        <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link ?? ''} title={feed.memo ?? feed.title ?? ''} />
                         <span className="flex-1 truncate text-sm font-medium capitalize">{feed.memo ?? feed.title ?? ''}</span>
                         {feed.lastFetchError && (
                             <Tooltip>

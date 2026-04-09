@@ -38,7 +38,7 @@ function Post({ id, className }: { id: number; className?: string }) {
                         <p className="text-muted-foreground line-clamp-2 text-sm">{post.summary}</p>
                         <div className="text-muted-foreground mt-1 flex text-xs">
                             <div className="flex items-center gap-x-1 overflow-hidden">
-                                <Avatar src={feed.icon ?? undefined} title={feed.memo ?? feed.title ?? ''} />
+                                <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link ?? ''} title={feed.memo ?? feed.title ?? ''} />
                                 <span className="truncate">{feed.memo ?? feed.title ?? ''}</span>
                             </div>
                             <span className="mx-1">·</span>
