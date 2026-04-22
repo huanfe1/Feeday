@@ -111,7 +111,12 @@ contextMenu({
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    if (is.dev) {
+        const { devtron } = await import('@electron/devtron');
+        await devtron.install();
+    }
+
     // Set app user model id for windows
     electronApp.setAppUserModelId('com.electron');
 
