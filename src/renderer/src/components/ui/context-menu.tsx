@@ -1,15 +1,50 @@
+import { composeEventHandlers } from '@radix-ui/primitive';
 import * as ContextMenuPrimitive from '@radix-ui/react-context-menu';
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-function ContextMenu({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
-    return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />;
+type ContextMenuRemountContextValue = {
+    contentKey: number;
+    /** 在每次右键后调用，用于在菜单已打开时再次右键仍从新锚点重播入场动画并更新位置。 */
+    bumpContentKey: () => void;
+};
+
+const ContextMenuRemountContext = React.createContext<ContextMenuRemountContextValue | null>(null);
+
+function ContextMenu({ children, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
+    const [contentKey, setContentKey] = React.useState(0);
+    const bumpContentKey = React.useCallback(() => {
+        setContentKey(k => k + 1);
+    }, []);
+    const remount = React.useMemo(() => ({ contentKey, bumpContentKey }), [bumpContentKey, contentKey]);
+
+    return (
+        <ContextMenuRemountContext.Provider value={remount}>
+            <ContextMenuPrimitive.Root data-slot="context-menu" {...props}>
+                {children}
+            </ContextMenuPrimitive.Root>
+        </ContextMenuRemountContext.Provider>
+    );
 }
 
-function ContextMenuTrigger({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
-    return <ContextMenuPrimitive.Trigger data-slot="context-menu-trigger" {...props} />;
+function ContextMenuTrigger({ onContextMenu, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
+    const remount = React.useContext(ContextMenuRemountContext);
+    return (
+        <ContextMenuPrimitive.Trigger
+            data-slot="context-menu-trigger"
+            {...props}
+            onContextMenu={composeEventHandlers(onContextMenu, () => {
+                if (!remount) {
+                    return;
+                }
+                requestAnimationFrame(() => {
+                    remount.bumpContentKey();
+                });
+            })}
+        />
+    );
 }
 
 function ContextMenuGroup({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Group>) {
@@ -52,7 +87,7 @@ function ContextMenuSubTrigger({
     );
 }
 
-function ContextMenuSubContent({ className, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.SubContent>) {
+function ContextMenuSubContent({ className, onContextMenu, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.SubContent>) {
     return (
         <ContextMenuPrimitive.SubContent
             className={cn(
@@ -61,11 +96,16 @@ function ContextMenuSubContent({ className, ...props }: React.ComponentProps<typ
             )}
             data-slot="context-menu-sub-content"
             {...props}
+            onContextMenu={composeEventHandlers(onContextMenu, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            })}
         />
     );
 }
 
-function ContextMenuContent({ className, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Content>) {
+function ContextMenuContent({ className, onContextMenu, ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Content>) {
+    const remount = React.useContext(ContextMenuRemountContext);
     return (
         <ContextMenuPrimitive.Portal>
             <ContextMenuPrimitive.Content
@@ -74,7 +114,12 @@ function ContextMenuContent({ className, ...props }: React.ComponentProps<typeof
                     className,
                 )}
                 data-slot="context-menu-content"
+                key={remount?.contentKey}
                 {...props}
+                onContextMenu={composeEventHandlers(onContextMenu, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                })}
             />
         </ContextMenuPrimitive.Portal>
     );
