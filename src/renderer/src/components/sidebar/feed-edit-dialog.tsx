@@ -1,10 +1,11 @@
 import type { FeedType } from '@/store';
-import { useFeedStore, useFolderStore } from '@/store';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { FeedDetail } from '@shared/types/database';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 import { z } from 'zod';
 
 import Avatar from '@/components/avatar';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 
 const editFeedSchema = z.object({
     title: z.string().min(1, '订阅源标题不能为空'),
@@ -26,15 +28,12 @@ const editFeedSchema = z.object({
 
 type EditFeedFormValues = z.infer<typeof editFeedSchema>;
 
-type FeedEditDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    feed: FeedType;
-};
+const fetcherFolders = () => window.electron.ipcRenderer.invoke('db-get-folders');
 
-function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
-    const folders = useFolderStore(state => state.folders);
-    const refreshFeeds = useFeedStore(state => state.refreshFeeds);
+const FeedEditDialog = NiceModal.create<{ feed: FeedType }>(({ feed }) => {
+    const { data: folders = [] } = useSWR('db-get-folders', fetcherFolders);
+    const modal = useModal();
+
     const [feedDetail, setFeedDetail] = useState<FeedDetail | null>(null);
     const currentFeedDetail = feedDetail?.id === feed.id ? feedDetail : null;
     const displayTitle = currentFeedDetail?.memo ?? currentFeedDetail?.title ?? feed.memo ?? feed.title ?? '';
@@ -53,7 +52,7 @@ function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
     });
 
     useEffect(() => {
-        if (!open || feed.id == null) return;
+        if (!modal.visible || feed.id == null) return;
         let cancelled = false;
         window.electron.ipcRenderer
             .invoke('db-get-feed-by-id', feed.id)
@@ -66,10 +65,10 @@ function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
         return () => {
             cancelled = true;
         };
-    }, [open, feed.id]);
+    }, [feed.id, modal.visible]);
 
     useEffect(() => {
-        if (!open) return;
+        if (!modal.visible) return;
         form.reset({
             title: currentFeedDetail?.title ?? feed.title,
             memo: currentFeedDetail?.memo ?? feed.memo ?? '',
@@ -77,7 +76,7 @@ function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
             folderId: currentFeedDetail?.folderId ?? feed.folderId ?? null,
             view: currentFeedDetail?.view ?? feed.view,
         });
-    }, [open, form, feed, currentFeedDetail]);
+    }, [form, feed, currentFeedDetail, modal.visible]);
 
     const onSubmit = async (data: EditFeedFormValues) => {
         if (currentFeedDetail?.id == null && feed.id == null) return;
@@ -90,17 +89,21 @@ function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
                 view: data.view,
             })
             .then(() => {
-                refreshFeeds();
+                eventBus.emit('refresh-feeds', null);
                 toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
-                onOpenChange(false);
+                modal.hide();
             })
             .catch(error => {
                 toast.error('更新订阅源失败：' + error.message, { position: 'top-center', richColors: true });
             });
     };
 
+    const handleOpenChange = () => {
+        modal.visible ? modal.hide() : modal.show();
+    };
+
     return (
-        <Dialog onOpenChange={onOpenChange} open={open}>
+        <Dialog onOpenChange={handleOpenChange} open={modal.visible}>
             <DialogContent className="flex flex-col overflow-hidden p-0 shadow-2xl">
                 <DialogHeader className="bg-sidebar-accent/60 flex-none border-b px-6 py-5">
                     <div className="flex items-center gap-3">
@@ -226,6 +229,8 @@ function FeedEditDialog({ open, onOpenChange, feed }: FeedEditDialogProps) {
             </DialogContent>
         </Dialog>
     );
-}
+});
 
-export default FeedEditDialog;
+export const feedEditDialog = (feed: FeedType) => {
+    return NiceModal.show(FeedEditDialog, { feed });
+};
