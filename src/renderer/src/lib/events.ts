@@ -1,12 +1,17 @@
+import type { FeedKey } from '@shared/types';
+import type { GetFeedsResult } from '@shared/types/database';
+
 export type Theme = 'dark' | 'light' | 'system';
 
 export interface EventMap {
-    'jump-to-feed': { feedId: number };
+    'jump-to-feed': { feedId: number; postId?: number | null };
     'theme-change': Theme;
     'refresh-feeds': null;
     'refresh-posts': null;
     'mutate-post-read': { postId: number; isRead: boolean };
-    'read-all-posts': null;
+    'mutate-feed-unread': { feedId: number; hasUnread: boolean };
+    'mutate-feed': { feedId: number; patch: Pick<GetFeedsResult, 'memo' | 'folderId' | 'view'> };
+    'read-all-posts': { feedKey: FeedKey };
 }
 
 class EventEmitter<T extends EventMap> extends EventTarget {

@@ -86,8 +86,7 @@ export default function Sidebar() {
                 },
                 { revalidate: false },
             );
-            eventBus.emit('read-all-posts', null);
-            eventBus.emit('refresh-feeds', null);
+            eventBus.emit('read-all-posts', { feedKey });
         });
     };
 
@@ -109,8 +108,8 @@ export default function Sidebar() {
                 { revalidate: false },
             );
 
-            window.electron.ipcRenderer.invoke('db-update-post-read-by-id', postId, isRead).then(() => {
-                eventBus.emit('refresh-feeds', null);
+            window.electron.ipcRenderer.invoke('db-update-post-read-by-id', postId, isRead).then(result => {
+                if (result) eventBus.emit('mutate-feed-unread', result);
             });
         });
     }, [mutate]);

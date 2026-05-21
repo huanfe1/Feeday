@@ -151,11 +151,23 @@ ipcMain.handle('db-get-post-by-id', async (_event, postId) => {
 });
 
 ipcMain.handle('db-update-post-read-by-id', async (_event, postId, isRead) => {
+    const post = await db.selectFrom('posts').select('feedId').where('id', '=', postId).executeTakeFirst();
+    if (!post) return null;
+
     await db
         .updateTable('posts')
         .set({ isRead: (isRead ? 1 : 0) as 0 | 1 })
         .where('id', '=', postId)
         .execute();
+
+    const row = await db
+        .selectFrom('posts')
+        .select(sql<number>`COUNT(*)`.as('count'))
+        .where('feedId', '=', post.feedId)
+        .where('isRead', '=', 0 as never)
+        .executeTakeFirst();
+
+    return { feedId: post.feedId, hasUnread: (row?.count ?? 0) > 0 };
 });
 
 ipcMain.handle('db-read-all-posts', async (_event, feedKey) => {

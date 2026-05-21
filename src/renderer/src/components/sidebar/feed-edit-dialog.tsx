@@ -2,8 +2,8 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { GetFeedsResult } from '@shared/types/database';
 import type { FeedDetail } from '@shared/types/database';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 import { z } from 'zod';
@@ -51,6 +51,9 @@ const FeedEditDialog = NiceModal.create<{ feed: GetFeedsResult }>(({ feed }) => 
         },
     });
 
+    const selectedView = useWatch({ control: form.control, name: 'view' });
+    const visibleFolders = useMemo(() => folders.filter(folder => folder.view === selectedView), [folders, selectedView]);
+
     useEffect(() => {
         if (!modal.visible || feed.id == null) return;
         let cancelled = false;
@@ -89,7 +92,16 @@ const FeedEditDialog = NiceModal.create<{ feed: GetFeedsResult }>(({ feed }) => 
                 view: data.view,
             })
             .then(() => {
-                eventBus.emit('refresh-feeds', null);
+                const patch = {
+                    memo: data.memo?.trim() || null,
+                    folderId: data.folderId ?? null,
+                    view: data.view,
+                };
+                const sidebarChanged = patch.memo !== (feed.memo ?? null) || patch.folderId !== (feed.folderId ?? null) || patch.view !== feed.view;
+
+                if (sidebarChanged) {
+                    eventBus.emit('mutate-feed', { feedId: feed.id, patch });
+                }
                 toast.success('订阅源更新成功', { position: 'top-center', richColors: true });
                 modal.hide();
             })
@@ -151,7 +163,17 @@ const FeedEditDialog = NiceModal.create<{ feed: GetFeedsResult }>(({ feed }) => 
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>视图</FormLabel>
-                                            <Select onValueChange={value => field.onChange(Number.parseInt(value, 10))} value={field.value.toString()}>
+                                            <Select
+                                                onValueChange={value => {
+                                                    const newView = Number.parseInt(value, 10);
+                                                    field.onChange(newView);
+                                                    const folderId = form.getValues('folderId');
+                                                    if (folderId != null && !folders.some(f => f.id === folderId && f.view === newView)) {
+                                                        form.setValue('folderId', null);
+                                                    }
+                                                }}
+                                                value={field.value.toString()}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger className="w-full">
                                                         <SelectValue placeholder="选择视图" />
@@ -183,7 +205,7 @@ const FeedEditDialog = NiceModal.create<{ feed: GetFeedsResult }>(({ feed }) => 
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="none">未分类</SelectItem>
-                                                    {folders.map(folder => (
+                                                    {visibleFolders.map(folder => (
                                                         <SelectItem key={folder.id} value={folder.id.toString()}>
                                                             {folder.name}
                                                         </SelectItem>

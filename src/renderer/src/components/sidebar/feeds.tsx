@@ -1,10 +1,11 @@
 import { useStore } from '@/store';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import type { GetFeedsResult } from '@shared/types/database';
+import type { FeedKey } from '@shared/types';
+import type { GetFeedsFolderGroup, GetFeedsResult } from '@shared/types/database';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import useSWR from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 
 import { alertDialog } from '@/components/modal/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,119 @@ import Feed from './feed';
 
 const fetcherFeeds = ([_channel, view]: [string, number]) => window.electron.ipcRenderer.invoke('db-get-feeds', view);
 
+function patchFeedUnread(data: GetFeedsFolderGroup[] | undefined, feedId: number, hasUnread: boolean): GetFeedsFolderGroup[] | undefined {
+    if (!data) return data;
+
+    let changed = false;
+    const result = data.map(folder => {
+        let folderChanged = false;
+        const feeds = folder.feeds.map(feed => {
+            if (feed.id !== feedId || feed.hasUnread === hasUnread) return feed;
+            folderChanged = true;
+            changed = true;
+            return { ...feed, hasUnread };
+        });
+        return folderChanged ? { ...folder, feeds } : folder;
+    });
+    return changed ? result : data;
+}
+
+function patchFeedsUnreadByKey(data: GetFeedsFolderGroup[] | undefined, feedKey: FeedKey): GetFeedsFolderGroup[] | undefined {
+    if (!data) return data;
+
+    const [prefix, idStr] = feedKey.split('-');
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return data;
+
+    const isInScope = (feed: GetFeedsResult) => {
+        if (prefix === 'feed') return feed.id === id;
+        if (prefix === 'folder') return feed.folderId === id;
+        if (prefix === 'view') return feed.view === id;
+        return false;
+    };
+
+    let changed = false;
+    const result = data.map(folder => {
+        let folderChanged = false;
+        const feeds = folder.feeds.map(feed => {
+            if (!isInScope(feed) || !feed.hasUnread) return feed;
+            folderChanged = true;
+            changed = true;
+            return { ...feed, hasUnread: false };
+        });
+        return folderChanged ? { ...folder, feeds } : folder;
+    });
+    return changed ? result : data;
+}
+
+type FeedUpdatePatch = Pick<GetFeedsResult, 'memo' | 'folderId' | 'view'>;
+
+function patchFeed(data: GetFeedsFolderGroup[] | undefined, feedId: number, patch: FeedUpdatePatch): GetFeedsFolderGroup[] | undefined {
+    if (!data) return data;
+
+    let sourceFolderIdx = -1;
+    let sourceFeedIdx = -1;
+    let currentFeed: GetFeedsResult | undefined;
+
+    for (let i = 0; i < data.length; i++) {
+        const idx = data[i].feeds.findIndex(f => f.id === feedId);
+        if (idx !== -1) {
+            sourceFolderIdx = i;
+            sourceFeedIdx = idx;
+            currentFeed = data[i].feeds[idx];
+            break;
+        }
+    }
+    if (!currentFeed || sourceFolderIdx === -1) return data;
+
+    const updatedFeed: GetFeedsResult = {
+        ...currentFeed,
+        memo: patch.memo ?? null,
+        folderId: patch.folderId ?? null,
+        view: patch.view,
+    };
+
+    if (patch.view !== currentFeed.view) {
+        const folder = data[sourceFolderIdx];
+        const feeds = folder.feeds.filter((_, i) => i !== sourceFeedIdx);
+        if (feeds.length === folder.feeds.length) return data;
+        return data.map((f, i) => (i === sourceFolderIdx ? { ...f, feeds } : f));
+    }
+
+    const targetFolderId = patch.folderId ?? 0;
+    const sourceFolderId = data[sourceFolderIdx].id;
+    const folderChanged = targetFolderId !== sourceFolderId;
+
+    if (!folderChanged) {
+        if (currentFeed.memo === updatedFeed.memo && currentFeed.folderId === updatedFeed.folderId && currentFeed.view === updatedFeed.view) {
+            return data;
+        }
+        const feeds = data[sourceFolderIdx].feeds.map((f, i) => (i === sourceFeedIdx ? updatedFeed : f));
+        return data.map((f, i) => (i === sourceFolderIdx ? { ...f, feeds } : f));
+    }
+
+    let changed = false;
+    const withoutFeed = data.map((folder, i) => {
+        if (i !== sourceFolderIdx) return folder;
+        changed = true;
+        return { ...folder, feeds: folder.feeds.filter((_, j) => j !== sourceFeedIdx) };
+    });
+
+    const result = withoutFeed.map(folder => {
+        if (folder.id !== targetFolderId) return folder;
+        changed = true;
+        return { ...folder, feeds: [...folder.feeds, updatedFeed] };
+    });
+
+    return changed ? result : data;
+}
+
 function Feeds({ className }: { className?: string }) {
     const view = useStore(state => state.view);
     const setFeedKey = useStore(state => state.setFeedKey);
 
     const { data: feedItems, mutate } = useSWR(['db-get-feeds', view], fetcherFeeds);
+    const { mutate: globalMutate } = useSWRConfig();
 
     const direction = view === 1 ? 'left' : 'right';
     const width = Number(localStorage.getItem('resizable:feeds-sidebar'));
@@ -40,9 +149,26 @@ function Feeds({ className }: { className?: string }) {
     };
 
     useEffect(() => {
-        const removeListener = eventBus.on('refresh-feeds', () => mutate());
-        return () => removeListener();
-    }, [mutate]);
+        const removeRefresh = eventBus.on('refresh-feeds', () => mutate());
+        const removeUnread = eventBus.on('mutate-feed-unread', ({ feedId, hasUnread }) => {
+            mutate(current => patchFeedUnread(current, feedId, hasUnread), { revalidate: false });
+        });
+        const removeReadAll = eventBus.on('read-all-posts', ({ feedKey }) => {
+            mutate(current => patchFeedsUnreadByKey(current, feedKey), { revalidate: false });
+        });
+        const removeFeedUpdate = eventBus.on('mutate-feed', ({ feedId, patch }) => {
+            mutate(current => patchFeed(current, feedId, patch), { revalidate: false });
+            if (patch.view !== view) {
+                void globalMutate(['db-get-feeds', patch.view]);
+            }
+        });
+        return () => {
+            removeRefresh();
+            removeUnread();
+            removeReadAll();
+            removeFeedUpdate();
+        };
+    }, [mutate, globalMutate, view]);
 
     return (
         <ContextMenu>
@@ -153,10 +279,11 @@ const FolderItem = memo(function FolderItem({ name, id, feeds }: { name?: string
     };
 
     const handleJumpToFeed = useCallback(
-        ({ feedId }: { feedId: number }) => {
+        ({ feedId, postId }: { feedId: number; postId?: number | null }) => {
             if (!feeds.some(feed => feed.id === feedId)) return;
             setFeedKey(`feed-${feedId}`);
             needJumpFeedId.current = feedId;
+            postId && useStore.getState().setPostId(postId);
 
             if (isOpen || id === 0) {
                 scrollToFeed();

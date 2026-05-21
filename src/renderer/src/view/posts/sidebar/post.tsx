@@ -17,7 +17,10 @@ function Post({ post, className }: { post: SidebarPost; className?: string }) {
     const handleClick = () => {
         useStore.getState().setPostId(post.id);
         if (!post.isRead) {
-            eventBus.emit('mutate-post-read', { postId: post.id, isRead: true });
+            // 推迟标记已读，让选中态先完成绘制，避免同一次点击内叠加 SWR mutate 渲染
+            queueMicrotask(() => {
+                eventBus.emit('mutate-post-read', { postId: post.id, isRead: true });
+            });
         }
     };
 

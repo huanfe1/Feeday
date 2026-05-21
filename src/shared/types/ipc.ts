@@ -54,7 +54,7 @@ export interface IpcEvents {
     'db-get-posts': (params: DbGetPostsParams) => Promise<DbGetPostsResult>;
     'db-insert-post': (feedId: number, post: InsertPost) => Promise<void>;
     'db-get-post-by-id': (postId: number) => Promise<PostDetail | null>;
-    'db-update-post-read-by-id': (postId: number, isRead: boolean) => Promise<void>;
+    'db-update-post-read-by-id': (postId: number, isRead: boolean) => Promise<{ feedId: number; hasUnread: boolean } | null>;
     'db-read-all-posts': (feedKey?: FeedKey) => Promise<void>;
 
     'db-get-folders': () => Promise<Selectable<Folders>[]>;

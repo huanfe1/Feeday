@@ -26,7 +26,7 @@ function Main() {
     const [isScrolled, setIsScrolled] = useState(false);
     const scrollViewRef = useRef<HTMLDivElement>(null);
 
-    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-post-by-id', postId], fetcher);
+    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-post-by-id', postId], fetcher, { keepPreviousData: true });
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!post?.podcast) return null;
@@ -37,7 +37,10 @@ function Main() {
         return { postId: post.id, feedId: post.feedId, podcast: post?.podcast };
     }, [post]);
 
-    useEffect(() => setIsScrolled(false), [postId]);
+    useEffect(() => {
+        scrollViewRef.current?.scrollTo({ top: 0 });
+        setIsScrolled(false);
+    }, [postId]);
 
     useEffect(() => {
         return eventBus.on('mutate-post-read', ({ postId: id, isRead }) => {
@@ -51,8 +54,9 @@ function Main() {
         });
     }, [mutate]);
 
-    const handleFeedClick = (feedId: number, postId: number) => {
-        eventBus.emit('jump-to-feed', { feedId });
+    const handleFeedClick = () => {
+        if (!post) return;
+        eventBus.emit('jump-to-feed', { feedId: post.feedId, postId: post?.id });
     };
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -70,11 +74,9 @@ function Main() {
 
     if (!post) {
         return (
-            <div className="h-full overflow-hidden">
-                <motion.div className="text-muted-foreground flex h-full items-center justify-center select-none" {...enterVariants}>
-                    <div className="flex flex-col items-center gap-y-3">
-                        <Logo className="size-25 opacity-50" />
-                    </div>
+            <div className="text-muted-foreground flex h-full items-center justify-center select-none">
+                <motion.div className="flex flex-col items-center gap-y-3" {...enterVariants}>
+                    <Logo className="size-25 opacity-50" />
                 </motion.div>
             </div>
         );
@@ -108,9 +110,9 @@ function Main() {
                 </div>
             </div>
             <div className="relative min-h-0 grow">
-                <ScrollArea className="h-full" key={post.id} onScroll={handleScroll} viewportRef={scrollViewRef}>
+                <ScrollArea className="h-full" onScroll={handleScroll} viewportRef={scrollViewRef}>
                     <AnimatePresence mode="wait">
-                        <motion.div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl" {...enterVariants}>
+                        <motion.div className="mx-auto max-w-2xl px-8 pt-4 pb-4 2xl:max-w-4xl" key={postId} {...enterVariants}>
                             <article className="mb-12">
                                 <header className="border-border mb-8 space-y-4 border-b pb-8">
                                     <h1>
@@ -124,10 +126,7 @@ function Main() {
                                         </a>
                                     </h1>
                                     <div className="text-muted-foreground flex flex-wrap items-center gap-6 text-sm">
-                                        <div
-                                            className="flex cursor-pointer items-center gap-x-1"
-                                            onClick={() => post.feedId != null && post.id != null && handleFeedClick(post.feedId, post.id)}
-                                        >
+                                        <div className="flex cursor-pointer items-center gap-x-1" onClick={handleFeedClick}>
                                             <Avatar defaultAvatarUrl={post.feedIcon ?? undefined} domain={post.feedLink} title={post.feedTitle} />
                                             <span className="font-medium">{post.feedTitle}</span>
                                         </div>
