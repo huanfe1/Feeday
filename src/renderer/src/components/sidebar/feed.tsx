@@ -1,6 +1,6 @@
-import type { FeedType } from '@/store';
-import type { SelectedFeedKey } from '@/types';
-import { memo, useState } from 'react';
+import { useStore } from '@/store';
+import type { GetFeedsResult } from '@shared/types/database';
+import { memo } from 'react';
 import { toast } from 'sonner';
 
 import Avatar from '@/components/avatar';
@@ -8,24 +8,15 @@ import { alertDialog } from '@/components/modal/dialog';
 import FeedContextMenu from '@/components/sidebar/feed-context-menu';
 import { feedEditDialog } from '@/components/sidebar/feed-edit-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
-function Feed({
-    feed,
-    className,
-    mutate,
-    isSelected,
-    setSelectedFeedKey,
-}: {
-    feed: FeedType;
-    className?: string;
-    mutate: () => void;
-    isSelected: boolean;
-    setSelectedFeedKey: (feed: SelectedFeedKey) => void;
-}) {
+function Feed({ feed, className }: { feed: GetFeedsResult; className?: string }) {
+    const isSelected = useStore(state => state.feedKey === `feed-${feed.id}`);
+
     const clickFeed = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        setSelectedFeedKey(`feed-${feed.id}`);
+        useStore.getState().setFeedKey(`feed-${feed.id}`);
     };
 
     const handleDeleteFeed = () => {
@@ -37,7 +28,7 @@ function Feed({
         }).then(() => {
             window.electron.ipcRenderer.invoke('db-delete-feed', feed.id).then(() => {
                 toast.success(`订阅源「${title}」删除成功`);
-                mutate();
+                eventBus.emit('refresh-feeds', null);
             });
         });
     };

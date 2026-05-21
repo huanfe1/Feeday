@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import Header from '@/components/header';
 
 import Main from './main';
@@ -11,4 +13,4 @@ function Media() {
     );
 }
 
-export default Media;
+export default memo(Media);

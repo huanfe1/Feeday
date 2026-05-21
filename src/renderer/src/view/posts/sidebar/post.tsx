@@ -1,31 +1,33 @@
-import { useFeedStore, usePostStore } from '@/store';
+import { useStore } from '@/store';
+import type { SidebarPost } from '@shared/types/ipc';
 import dayjs from 'dayjs';
 import { memo, useRef, useState } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import Avatar from '@/components/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { dayjsPlugin } from '@/lib/dayjs';
+import { fromNow } from '@/lib/dayjs';
 import { eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
-function Post({ id, className }: { id: number; className?: string }) {
-    const post = usePostStore(useShallow(state => state.posts.find(p => p.id === id)));
-    const isSelected = usePostStore(state => state.selectedPostId === post?.id);
-    const updatePostReadById = usePostStore(state => state.updatePostReadById);
-    const setSelectedPost = usePostStore(state => state.setSelectedPost);
+function Post({ post, className }: { post: SidebarPost; className?: string }) {
+    const isSelected = useStore(state => state.postId === post.id);
 
-    const feed = useFeedStore(state => state.feeds.find(f => f.id === post?.feedId));
+    const { feed } = post;
 
-    const openLink = () => window.open(post?.link, '_blank');
+    const handleClick = () => {
+        useStore.getState().setPostId(post.id);
+        if (!post.isRead) {
+            eventBus.emit('mutate-post-read', { postId: post.id, isRead: true });
+        }
+    };
 
-    if (!feed || !post) return null;
+    const openLink = () => window.open(post.link, '_blank');
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
                 <div
                     className={cn('flex p-4 select-none', { 'bg-sidebar-accent dark:bg-accent': isSelected, 'dark:hover:bg-accent/50 hover:bg-accent': !isSelected }, className)}
-                    onClick={() => setSelectedPost(post.id)}
+                    onClick={handleClick}
                     onDoubleClick={openLink}
                 >
                     <div className={cn('right-anchor-left-1.5 h-anchor anchored/title flex items-center', { hidden: post.isRead })}>
@@ -38,12 +40,12 @@ function Post({ id, className }: { id: number; className?: string }) {
                         <p className="text-muted-foreground line-clamp-2 text-sm">{post.summary}</p>
                         <div className="text-muted-foreground mt-1 flex text-xs">
                             <div className="flex items-center gap-x-1 overflow-hidden">
-                                <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link ?? ''} title={feed.memo ?? feed.title ?? ''} />
-                                <span className="truncate">{feed.memo ?? feed.title ?? ''}</span>
+                                <Avatar defaultAvatarUrl={feed.icon ?? undefined} domain={feed.link} title={feed.title} />
+                                <span className="truncate">{feed.title}</span>
                             </div>
                             <span className="mx-1">·</span>
                             <span className="flex-none" title={dayjs(post.pubDate).format('YYYY-MM-DD')}>
-                                {dayjsPlugin(post.pubDate).fromNow()}
+                                {post.pubDate && fromNow(post.pubDate)}
                             </span>
                         </div>
                     </div>
@@ -56,7 +58,7 @@ function Post({ id, className }: { id: number; className?: string }) {
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="border-border/80 min-w-40 rounded-xl p-2 shadow-xl backdrop-blur-md">
-                <ContextMenuItem className="rounded-md" onSelect={() => post.id != null && updatePostReadById(post.id, !post.isRead)}>
+                <ContextMenuItem className="rounded-md" onSelect={() => post.id != null && eventBus.emit('mutate-post-read', { postId: post.id, isRead: !post.isRead })}>
                     <i className={cn('text-muted-foreground size-4', post.isRead ? 'i-mingcute-mail-open-line' : 'i-mingcute-mail-line')} />
                     {post.isRead ? '标记为未读' : '标记为已读'}
                 </ContextMenuItem>

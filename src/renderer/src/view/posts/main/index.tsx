@@ -1,4 +1,4 @@
-import { usePostStore } from '@/store';
+import { useStore } from '@/store';
 import type { AudioTrack } from '@/store';
 import type { PostDetail } from '@shared/types/database';
 import dayjs from 'dayjs';
@@ -21,12 +21,12 @@ const fetcher = ([_channel, postId]: readonly [string, number | null]): Promise<
     postId != null ? window.electron.ipcRenderer.invoke('db-get-post-by-id', postId) : Promise.resolve(null);
 
 function Main() {
-    const selectedPostId = usePostStore(state => state.selectedPostId);
+    const postId = useStore(state => state.postId);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const scrollViewRef = useRef<HTMLDivElement>(null);
 
-    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-post-by-id', selectedPostId], fetcher);
+    const { data: post, mutate } = useSWR<PostDetail | null>(['db-get-post-by-id', postId], fetcher);
 
     const audio: AudioTrack | null = useMemo(() => {
         if (!post?.podcast) return null;
@@ -37,10 +37,22 @@ function Main() {
         return { postId: post.id, feedId: post.feedId, podcast: post?.podcast };
     }, [post]);
 
-    useEffect(() => setIsScrolled(false), [selectedPostId]);
+    useEffect(() => setIsScrolled(false), [postId]);
+
+    useEffect(() => {
+        return eventBus.on('mutate-post-read', ({ postId: id, isRead }) => {
+            mutate(current => (current?.id === id ? { ...current, isRead } : current), { revalidate: false });
+        });
+    }, [mutate]);
+
+    useEffect(() => {
+        return eventBus.on('read-all-posts', () => {
+            mutate(current => (current ? { ...current, isRead: true } : current), { revalidate: false });
+        });
+    }, [mutate]);
 
     const handleFeedClick = (feedId: number, postId: number) => {
-        eventBus.emit('jump-to-feed', { feedId, postId });
+        eventBus.emit('jump-to-feed', { feedId });
     };
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -53,8 +65,7 @@ function Main() {
 
     const handleUpdatePostReadById = () => {
         if (!post?.id) return;
-        usePostStore.getState().updatePostReadById(post?.id, !post?.isRead);
-        mutate({ ...post, isRead: !post?.isRead }, false);
+        eventBus.emit('mutate-post-read', { postId: post.id, isRead: !post.isRead });
     };
 
     if (!post) {

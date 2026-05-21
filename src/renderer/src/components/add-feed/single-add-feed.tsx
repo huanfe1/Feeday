@@ -1,4 +1,4 @@
-import { useFeedStore, useFolderStore, usePostStore } from '@/store';
+import { useFolderStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Podcast } from '@shared/types/database';
 import type { FetchFeedPostsResult, FetchFeedResult } from '@shared/types/ipc';
@@ -15,6 +15,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 const FEED_TYPE_RSSHUB = 1;
@@ -158,8 +159,8 @@ export function SingleAddFeed({ onClose }: { onClose: () => void }) {
                 );
             await Promise.all(tasks);
 
-            useFeedStore.getState().refreshFeeds();
-            usePostStore.getState().refreshPosts();
+            eventBus.emit('refresh-feeds', null);
+            eventBus.emit('refresh-posts', null);
 
             onClose();
             toast.success(`「${values.title}」添加订阅源成功`);

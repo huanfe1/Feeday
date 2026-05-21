@@ -1,5 +1,13 @@
 import type { DatabaseSync } from 'node:sqlite';
 
+/** 已有库若缺少 folders.view 则补齐（默认 1，与 feeds.view 语义一致） */
+function migrateFoldersView(db: DatabaseSync) {
+    const cols = db.prepare('PRAGMA table_info(folders)').all() as { name: string }[];
+    if (!cols.some(c => c.name === 'view')) {
+        db.exec(`ALTER TABLE folders ADD COLUMN view INTEGER NOT NULL DEFAULT 1`);
+    }
+}
+
 const initSql = `
     PRAGMA foreign_keys = ON;
 
@@ -54,6 +62,7 @@ const initSql = `
     CREATE TABLE IF NOT EXISTS folders (
         id INTEGER PRIMARY KEY AUTOINCREMENT, -- 文件夹ID
         name TEXT NOT NULL UNIQUE, -- 文件夹名称
+        view INTEGER NOT NULL DEFAULT 1, -- 视图（1: 文章, 2: 媒体）
         created_at DATETIME DEFAULT (DATETIME('now', 'localtime')), -- 创建时间
         updated_at DATETIME DEFAULT (DATETIME('now', 'localtime')) -- 更新时间
     );
@@ -93,4 +102,5 @@ const initSql = `
 
 export function initDB(db: DatabaseSync) {
     db.exec(initSql);
+    migrateFoldersView(db);
 }

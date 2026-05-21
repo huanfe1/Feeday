@@ -53,6 +53,14 @@ export type GetFeedsResult = Pick<Selectable<Feeds>, 'id' | 'title' | 'memo' | '
     hasUnread: boolean;
 };
 
+/** db-get-feeds：按文件夹分组的列表（id=0 为未分类） */
+export type GetFeedsFolderGroup = {
+    id: number;
+    title: string;
+    view: number;
+    feeds: GetFeedsResult[];
+};
+
 /** db-get-feed-by-id 查询结果：单条订阅源完整字段 */
 export type FeedDetail = Selectable<Feeds>;
 
@@ -69,6 +77,7 @@ export type PostDetail = Omit<PostWithNormalized, 'summary'> & {
 export interface Folders {
     id: Generated<number>;
     name: string;
+    view: Generated<number>;
 }
 
 export interface Database {

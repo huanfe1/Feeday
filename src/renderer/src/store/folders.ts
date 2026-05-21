@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export type FolderType = {
     id: number;
     name: string;
+    view: number;
     isOpen?: boolean;
 };
 
@@ -13,7 +14,7 @@ interface UseFolderStore {
     setSelectedFolderId: (folderId: number | null) => void;
     getSelectedFolder: () => FolderType | null;
     refreshFolders: () => void;
-    createFolder: (name: string) => Promise<number>;
+    createFolder: (name: string, view?: number) => Promise<number>;
     updateFolder: (id: number, name: string) => Promise<void>;
     deleteFolder: (id: number) => Promise<void>;
     setFolderOpen: (id: number, open: boolean) => void;
@@ -39,8 +40,8 @@ export const useFolderStore = create<UseFolderStore>((set, get) => {
         setSelectedFolderId: folderId => set({ selectedFolderId: folderId }),
         getSelectedFolder: () => get().folders.find(folder => folder.id === get().selectedFolderId) || null,
         refreshFolders,
-        createFolder: async (name: string) => {
-            const id = await window.electron.ipcRenderer.invoke('db-insert-folder', name);
+        createFolder: async (name: string, view = 1) => {
+            const id = await window.electron.ipcRenderer.invoke('db-create-folder', name, view);
             get().refreshFolders();
             return id ?? 0;
         },

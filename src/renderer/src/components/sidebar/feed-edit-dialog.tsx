@@ -1,6 +1,6 @@
-import type { FeedType } from '@/store';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { GetFeedsResult } from '@shared/types/database';
 import type { FeedDetail } from '@shared/types/database';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -30,7 +30,7 @@ type EditFeedFormValues = z.infer<typeof editFeedSchema>;
 
 const fetcherFolders = () => window.electron.ipcRenderer.invoke('db-get-folders');
 
-const FeedEditDialog = NiceModal.create<{ feed: FeedType }>(({ feed }) => {
+const FeedEditDialog = NiceModal.create<{ feed: GetFeedsResult }>(({ feed }) => {
     const { data: folders = [] } = useSWR('db-get-folders', fetcherFolders);
     const modal = useModal();
 
@@ -231,6 +231,6 @@ const FeedEditDialog = NiceModal.create<{ feed: FeedType }>(({ feed }) => {
     );
 });
 
-export const feedEditDialog = (feed: FeedType) => {
+export const feedEditDialog = (feed: GetFeedsResult) => {
     return NiceModal.show(FeedEditDialog, { feed });
 };

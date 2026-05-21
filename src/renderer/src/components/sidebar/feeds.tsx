@@ -1,6 +1,6 @@
-import type { FeedType } from '@/store';
-import type { SelectedFeedKey, SelectedFeedKeyPrefix } from '@/types';
+import { useStore } from '@/store';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import type { GetFeedsResult } from '@shared/types/database';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -22,24 +22,22 @@ import Feed from './feed';
 const fetcherFeeds = ([_channel, view]: [string, number]) => window.electron.ipcRenderer.invoke('db-get-feeds', view);
 
 function Feeds({ className }: { className?: string }) {
-    const [view, setView] = useState(1);
-    const [selectedFeedKey, setSelectedFeedKey] = useState<SelectedFeedKey>('view-1');
+    const view = useStore(state => state.view);
+    const setFeedKey = useStore(state => state.setFeedKey);
+
     const { data: feedItems, mutate } = useSWR(['db-get-feeds', view], fetcherFeeds);
 
     const direction = view === 1 ? 'left' : 'right';
     const width = Number(localStorage.getItem('resizable:feeds-sidebar'));
 
-    const handleBlankClick = useCallback(() => setSelectedFeedKey(`view-${view}`), [view]);
-
-    const toggleView = (value: number) => {
-        setView(value);
-        setSelectedFeedKey(`view-${value}`);
+    const handleBlankClick = () => {
+        setFeedKey(`view-${view}`);
+        useStore.getState().setPostId(null);
     };
-
-    useEffect(() => {
-        const [prefix, id] = selectedFeedKey.split('-') as [SelectedFeedKeyPrefix, number];
-        eventBus.emit('refresh-posts', { [prefix]: id });
-    }, [selectedFeedKey]);
+    const toggleView = (value: number) => {
+        useStore.getState().setView(value);
+        setFeedKey(`view-${value}`);
+    };
 
     useEffect(() => {
         const removeListener = eventBus.on('refresh-feeds', () => mutate());
@@ -80,15 +78,7 @@ function Feeds({ className }: { className?: string }) {
                             ) : (
                                 <div onClick={e => e.stopPropagation()}>
                                     {feedItems.map(item => (
-                                        <FolderItem
-                                            id={item.id}
-                                            feeds={item.feeds}
-                                            key={item.id}
-                                            mutate={mutate}
-                                            name={item.title}
-                                            selectedFeedKey={selectedFeedKey}
-                                            setSelectedFeedKey={setSelectedFeedKey}
-                                        />
+                                        <FolderItem id={item.id} feeds={item.feeds} key={item.id} name={item.title} />
                                     ))}
                                 </div>
                             )}
@@ -106,25 +96,12 @@ function Feeds({ className }: { className?: string }) {
     );
 }
 
-const FolderItem = memo(function FolderItem({
-    name,
-    id,
-    feeds,
-    mutate,
-    selectedFeedKey,
-    setSelectedFeedKey,
-}: {
-    name?: string;
-    id: number;
-    feeds: FeedType[];
-    mutate: () => void;
-    selectedFeedKey: SelectedFeedKey;
-    setSelectedFeedKey: (feed: SelectedFeedKey) => void;
-}) {
+const FolderItem = memo(function FolderItem({ name, id, feeds }: { name?: string; id: number; feeds: GetFeedsResult[] }) {
     const DURATION = 0.2;
 
     const [isOpen, setIsOpen] = useState(false);
-    const isSelected = selectedFeedKey === `folder-${id}`;
+    const isSelected = useStore(state => state.feedKey === `folder-${id}`);
+    const setFeedKey = useStore(state => state.setFeedKey);
 
     const openRenameDialog = () => {
         if (!id || !name) return;
@@ -141,7 +118,7 @@ const FolderItem = memo(function FolderItem({
             window.electron.ipcRenderer
                 .invoke('db-delete-folder', id)
                 .then(() => {
-                    mutate();
+                    eventBus.emit('refresh-feeds', null);
                     toast.success('文件夹删除成功', { position: 'top-center', richColors: true });
                 })
                 .catch(err => {
@@ -155,7 +132,7 @@ const FolderItem = memo(function FolderItem({
 
     const clickFolder = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        setSelectedFeedKey(`folder-${id}`);
+        setFeedKey(`folder-${id}`);
     };
 
     const toggleFolderOpen = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -178,7 +155,7 @@ const FolderItem = memo(function FolderItem({
     const handleJumpToFeed = useCallback(
         ({ feedId }: { feedId: number }) => {
             if (!feeds.some(feed => feed.id === feedId)) return;
-            setSelectedFeedKey(`feed-${feedId}`);
+            setFeedKey(`feed-${feedId}`);
             needJumpFeedId.current = feedId;
 
             if (isOpen || id === 0) {
@@ -191,7 +168,7 @@ const FolderItem = memo(function FolderItem({
             if (!feedElement) return;
             setTimeout(() => feedElement.scrollIntoView({ behavior: 'smooth', block: 'center' }), DURATION * 1000);
         },
-        [feeds, isOpen, id, DURATION, setSelectedFeedKey, needJumpFeedId],
+        [feeds, isOpen, id, DURATION, setFeedKey, needJumpFeedId],
     );
 
     useEffect(() => {
@@ -200,7 +177,7 @@ const FolderItem = memo(function FolderItem({
     }, [handleJumpToFeed]);
 
     if (id === 0) {
-        return feeds.map(item => <Feed feed={item} isSelected={selectedFeedKey === `feed-${item.id}`} key={item.id} mutate={mutate} setSelectedFeedKey={setSelectedFeedKey} />);
+        return feeds.map(item => <Feed feed={item} key={item.id} />);
     }
 
     const hasUnread = feeds.some(feed => feed.hasUnread);
@@ -244,14 +221,7 @@ const FolderItem = memo(function FolderItem({
                         transition={{ duration: DURATION, ease: 'easeInOut' }}
                     >
                         {feeds.map(item => (
-                            <Feed
-                                className="pl-6"
-                                feed={item}
-                                isSelected={selectedFeedKey === `feed-${item.id}`}
-                                key={item.id}
-                                mutate={mutate}
-                                setSelectedFeedKey={setSelectedFeedKey}
-                            />
+                            <Feed className="pl-6" feed={item} key={item.id} />
                         ))}
                     </motion.div>
                 )}

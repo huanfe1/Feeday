@@ -1,10 +1,10 @@
-import type { FeedType } from '@/store';
+import type { GetFeedsResult } from '@shared/types/database';
 import type { ReactNode } from 'react';
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 
 type FeedContextMenuProps = {
-    feed: FeedType;
+    feed: GetFeedsResult;
     children: ReactNode;
     onEdit: () => void;
     onDelete: () => void;

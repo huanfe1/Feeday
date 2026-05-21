@@ -1,8 +1,12 @@
 export type Theme = 'dark' | 'light' | 'system';
 
 export interface EventMap {
-    'jump-to-feed': { feedId: number; postId?: number | null };
+    'jump-to-feed': { feedId: number };
     'theme-change': Theme;
+    'refresh-feeds': null;
+    'refresh-posts': null;
+    'mutate-post-read': { postId: number; isRead: boolean };
+    'read-all-posts': null;
 }
 
 class EventEmitter<T extends EventMap> extends EventTarget {

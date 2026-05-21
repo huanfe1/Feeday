@@ -1,8 +1,8 @@
-import { useFeedStore } from '@/store';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Spinner } from '@/components/ui/spinner';
+import { eventBus } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 export function BatchImportFeed({ isImporting, setIsImporting }: { onClose: () => void; isImporting: boolean; setIsImporting: (value: boolean) => void }) {
@@ -16,7 +16,7 @@ export function BatchImportFeed({ isImporting, setIsImporting }: { onClose: () =
                 const messages = results.filter(result => result.status === 'fulfilled').map(result => result.value);
                 console.log(messages);
                 toast.success(`成功导入 ${messages.filter(message => message.success).length} 个订阅源`, { position: 'top-center', richColors: true });
-                useFeedStore.getState().refreshFeeds();
+                eventBus.emit('refresh-feeds', null);
             })
             .catch(err => {
                 toast.error(err?.message ?? '导入失败', { position: 'top-center', richColors: true });

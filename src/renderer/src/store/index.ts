@@ -1,18 +1,37 @@
+import type { FeedKey, FeedKeyPrefix } from '@shared/types';
+import { create } from 'zustand';
+
 import { useAudioStore } from './audio';
 import { useDragging, useView } from './common';
-import { useFeedStore } from './feeds';
 import { useFolderStore } from './folders';
-import { usePostStore } from './posts';
 
-export type { FeedType } from './feeds';
 export type { FolderType } from './folders';
-export type { PostType } from './posts';
 export type { AudioTrack } from './audio';
 
-const refreshAll = () => {
-    useFeedStore.getState().refreshFeeds();
-    usePostStore.getState().refreshPosts();
-    useFolderStore.getState().refreshFolders();
-};
+export { useDragging, useFolderStore, useView, useAudioStore };
 
-export { useDragging, useFeedStore, useFolderStore, usePostStore, useView, useAudioStore, refreshAll };
+interface UseStore {
+    view: number;
+    setView: (view: number) => void;
+
+    feedKey: FeedKey;
+    setFeedKey: (feedKey: FeedKey) => void;
+    getFeedKey: () => [FeedKeyPrefix, number];
+
+    postId: number | null;
+    setPostId: (postId: number | null) => void;
+}
+
+export const useStore = create<UseStore>((set, get) => {
+    return {
+        view: 1,
+        setView: (view: number) => set({ view }),
+
+        feedKey: 'view-1',
+        setFeedKey: (feedKey: FeedKey) => set({ feedKey }),
+        getFeedKey: () => get().feedKey.split('-') as [FeedKeyPrefix, number],
+
+        postId: null,
+        setPostId: (postId: number | null) => set({ postId }),
+    };
+});

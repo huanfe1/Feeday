@@ -24,6 +24,7 @@
         "postversion": "npm run typecheck && git push && git push --tags"
     },
     "dependencies": {
+        "@ebay/nice-modal-react": "^1.2.13",
         "@electron-toolkit/preload": "^3.0.2",
         "@electron-toolkit/utils": "^4.0.0",
         "@hookform/resolvers": "^5.2.2",
